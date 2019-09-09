@@ -26,7 +26,7 @@ import logging
 from collections import defaultdict
 
 
-__version__ = '0.2'  # canonical version
+__version__ = '0.2.1'  # canonical version
 __author__ = 'jtmoon79'
 __url__ = 'https://github.com/jtmoon79/goto_http_redirect_server'
 __url_issues__ = 'https://github.com/jtmoon79/goto_http_redirect_server/issues'
@@ -429,12 +429,12 @@ def load_redirects_files(redirects_files: Path_List,
                         log.debug('File Line (%s:%s):%s', rfilen, csvr.line_num, row)
                         if not row:  # quietly skip empty rows
                             continue
-                        from_, to_, author, date_ = row
-                        dt = fromisoformat(date_)
-                        entrys[Re_EntryKey(Re_From(from_))] = \
+                        from_path, to_url, user_added, date_added = row
+                        dt = fromisoformat(date_added)
+                        entrys[Re_EntryKey(Re_From(from_path))] = \
                             Re_EntryValue((
-                                Re_To(to_),
-                                Re_User(author),
+                                Re_To(to_url),
+                                Re_User(user_added),
                                 Re_Date(dt),)
                             )
                     except Exception:
@@ -556,7 +556,7 @@ def process_options() -> typing.Tuple[str, int, bool, bool, int, int, str,
         description="""The *Go To HTTP Redirect Server*!
 
 HTTP %s %s reply server. Load this server with redirect mappings
-of "from" and "to" and let it run indefinitely. Reload the running server by
+of "from path" and "to URL" and let it run indefinitely. Reload the running server by
 signaling the process.
 """
                     % (int(rcd), rcd.phrase),
@@ -570,7 +570,7 @@ signaling the process.
     pgroup.add_argument('--from-to',
                         nargs=2, metavar=('from', 'to'),
                         action='append',
-                        help='A redirection pair of "from" and "to" fields.'
+                        help='A redirection pair of "from path" and "to URL" fields.'
                              ' For example,'
                              ' --from-to "foo" "http://foobar.com"',
                         default=list())
@@ -578,7 +578,9 @@ signaling the process.
                         help='File of redirection information. Within a file,'
                         ' is one entry per line. An entry is four fields'
                         ' using tab character for field separator. The'
-                        ' four entry fields are: "from" "to" "author" "date"'
+                        ' four entry fields are:'
+                        ' "from path", "to URL", "added by user", and'
+                        ' "added on datetime"'
                         ' separated by a tab. ',
                         default=list())
 
@@ -632,14 +634,14 @@ About Redirect Entries:
 
   Entries found in --redirects file(s) and entries passed via --from-to are
   combined.
-  Entries passed via --from-to override any matching "from" entry found in
+  Entries passed via --from-to override any matching "from path" entry found in
   redirects files.
-  The "from" field corresponds to the URI Path in the originating request.
-  The "to" field corresponds to HTTP Header "Location" in the server Redirect
-  reply.
+  The "from path" field corresponds to the URI Path in the originating request.
+  The "to URL" field corresponds to HTTP Header "Location" in the server
+  Redirect reply.
 
   A redirects file entry has four columns separated by a tab character "\\t";
-  "from", "to", "added by user", "added on datetime".  For example,
+  "from path", "to URL", "added by user", "added on datetime".  For example,
 
     foo	http://foobar.com	bob	2019-09-07 12:00:00
 
