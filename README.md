@@ -1,7 +1,10 @@
 
 # goto HTTP redirect server
 
-The _goto ("Go To") HTTP redirect server_. For sharing shortened HTTP URLs on
+[![CircleCI](https://circleci.com/gh/jtmoon79/coverlovin2.svg?style=svg)](https://circleci.com/gh/jtmoon79/goto_http_redirect_server)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
+The **_"Go To" HTTP redirect server_**. For sharing shortened HTTP URLs on
 your private network.
 
 Trivial to run and reload.  Only uses Python built-in modules.  Super useful 😄 ‼
