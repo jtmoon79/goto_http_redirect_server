@@ -570,9 +570,9 @@ signaling the process.
     pgroup.add_argument('--from-to',
                         nargs=2, metavar=('from', 'to'),
                         action='append',
-                        help='A redirection pair of "from path" and "to URL" fields.'
-                             ' For example,'
-                             ' --from-to "foo" "http://foobar.com"',
+                        help='A redirection pair of "from path" and "to URL"'
+                             ' fields. For example,'
+                             ' --from-to "/hr" "http://human-resources.mycorp.local/login"',
                         default=list())
     pgroup.add_argument('--redirects', dest='redirects_files', action='append',
                         help='File of redirection information. Within a file,'
@@ -643,15 +643,15 @@ About Redirect Entries:
   A redirects file entry has four columns separated by a tab character "\\t";
   "from path", "to URL", "added by user", "added on datetime".  For example,
 
-    foo	http://foobar.com	bob	2019-09-07 12:00:00
+    hr	http://human-resources.mycorp.local/login	bob	2019-09-07 12:00:00
 
   The last two columns, "added by user" and "added on datetime", are intended
   for record-keeping within an organization.
 
   A passed redirect (either via --from-to or --redirects file) should have a
   leading "/" as this is the URI path given for processing.
-  For example, the URL "http://host/foo" is parsed by {0}
-  as URI path "/foo".
+  For example, the URL "http://host/hr" is parsed by {0}
+  as URI path "/hr".
 
 About Signals and Reloads:
 

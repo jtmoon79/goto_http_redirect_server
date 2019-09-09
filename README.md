@@ -5,8 +5,8 @@
 [![Requirements Status](https://requires.io/github/jtmoon79/goto_http_redirect_server/requirements.svg?branch=master)](https://requires.io/github/jtmoon79/goto_http_redirect_server/requirements/?branch=master)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-The **_"Go To" HTTP redirect server_**. For sharing shortened HTTP URLs on
-your private network.
+The **_"Go To" HTTP redirect server_**. For sharing shortened HTTP URLs on your
+private network.
 
 Trivial to run and reload.  Only uses Python built-in modules.  Super handy 😄 ‼
 
@@ -17,7 +17,7 @@ Trivial to run and reload.  Only uses Python built-in modules.  Super handy 😄
    For example, given a file `./redirects1.csv`
 
        /builds	https://build-server.mycorp.local/build-list	alice	2019-08-10 00:05:10
-       /hr	http://human-resources.mycorp.local	bob	2018-07-11 22:15:10
+       /hr	http://human-resources.mycorp.local/login	bob	2018-07-11 22:15:10
        /aws	https://us-west-2.console.aws.amazon.com/console/home?region=us-west-2#	carl	2019-01-05 12:35:10
 
 2. (optional) Install<br />
@@ -43,14 +43,14 @@ From your browser, browse to a redirect path!  For example, given a network host
 `goto` running `goto_http_redirect_server` on port `80`, and given the
 example redirects file `./redirects1.csv` above, then<br />
 in your browser, type **`goto/hr⏎`**. Your browser will end up at
-**`http://human-resources.mycorp.local`** 😝‼
+**`http://human-resources.mycorp.local/login`** 😝‼
 
 <small>
 
-Sadly, some browsers will assume a single word host, e.g. `goto/foo`, is a
-search engine query, i.e. the browser will query Google for `goto/foo`. 
+Sadly, some browsers will assume a single word host, e.g. `goto/hr`, is a
+search engine query, i.e. the browser will query Google for "`goto/hr`".
 Users may need to pass the local network domain name, e.g. `goto.local/hr`, to
-force the browser to use host `goto.local`.\*\*
+force the browser to use local network host `goto.local`.\*\*
 
 </small>
 
@@ -112,19 +112,21 @@ privilege process.
     The *Go To HTTP Redirect Server*!
 
     HTTP 308 Permanent Redirect reply server. Load this server with redirect mappings
-    of "from" and "to" and let it run indefinitely. Reload the running server by
+    of "from path" and "to URL" and let it run indefinitely. Reload the running server by
     signaling the process.
 
     Redirects:
       One or more required. May be passed multiple times.
 
-      --from-to from to     A redirection pair of "from" and "to" fields. For
-                            example, --from-to "foo" "http://foobar.com"
+      --from-to from to     A redirection pair of "from path" and "to URL" fields.
+                            For example, --from-to "/hr" "http://human-
+                            resources.mycorp.local/login"
       --redirects REDIRECTS_FILES
                             File of redirection information. Within a file, is one
                             entry per line. An entry is four fields using tab
                             character for field separator. The four entry fields
-                            are: "from" "to" "author" "date" separated by a tab.
+                            are: "from path", "to URL", "added by user", and
+                            "added on datetime" separated by a tab.
 
     Network Options:
       --ip IP, -i IP        IP interface to listen on. Defaults to 127.0.0.1
@@ -157,24 +159,24 @@ privilege process.
 
       Entries found in --redirects file(s) and entries passed via --from-to are
       combined.
-      Entries passed via --from-to override any matching "from" entry found in
+      Entries passed via --from-to override any matching "from path" entry found in
       redirects files.
-      The "from" field corresponds to the URI Path in the originating request.
-      The "to" field corresponds to HTTP Header "Location" in the server Redirect
-      reply.
+      The "from path" field corresponds to the URI Path in the originating request.
+      The "to URL" field corresponds to HTTP Header "Location" in the server
+      Redirect reply.
 
       A redirects file entry has four columns separated by a tab character "\t";
-      "from", "to", "added by user", "added on datetime".  For example,
+      "from path", "to URL", "added by user", "added on datetime".  For example,
 
-        foo http://foobar.com       bob     2019-09-07 12:00:00
+        hr  http://human-resources.mycorp.local/login       bob     2019-09-07 12:00:00
 
       The last two columns, "added by user" and "added on datetime", are intended
       for record-keeping within an organization.
 
       A passed redirect (either via --from-to or --redirects file) should have a
       leading "/" as this is the URI path given for processing.
-      For example, the URL "http://host/foo" is parsed by goto_http_redirect_server
-      as URI path "/foo".
+      For example, the URL "http://host/hr" is parsed by goto_http_redirect_server
+      as URI path "/hr".
 
     About Signals and Reloads:
 
