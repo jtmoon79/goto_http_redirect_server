@@ -1,34 +1,41 @@
 # CircleCI 2.0 configuration file
-#
+# image list at https://circleci.com/docs/2.0/circleci-images/
 ---
 version: 2.1
 jobs:
-  build_install_run:
+  build_install_run_py35:
     docker:
-      # see https://circleci.com/docs/2.0/circleci-images/
       - image: circleci/python:3.5
-      - image: circleci/python:3.6
-      - image: circleci/python:3.7
-
-    working_directory: ~/repo
-
     steps:
       - checkout
-
       - run:
-          name: build, install, and run using provided shell script
+          name: build, install, and run using provided shell script in Python 3.5
           command: |
-            set -x
-            whoami
-            pwd
-            env | sort
-            ls -la .
-            uname -a
-            python --version
-            pip --version
-            ./build-install.sh
+            ./.circleci/build_install_run.sh
+  build_install_run_py36:
+    docker:
+      
+      - image: circleci/python:3.6
+    steps:
+      - checkout
+      - run:
+          name: build, install, and run using provided shell script in Python 3.6
+          command: |
+            ./.circleci/build_install_run.sh
+  build_install_run_py37:
+    docker:
+      - image: circleci/python:3.7
+    steps:
+      - checkout
+      - run:
+          name: build, install, and run using provided shell script in Python 3.7
+          command: |
+            ./.circleci/build_install_run.sh
 workflows:
   version: 2
-  workflow_1:
+  working_directory: ~/repo
+  workflow_py:
     jobs:
-      - build_install_run
+      - build_install_run_py35
+      - build_install_run_py36
+      - build_install_run_py37
