@@ -18,19 +18,14 @@ jobs:
       - run:
           name: build, install, and run using provided shell script
           command: |
+            set -x
             pwd
-            echo
             env | sort
-            echo
-            ls -las .
-            echo
+            ls -la .
             uname -a
-            echo
             python --version
-            echo
             pip --version
-            echo
-            build-install.sh
+            ./build-install.sh
 workflows:
   version: 2
   workflow_1:
