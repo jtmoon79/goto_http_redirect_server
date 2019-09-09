@@ -33,7 +33,6 @@ jobs:
             ./.circleci/build_install_run.sh
 workflows:
   version: 2
-  working_directory: ~/repo
   workflow_py:
     jobs:
       - build_install_run_py35
