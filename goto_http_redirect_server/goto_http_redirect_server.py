@@ -25,7 +25,7 @@ import logging
 from collections import defaultdict
 
 
-__version__ = '0.1'  # canonical version
+__version__ = '0.2'  # canonical version
 __author__ = 'jtmoon79'
 __url__ = 'https://github.com/jtmoon79/goto_http_redirect_server'
 __url_issues__ = 'https://github.com/jtmoon79/goto_http_redirect_server/issues'
@@ -36,22 +36,25 @@ Modules used are available within the standard CPython distribution.
 Written for Python 3.7 but hacked to run with at least Python 3.5.
 """
 
-PROGRAM_NAME = 'goto_http_redirect_server'
-IP_LOCALHOST = '127.0.0.1'
-REDIRECT_CODE_DEFAULT = http.HTTPStatus.PERMANENT_REDIRECT  # HTTP Status Code used for redirects (among several possible redirect codes)
-Redirect_Code = REDIRECT_CODE_DEFAULT
-HOSTNAME = socket.gethostname()
-# signal to cause --redirects file reload
-SIGNAL_RELOAD_WINDOWS = 'SIGBREAK'
-SIGNAL_RELOAD_UNIX = 'SIGUSR1'
-try:
-    SIGNAL_RELOAD = signal.SIGUSR1  # Linux (not defined on Windows)
-except AttributeError:
-    SIGNAL_RELOAD = signal.SIGBREAK  # Windows (not defined on Linux)
-
 #
 # globals initialization
 #
+
+PROGRAM_NAME = 'goto_http_redirect_server'
+IP_LOCALHOST = '127.0.0.1'
+HOSTNAME = socket.gethostname()
+
+# HTTP Status Code used for redirects (among several possible redirect codes)
+REDIRECT_CODE_DEFAULT = http.HTTPStatus.PERMANENT_REDIRECT
+Redirect_Code = REDIRECT_CODE_DEFAULT
+
+SIGNAL_RELOAD_UNIX = 'SIGUSR1'
+SIGNAL_RELOAD_WINDOWS = 'SIGBREAK'
+# signal to cause --redirects file reload
+try:
+    SIGNAL_RELOAD = signal.SIGUSR1  # Unix (not defined on Windows)
+except AttributeError:
+    SIGNAL_RELOAD = signal.SIGBREAK  # Windows (not defined on some Unix)
 
 # ready logging module initializations (call logging_init to complete)
 LOGGING_FORMAT_DATETIME = '%Y-%m-%d %H:%M:%S'
@@ -84,6 +87,10 @@ redirect_counter = defaultdict(int)  # XXX: not thread-safe!
 allow_remote_reload = False
 program_start_time = time.time()
 FIELD_DELMITER_DEFAULT = '\t'
+
+#
+# functions, classes, code
+#
 
 
 def html_escape(s_: str) -> str:
@@ -199,11 +206,13 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
             uptime = time.time() - program_start_time
             esc_overall = html_escape(
                 '%s Process ID %s listening on %s:%s\n'
+                'Program version %s and Project Page (%s)\n'
                 'Process start datetime %s (running for %s)\n'
                 'Successful Redirect Status Code %s (%s)'
                 % (PROGRAM_NAME, pid,
                    self.server.server_address[0],
                    self.server.server_address[1],
+                   __version__, __url__,
                    start_datetime, datetime.timedelta(seconds=uptime),
                    int(status_code), status_code.phrase,)
             )
