@@ -11,6 +11,7 @@ import getpass
 import datetime
 import time
 import signal
+import threading
 import socket
 import socketserver
 import http
@@ -486,6 +487,11 @@ class RedirectServer(socketserver.TCPServer):
         """copy+paste from Python 3.7 socketserver.py class BaseServer"""
         self.server_close()
 
+    def shutdown(self):
+        """helper to allow others to know when shutdown was called"""
+        self._shutdown = True
+        return super(socketserver.TCPServer, self).shutdown()
+
     def service_actions(self):
         """
         Override function.
@@ -538,7 +544,7 @@ def reload_signal_handler(signum, _) -> None:
     reload = True
 
 
-def process_options() -> typing.Tuple[str, int, bool, bool, int, str,
+def process_options() -> typing.Tuple[str, int, bool, bool, int, int, str,
                                       FromTo_List, typing.List[str]]:
     """Process script command-line options."""
 
@@ -609,6 +615,10 @@ signaling the process.
                         help='Field delimiter string for --redirects files.'
                              ' Defaults to "%(default)s" (tab character)'
                              ' between fields.')
+    pgroup.add_argument('--shutdown', action='store', type=int,
+                        default=0,
+                        help='Shutdown the server after passed seconds.'
+                             ' Intended for testing.')
     pgroup.add_argument('--verbose', action='store_true', default=False,
                         help='Set logging level to DEBUG.'
                              ' Logging level default is INFO.')
@@ -673,12 +683,13 @@ Other Notes:
         sys.exit(1)
 
     return str(args.ip), int(args.port), args.verbose, \
-        args.allow_remote_reload, args.status_code, args.field_delimiter, \
+        args.allow_remote_reload, args.status_code, args.shutdown, \
+        args.field_delimiter, \
         args.from_to, args.redirects_files
 
 
 def main() -> None:
-    ip, port, verbose, allow_remote_reload_, status_code, \
+    ip, port, verbose, allow_remote_reload_, status_code, shutdown, \
         field_delimiter_, from_to, redirects_files = process_options()
 
     logging_init(verbose)
@@ -717,12 +728,39 @@ def main() -> None:
               int(SIGNAL_RELOAD), str(SIGNAL_RELOAD))
     signal.signal(SIGNAL_RELOAD, reload_signal_handler)
 
+    do_shutdown = False  # signal between threads __main__ and shutdown_thread
+    def shutdown_server(redirect_server: RedirectServer, shutdown: int):
+        log.debug('Server will shutdown in %s seconds', shutdown)
+        start = time.time()
+        while time.time() - start < shutdown:
+            if do_shutdown:
+                time.sleep(0.5)
+                break
+            time.sleep(0.5)
+        log.info("Calling shutdown on Redirect_Server {0} (0x{1:08x})".
+                 format(str(redirect_server), id(redirect_server)))
+        redirect_server.shutdown()
+
     # create the first instance of the Redirect Handler
     redirect_handler = redirect_handler_factory(entry_list, status_code)
     pid = os.getpid()
     with RedirectServer((ip, port), redirect_handler) as redirect_server:
-        log.info("Serve forever at %s:%s, Process ID %s", ip, port, pid)
-        redirect_server.serve_forever(poll_interval=1)  # never returns
+        serve_time = 'forever'
+        if shutdown:
+            serve_time = 'for %s seconds' % shutdown
+            st = threading.Thread(
+                name='shutdown_thread',
+                target=shutdown_server,
+                args=(redirect_server, shutdown,))
+            st.start()
+        log.info("Serve %s at %s:%s, Process ID %s", serve_time, ip, port, pid)
+        try:
+            log.debug("Redirect_Server {0} (0x{1:08x})".
+                      format(str(redirect_server), id(redirect_server)))
+            redirect_server.serve_forever(poll_interval=1)  # never returns
+        except (KeyboardInterrupt, InterruptedError):
+            do_shutdown = True
+            raise
 
 
 if __name__ == '__main__':
