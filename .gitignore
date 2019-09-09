@@ -1,0 +1,7 @@
+.idea/
+.eggs/
+.mypy_cache/
+dist/
+build/
+goto_http_redirect_server.egg-info/
+goto_http_redirect_server/__pycache__/
