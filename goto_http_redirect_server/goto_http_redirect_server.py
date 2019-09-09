@@ -216,7 +216,8 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
                                sort_keys=sort_keys, default=str)
                     # pprint.pformat(obj)
                 )
-
+            esc_reload_info = html_escape(" (e.g. '/reload')") if \
+                allow_remote_reload else ''
             esc_redirects_counter = obj_to_html(redirect_counter,
                                                 sort_keys=True)
             esc_redirects = obj_to_html(redirects)
@@ -255,9 +256,9 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
         </pre>
     </div>
     <div>
-        <h3>Redirect Files Searched During an Update:</h3>
+        <h3>Redirect Files Searched During an Reload{6}:</h3>
         <pre>
-{6}
+{7}
         </pre>
     </div>
   </body>
@@ -265,7 +266,9 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
 """\
                 .format(esc_title, esc_overall, esc_args,
                         esc_redirects_counter, esc_reload_datetime,
-                        esc_redirects, esc_files)
+                        esc_redirects,
+                        esc_reload_info,
+                        esc_files)
             body = bytes(body, encoding='utf-8', errors='xmlcharrefreplace')
             self.send_header('Content-Length', len(body))
             self.end_headers()
@@ -538,7 +541,7 @@ def process_options() -> typing.Tuple[str, int, bool, bool, int, str,
         description="""The *Go To HTTP Redirect Server*!
 
 HTTP %s %s reply server. Load this server with redirect mappings
-of "from" and "to" and let it run indefinitely. Update running server by
+of "from" and "to" and let it run indefinitely. Reload the running server by
 signaling the process.
 """
                     % (int(rcd), rcd.phrase),
