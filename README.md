@@ -14,7 +14,7 @@ Trivial to run and reload.  Only uses Python built-in modules.  Super handy 😄
 
 1. create a tab-separated values file (`'\t'`) with a list of HTTP redirects.<br />
    Columns are "_from path_", "_to URL_", "_added by user_", and "_added on datetime_".<br />
-   For example,
+   For example, given a file `./redirects1.csv`
 
        /builds	https://build-server.mycorp.local/build-list	alice	2019-08-10 00:05:10
        /hr	http://human-resources.mycorp.local	bob	2018-07-11 22:15:10
@@ -29,11 +29,11 @@ Trivial to run and reload.  Only uses Python built-in modules.  Super handy 😄
 
 3.  start the _Go To HTTP redirect server_
 
-        goto_http_redirect_server --redirects .\redirects1.csv
+        goto_http_redirect_server --redirects ./redirects1.csv
 
     or, if Install step was skipped,
 
-        python goto_http_redirect_server.py --redirects .\redirects1.csv
+        python goto_http_redirect_server.py --redirects ./redirects1.csv
 
     Requires at least Python version 3.5.2.
 
@@ -41,7 +41,7 @@ Trivial to run and reload.  Only uses Python built-in modules.  Super handy 😄
 
 From your browser, browse to a redirect path!  For example, given a network host
 `goto` running `goto_http_redirect_server` on port `80`, and given the
-example redirects file above, then<br />
+example redirects file `./redirects1.csv` above, then<br />
 in your browser, type **`goto/hr⏎`**. Your browser will end up at
 **`http://human-resources.mycorp.local`** 😝‼
 
