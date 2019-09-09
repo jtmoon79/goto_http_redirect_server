@@ -1,6 +1,7 @@
 # CircleCI 2.0 configuration file
 #
-version: 2
+---
+version: 2.1
 jobs:
   build_install_run:
     docker:
@@ -21,6 +22,8 @@ jobs:
             echo
             env | sort
             echo
+            ls -las .
+            echo
             uname -a
             echo
             python --version
@@ -28,3 +31,8 @@ jobs:
             pip --version
             echo
             build-install.sh
+workflows:
+  version: 2
+  workflow_1:
+    jobs:
+      - build_install_run
