@@ -34,7 +34,8 @@ jobs:
             whoami
             pwd
             env | sort
-            ls -la .
+            ls -la . .circleci/
+            chmod +x ./.circleci/build_install_run.sh
             ./.circleci/build_install_run.sh
 workflows:
   version: 2

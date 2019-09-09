@@ -5,6 +5,7 @@ set -e
 set -u
 set -o pipefail
 
+BUILD_INSTALL="$(dirname -- "${0}")/../build-install.sh"
 set -x
 whoami
 pwd
@@ -13,4 +14,5 @@ ls -la .
 uname -a
 python --version
 pip --version
-"$(dirname -- "${0}")/../build-install.sh" --uninstall
+chmod +x "${BUILD_INSTALL}"  # force +x
+"${BUILD_INSTALL}" --uninstall
