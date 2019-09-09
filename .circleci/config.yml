@@ -11,6 +11,7 @@ jobs:
       - run:
           name: build, install, and run using provided shell script in Python 3.5
           command: |
+            chmod +x ./.circleci/build_install_run.sh  # force +x
             ./.circleci/build_install_run.sh
   build_install_run_py36:
     docker:
@@ -21,6 +22,7 @@ jobs:
       - run:
           name: build, install, and run using provided shell script in Python 3.6
           command: |
+            chmod +x ./.circleci/build_install_run.sh  # force +x
             ./.circleci/build_install_run.sh
   build_install_run_py37:
     docker:
@@ -30,12 +32,7 @@ jobs:
       - run:
           name: build, install, and run using provided shell script in Python 3.7
           command: |
-            set -x
-            whoami
-            pwd
-            env | sort
-            ls -la . .circleci/
-            chmod +x ./.circleci/build_install_run.sh
+            chmod +x ./.circleci/build_install_run.sh  # force +x
             ./.circleci/build_install_run.sh
 workflows:
   version: 2
