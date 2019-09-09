@@ -87,6 +87,7 @@ reload_datetime = None  # XXX: not thread-safe! but good enough.
 redirect_counter = defaultdict(int)  # XXX: not thread-safe!
 allow_remote_reload = False
 program_start_time = time.time()
+STATUS_PAGE_PATH_DEFAULT = '/status'
 FIELD_DELMITER_DEFAULT = '\t'
 
 #
@@ -159,10 +160,12 @@ def fromisoformat(dts: str) -> datetime.datetime:
 
 
 def redirect_handler_factory(redirects: Re_Entry_Dict,
-                             status_code: http.HTTPStatus):
+                             status_code: http.HTTPStatus,
+                             status_path: str):
     """
     :param redirects: dictionary of from-to redirects for the server
     :param status_code: HTTPStatus instance to use for successful redirects
+    :param status_path: server status page path
     :return: RedirectHandler type: request handler class type for
              RedirectServer.RequestHandlerClass
     """
@@ -188,10 +191,11 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
             except Exception as ex:
                 print('Error during log_message\n%s' % str(ex), file=sys.stderr)
 
-        def do_GET_status(self):
+        def do_GET_status(self, status_path_: str):
             """dump status information about this server instance"""
 
-            self.log_message('/status requested, returning %s (%s)',
+            self.log_message('%s requested, returning %s (%s)',
+                             status_path_,
                              int(http.HTTPStatus.OK),
                              http.HTTPStatus.OK.phrase,
                              loglevel=logging.INFO)
@@ -206,14 +210,13 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
                 fromtimestamp(program_start_time).replace(microsecond=0)
             uptime = time.time() - program_start_time
             esc_overall = html_escape(
-                '%s Process ID %s listening on %s:%s\n'
-                'Program version %s and Project Page (%s)\n'
-                'Process start datetime %s (running for %s)\n'
-                'Successful Redirect Status Code %s (%s)'
-                % (PROGRAM_NAME, pid,
-                   self.server.server_address[0],
-                   self.server.server_address[1],
-                   __version__, __url__,
+                'Program %s version %s and Project Page (%s)\n'
+                'Process ID %s listening on %s:%s on host %s\n'
+                'Process start datetime %s (up time %s)\n'
+                'Successful Redirect Status Code is %s (%s)'
+                % (PROGRAM_NAME, __version__, __url__,
+                   pid, self.server.server_address[0],
+                   self.server.server_address[1], HOSTNAME,
                    start_datetime, datetime.timedelta(seconds=uptime),
                    int(status_code), status_code.phrase,)
             )
@@ -226,6 +229,8 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
                                sort_keys=sort_keys, default=str)
                     # pprint.pformat(obj)
                 )
+            # TODO: make the paths and URLs in the strings into
+            #       <a>...</a> anchor elements.
             esc_reload_info = html_escape(" (e.g. '/reload')") if \
                 allow_remote_reload else ''
             esc_redirects_counter = obj_to_html(redirect_counter,
@@ -376,8 +381,8 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
             except:
                 log.exception('Failed to log GET request')
 
-            if self.path == '/status':
-                self.do_GET_status()
+            if self.path == status_path:
+                self.do_GET_status(self.path)
                 return
             elif self.path == '/reload' and allow_remote_reload:
                 self.do_GET_reload()
@@ -544,7 +549,7 @@ def reload_signal_handler(signum, _) -> None:
     reload = True
 
 
-def process_options() -> typing.Tuple[str, int, bool, bool, int, int, str,
+def process_options() -> typing.Tuple[str, int, bool, bool, str, int, int, str,
                                       FromTo_List, typing.List[str]]:
     """Process script command-line options."""
 
@@ -593,8 +598,19 @@ signaling the process.
                              ' Defaults to %(default)s')
 
     pgroup = parser.add_argument_group(title='Miscellaneous')
+
+    pgroup.add_argument('--status-path', action='store',
+                        default=STATUS_PAGE_PATH_DEFAULT, type=str,
+                        help='Override status page path. This is the page that'
+                             ' dumps information about the process and loaded'
+                             ' redirects. This can be used to hide the status'
+                             ' page. e.g. --status-path'
+                             ' "/9663e0e8-d2ec-11e9-b93a-6c626d698de1" .'
+                             ' Conversely, it could be the default landing page'
+                             ' e.g. --status-path "/" .'
+                             ' Default status page path is "%(default)s".')
     rc_302 = http.HTTPStatus.TEMPORARY_REDIRECT
-    pgroup.add_argument('--status-code', action='store',
+    pgroup.add_argument('--status-code', action='store',  # TODO: change this to '--override-code'
                         default=int(rcd), type=int,
                         help='Override default HTTP Status Code as an integer.'
                              ' Most often the desired override will be ' +
@@ -669,11 +685,12 @@ About Signals and Reloads:
 
 Other Notes:
 
-  Path "/status" will dump the current status of the process.
+  By default, path "%s" will dump the server status.
 
 """.format(
         PROGRAM_NAME, int(SIGNAL_RELOAD), str(SIGNAL_RELOAD),
         SIGNAL_RELOAD_UNIX, SIGNAL_RELOAD_WINDOWS,
+        STATUS_PAGE_PATH_DEFAULT
        )
 
     args = parser.parse_args()
@@ -685,14 +702,14 @@ Other Notes:
         sys.exit(1)
 
     return str(args.ip), int(args.port), args.verbose, \
-        args.allow_remote_reload, args.status_code, args.shutdown, \
-        args.field_delimiter, \
+        args.allow_remote_reload, args.status_path, args.status_code, \
+        args.shutdown, args.field_delimiter, \
         args.from_to, args.redirects_files
 
 
 def main() -> None:
-    ip, port, verbose, allow_remote_reload_, status_code, shutdown, \
-        field_delimiter_, from_to, redirects_files = process_options()
+    ip, port, verbose, allow_remote_reload_, status_path, status_code, \
+        shutdown, field_delimiter_, from_to, redirects_files = process_options()
 
     logging_init(verbose)
 
@@ -744,7 +761,8 @@ def main() -> None:
         redirect_server.shutdown()
 
     # create the first instance of the Redirect Handler
-    redirect_handler = redirect_handler_factory(entry_list, status_code)
+    redirect_handler = redirect_handler_factory(entry_list, status_code,
+                                                status_path)
     pid = os.getpid()
     with RedirectServer((ip, port), redirect_handler) as redirect_server:
         serve_time = 'forever'

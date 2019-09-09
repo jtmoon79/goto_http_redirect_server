@@ -103,7 +103,8 @@ privilege process.
 
     usage: goto_http_redirect_server [--from-to from to]
                                      [--redirects REDIRECTS_FILES] [--ip IP]
-                                     [--port PORT] [--status-code STATUS_CODE]
+                                     [--port PORT] [--status-path STATUS_PATH]
+                                     [--status-code STATUS_CODE]
                                      [--allow-remote-reload]
                                      [--field-delimiter FIELD_DELIMITER]
                                      [--shutdown SHUTDOWN] [--verbose] [--version]
@@ -133,6 +134,14 @@ privilege process.
       --port PORT, -p PORT  IP port to listen on. Defaults to 80
 
     Miscellaneous:
+      --status-path STATUS_PATH
+                            Override status page path. This is the page that dumps
+                            information about the process and loaded redirects.
+                            This can be used to hide the status page. e.g.
+                            --status-path "/9663e0e8-d2ec-11e9-b93a-6c626d698de1"
+                            . Conversely, it could be the default landing page
+                            e.g. --status-path "/" . Default status page path is
+                            "/status".
       --status-code STATUS_CODE
                             Override default HTTP Status Code as an integer. Most
                             often the desired override will be 307 (Temporary
@@ -194,7 +203,7 @@ privilege process.
 
     Other Notes:
 
-      Path "/status" will dump the current status of the process.
+      By default, path "%s" will dump the server status.
 
 \*\* _Mileage May Vary_ 😔
 
