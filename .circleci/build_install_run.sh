@@ -5,8 +5,6 @@ set -e
 set -u
 set -o pipefail
 
-cd "$(dirname -- "${0}")/.."  # cd to project top-level
-
 set -x
 whoami
 pwd
@@ -15,4 +13,4 @@ ls -la .
 uname -a
 python --version
 pip --version
-./build-install.sh --uninstall
+"$(dirname -- "${0}")/../build-install.sh" --uninstall

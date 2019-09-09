@@ -30,6 +30,11 @@ jobs:
       - run:
           name: build, install, and run using provided shell script in Python 3.7
           command: |
+            set -x
+            whoami
+            pwd
+            env | sort
+            ls -la .
             ./.circleci/build_install_run.sh
 workflows:
   version: 2
