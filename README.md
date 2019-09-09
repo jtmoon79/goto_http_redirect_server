@@ -11,23 +11,29 @@ Trivial to run and reload.  Only uses Python built-in modules.  Super useful ðŸ˜
 
 ## Setup and run
 
-1. create a tab-separated values file (`'\t'`) with a list of redirects. 
-    
+1. create a tab-separated values file (`'\t'`) with a list of redirects.<br />
+   Columns are "_from_", "_to_", "_added by user_", and "_added on datetime_".<br />
+   For example,
+
        /builds	https://build-server.mycorp.local/build-list	alice	2019-08-10 00:05:10
        /hr	http://human-resources.mycorp.local	bob	2018-07-11 22:15:10
        /aws	https://us-west-2.console.aws.amazon.com/console/home?region=us-west-2#	carl	2019-01-05 12:35:10
 
-2. Run `build-install.sh` or `build-install.ps1`
+2. (optional) Install<br />
+
+       python setup.py bdist_wheel
+       python -m pip install --user ./dist/goto_http_redirect_server-*-py3.7-none-any.whl
+
+   or, try helper scripts `build-install.sh` or `build-install.ps1`.
 
 3.  start the _Go To HTTP redirect server_
 
         goto_http_redirect_server --redirects .\redirects1.csv
 
-    or
+    or, if Install step was skipped,
 
         python goto_http_redirect_server.py --redirects .\redirects1.csv
 
-    Depends on how it was copied or installed.<br />
     Requires at least Python version 3.5.2.
 
 ### Use
