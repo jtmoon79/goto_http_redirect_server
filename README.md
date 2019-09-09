@@ -194,3 +194,7 @@ privilege process.
       Path "/status" will dump the current status of the process.
 
 \*\* _Mileage May Vary_ 😔
+
+<br />
+
+<img src="https://stackexchange.com/users/flair/216253.png" width="208" height="58" alt="profile for James Thomas Moon on Stack Exchange, a network of free, community-driven Q&amp;A sites" title="profile for James Thomas Moon on Stack Exchange, a network of free, community-driven Q&amp;A sites">
