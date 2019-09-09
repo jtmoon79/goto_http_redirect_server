@@ -586,16 +586,16 @@ signaling the process.
                         ' four entry fields are:'
                         ' "from path", "to URL", "added by user", and'
                         ' "added on datetime"'
-                        ' separated by a tab. ',
+                        ' separated by a tab.',
                         default=list())
 
     pgroup = parser.add_argument_group(title='Network Options')
     pgroup.add_argument('--ip', '-i', action='store', default=IP_LOCALHOST,
                         help='IP interface to listen on.'
-                             ' Defaults to %(default)s')
+                             ' Defaults to %(default)s .')
     pgroup.add_argument('--port', '-p', action='store', type=int, default=80,
                         help='IP port to listen on.'
-                             ' Defaults to %(default)s')
+                             ' Defaults to %(default)s .')
 
     pgroup = parser.add_argument_group(title='Miscellaneous')
 
@@ -619,11 +619,11 @@ signaling the process.
                              ' be ' + str(int(rc_302)) + ' (' + rc_302.phrase +
                              '). Any HTTP Status Code could be used but odd'
                              ' things will happen if a value like 500 is'
-                             ' returned. '
+                             ' returned.'
                              ' This Status Code is only returned when a'
-                             ' loaded redirect entry is found and returned. '
-                             ' Default Status Code is %(default)s (' +
-                             rcd.phrase + ')')
+                             ' loaded redirect entry is found and returned.'
+                             ' Default successful redirect Status Code is'
+                             ' %(default)s (' + rcd.phrase + ').')
     pgroup.add_argument('--allow-remote-reload', action='store_true',
                         default=False,
                         help='Allow reloads via request URI Path "/reload".'
@@ -658,12 +658,12 @@ About Redirect Entries:
   The "to URL" field corresponds to HTTP Header "Location" in the server
   Redirect reply.
 
-  A redirects file entry has four columns separated by a tab character "\\t";
+  A redirects file entry has four fields separated by a tab character "\\t";
   "from path", "to URL", "added by user", "added on datetime".  For example,
 
     hr	http://human-resources.mycorp.local/login	bob	2019-09-07 12:00:00
 
-  The last two columns, "added by user" and "added on datetime", are intended
+  The last two fields, "added by user" and "added on datetime", are intended
   for record-keeping within an organization.
 
   A passed redirect (either via --from-to or --redirects file) should have a
@@ -687,7 +687,7 @@ About Signals and Reloads:
 
 Other Notes:
 
-  By default, path "%s" will dump the server status.
+  By default, path "{5}" will dump the server status.
 
 """.format(
         PROGRAM_NAME, int(SIGNAL_RELOAD), str(SIGNAL_RELOAD),

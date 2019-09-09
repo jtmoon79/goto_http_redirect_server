@@ -130,8 +130,8 @@ privilege process.
                             "added on datetime" separated by a tab.
 
     Network Options:
-      --ip IP, -i IP        IP interface to listen on. Defaults to 127.0.0.1
-      --port PORT, -p PORT  IP port to listen on. Defaults to 80
+      --ip IP, -i IP        IP interface to listen on. Defaults to 127.0.0.1 .
+      --port PORT, -p PORT  IP port to listen on. Defaults to 80 .
 
     Miscellaneous:
       --status-path STATUS_PATH
@@ -149,7 +149,8 @@ privilege process.
                             used but odd things will happen if a value like 500 is
                             returned. This Status Code is only returned when a
                             loaded redirect entry is found and returned. Default
-                            Status Code is 308 (Permanent Redirect)
+                            successful redirect Status Code is 308 (Permanent
+                            Redirect).
       --allow-remote-reload
                             Allow reloads via request URI Path "/reload". This is
                             in addition to sending the process a signal. May be a
@@ -174,12 +175,12 @@ privilege process.
       The "to URL" field corresponds to HTTP Header "Location" in the server
       Redirect reply.
 
-      A redirects file entry has four columns separated by a tab character "\t";
+      A redirects file entry has four fields separated by a tab character "\t";
       "from path", "to URL", "added by user", "added on datetime".  For example,
 
         hr  http://human-resources.mycorp.local/login       bob     2019-09-07 12:00:00
 
-      The last two columns, "added by user" and "added on datetime", are intended
+      The last two fields, "added by user" and "added on datetime", are intended
       for record-keeping within an organization.
 
       A passed redirect (either via --from-to or --redirects file) should have a
@@ -203,7 +204,7 @@ privilege process.
 
     Other Notes:
 
-      By default, path "%s" will dump the server status.
+      By default, path "/status" will dump the server status.
 
 \*\* _Mileage May Vary_ 😔
 
