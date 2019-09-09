@@ -77,11 +77,14 @@ function on_exit(){
 }
 trap on_exit EXIT
 
-# does it run?
-"${PACKAGE_NAME}" --version
 PORT=55923  # hopefully not used
-# does it run and listen on the socket?
-"${PACKAGE_NAME}" --verbose --shutdown 2 --port ${PORT} --from-to '/a' 'http://foo.com'
+(
+    set -x
+    # does it run?
+    "${PACKAGE_NAME}" --version
+    # does it run and listen on the socket?
+    "${PACKAGE_NAME}" --verbose --shutdown 2 --port ${PORT} --from-to '/a' 'http://foo.com'
+)
 
 if ${uninstall}; then
     # and test uninstall if asked
