@@ -22,15 +22,17 @@ Trivial to run and reload.  Only uses Python built-in modules.  Super useful �
 
 From your browser, browse to a redirect path!  For example, given a network host
 `goto` running `goto_http_redirect_server.py` on port `80`, and given the
-example redirects file above, then
+example redirects file above, then<br />
 in your browser, type **`goto/hr⏎`**. Your browser will end up at
 **`http://human-resources.mycorp.local`**!
 
 <small>
+
 Sadly, some browsers will assume a single word host, e.g. `goto/foo`, is a
-search engine query, i.e. the browser will query Google for "`goto/foo`". 
+search engine query, i.e. the browser will query Google for `goto/foo`. 
 Users may need to pass the local network domain name, e.g. `goto.local/hr`, to
 force the browser to use host `goto.local`.
+
 </small>
 
 ### Live Reload
@@ -43,9 +45,9 @@ No service downtime.
  1. Note during startup the Process ID (or query the host System). This is
     necessary to send a process signal. 
  
- 2. Send the process signal to the running `goto_http_redirect_server.py`.
-    In Unix, use `kill`.
-    In Windows, use [`windows-kill.exe`](https://github.com/alirdn/windows-kill/releases)
+ 2. Send the process signal to the running `goto_http_redirect_server.py`.<br />
+    In Unix, use `kill`.<br />
+    In Windows, use [`windows-kill.exe`](https://github.com/alirdn/windows-kill/releases)<br />
     The running `goto_http_redirect_server.py` will re-read all files passed via
     `--redirects`.
 
@@ -58,7 +60,7 @@ No service downtime.
 ### Pro Tips
 
 - Add a DNS addressable host on your network named `goto`. Run
-`goto_http_redirect_server.py` on the host.
+`goto_http_redirect_server.py` on the host.<br />
 Network users can type in their browser address bar `goto/…⏎` to easily use the
 _goto HTTP redirect server_.
 
@@ -73,7 +75,7 @@ privilege process.
 
 - There are many methods to periodically (or on-demand)
   1. modify a file
-  2. signal a process
+  2. signal a process<br />
   That is an exercise for the user.
 
 ----
