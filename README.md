@@ -36,7 +36,7 @@ From your browser, browse to a redirect path!  For example, given a network host
 `goto` running `goto_http_redirect_server` on port `80`, and given the
 example redirects file above, then<br />
 in your browser, type **`goto/hr⏎`**. Your browser will end up at
-**`http://human-resources.mycorp.local`**!
+**`http://human-resources.mycorp.local`** 😝!
 
 <small>
 
@@ -187,4 +187,4 @@ privilege process.
 
       Path "/status" will dump the current status of the process.
 
-\*\* _Mileage May Vary_
+\*\* _Mileage May Vary_ 😔
