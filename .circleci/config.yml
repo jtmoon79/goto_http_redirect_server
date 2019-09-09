@@ -19,6 +19,7 @@ jobs:
           name: build, install, and run using provided shell script
           command: |
             set -x
+            whoami
             pwd
             env | sort
             ls -la .

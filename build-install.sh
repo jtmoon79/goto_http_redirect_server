@@ -33,7 +33,7 @@ set -x
 # uninstall any previous install (must be done outside the project directory)
 cd ..
 
-${PYTHON} -m pip uninstall --yes "${PACKAGE_NAME}" || true
+${PYTHON} -m pip uninstall --yes --verbose "${PACKAGE_NAME}" || true
 
 # remove previous build artifacts
 rm -rfv ./build/ ./dist/ "./${PACKAGE_NAME}.egg-info/"
@@ -41,6 +41,8 @@ rm -rfv ./build/ ./dist/ "./${PACKAGE_NAME}.egg-info/"
 # build using wheels
 cd -
 version=$(${PYTHON} -B -c 'from goto_http_redirect_server import goto_http_redirect_server as gh;print(gh.__version__)')
+userbase=$(${PYTHON} -B -c 'import site; site.getuserbase(); print(site.USER_BASE)')  # pip will install to here
+export PATH="${PATH}:${userbase}"
 
 ${PYTHON} setup.py -v bdist_wheel
 
@@ -59,7 +61,7 @@ fi
 (   
     cd ..
     set -x
-    ${PYTHON} -m pip install -v "${cv_whl}"
+    ${PYTHON} -m pip install --user --verbose "${cv_whl}"
 )
 
 # make sure to attempt uninstall if asked
@@ -70,7 +72,7 @@ fi
 function on_exit(){
     if ${uninstall}; then
       set -x
-      ${PYTHON} -m pip uninstall "${PACKAGE_NAME}"
+      ${PYTHON} -m pip uninstall --yes --verbose "${PACKAGE_NAME}"
     fi
 }
 trap on_exit EXIT
@@ -82,7 +84,7 @@ if ${uninstall}; then
     # and test uninstall if asked
     (
         set -x
-        ${PYTHON} -m pip uninstall "${PACKAGE_NAME}"
+        ${PYTHON} -m pip uninstall --yes --verbose "${PACKAGE_NAME}"
     )
     # if script got here then no need to run uninstall on EXIT
     uninstall=false
@@ -90,7 +92,7 @@ else
     echo "
 To uninstall remaining package:
 
-        ${PYTHON} -m pip uninstall -y '${PACKAGE_NAME}'
+        ${PYTHON} -m pip uninstall --yes --verbose '${PACKAGE_NAME}'
 
 or run this script with '--uninstall'
 "
