@@ -15,4 +15,4 @@ ls -la .
 uname -a
 python --version
 pip --version
-build-install.sh --uninstall
+./build-install.sh --uninstall
