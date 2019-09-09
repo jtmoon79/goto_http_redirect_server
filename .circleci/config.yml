@@ -2,8 +2,9 @@
 #
 version: 2
 jobs:
-  build:
+  build_install_run:
     docker:
+      # see https://circleci.com/docs/2.0/circleci-images/
       - image: circleci/python:3.5
       - image: circleci/python:3.6
       - image: circleci/python:3.7
@@ -14,6 +15,16 @@ jobs:
       - checkout
 
       - run:
-          name: build install run
+          name: build, install, and run using provided shell script
           command: |
+            pwd
+            echo
+            env | sort
+            echo
+            uname -a
+            echo
+            python --version
+            echo
+            pip --version
+            echo
             build-install.sh
