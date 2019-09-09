@@ -609,15 +609,17 @@ signaling the process.
                              ' Conversely, it could be the default landing page'
                              ' e.g. --status-path "/" .'
                              ' Default status page path is "%(default)s".')
+    # TODO: change this to '--redirect-code' because term 'status' is taken and
+    #       unrelated.
     rc_302 = http.HTTPStatus.TEMPORARY_REDIRECT
-    pgroup.add_argument('--status-code', action='store',  # TODO: change this to '--override-code'
+    pgroup.add_argument('--redirect-code', action='store',
                         default=int(rcd), type=int,
-                        help='Override default HTTP Status Code as an integer.'
-                             ' Most often the desired override will be ' +
-                             str(int(rc_302)) + ' (' + rc_302.phrase + ').'
-                             ' Any HTTP Status Code could be passed but odd'
-                             ' things might happen if a value like 500 was'
-                             ' passed. '
+                        help='Override default HTTP Redirect Status Code as an'
+                             ' integer. Most often the desired override will'
+                             ' be ' + str(int(rc_302)) + ' (' + rc_302.phrase +
+                             '). Any HTTP Status Code could be used but odd'
+                             ' things will happen if a value like 500 is'
+                             ' returned. '
                              ' This Status Code is only returned when a'
                              ' loaded redirect entry is found and returned. '
                              ' Default Status Code is %(default)s (' +
@@ -702,13 +704,13 @@ Other Notes:
         sys.exit(1)
 
     return str(args.ip), int(args.port), args.verbose, \
-        args.allow_remote_reload, args.status_path, args.status_code, \
+        args.allow_remote_reload, args.status_path, args.redirect_code, \
         args.shutdown, args.field_delimiter, \
         args.from_to, args.redirects_files
 
 
 def main() -> None:
-    ip, port, verbose, allow_remote_reload_, status_path, status_code, \
+    ip, port, verbose, allow_remote_reload_, status_path, redirect_code, \
         shutdown, field_delimiter_, from_to, redirects_files = process_options()
 
     logging_init(verbose)
@@ -736,11 +738,11 @@ def main() -> None:
     allow_remote_reload = allow_remote_reload_
     log.debug('allow_remote_reload %s', allow_remote_reload)
 
-    status_code = http.HTTPStatus(status_code)
+    redirect_code = http.HTTPStatus(redirect_code)
     global Redirect_Code
-    Redirect_Code = status_code
-    log.debug('Successful Redirect Status Code is %s (%s)', int(status_code),
-              status_code.phrase)
+    Redirect_Code = redirect_code
+    log.debug('Successful Redirect Status Code is %s (%s)', int(redirect_code),
+              redirect_code.phrase)
 
     # register the signal handler function
     log.debug('Register handler for signal %s (%s)',
@@ -761,7 +763,7 @@ def main() -> None:
         redirect_server.shutdown()
 
     # create the first instance of the Redirect Handler
-    redirect_handler = redirect_handler_factory(entry_list, status_code,
+    redirect_handler = redirect_handler_factory(entry_list, redirect_code,
                                                 status_path)
     pid = os.getpid()
     with RedirectServer((ip, port), redirect_handler) as redirect_server:

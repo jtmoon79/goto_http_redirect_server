@@ -104,7 +104,7 @@ privilege process.
     usage: goto_http_redirect_server [--from-to from to]
                                      [--redirects REDIRECTS_FILES] [--ip IP]
                                      [--port PORT] [--status-path STATUS_PATH]
-                                     [--status-code STATUS_CODE]
+                                     [--redirect-code REDIRECT_CODE]
                                      [--allow-remote-reload]
                                      [--field-delimiter FIELD_DELIMITER]
                                      [--shutdown SHUTDOWN] [--verbose] [--version]
@@ -142,12 +142,12 @@ privilege process.
                             . Conversely, it could be the default landing page
                             e.g. --status-path "/" . Default status page path is
                             "/status".
-      --status-code STATUS_CODE
-                            Override default HTTP Status Code as an integer. Most
-                            often the desired override will be 307 (Temporary
-                            Redirect). Any HTTP Status Code could be passed but
-                            odd things might happen if a value like 500 was
-                            passed. This Status Code is only returned when a
+      --redirect-code REDIRECT_CODE
+                            Override default HTTP Redirect Status Code as an
+                            integer. Most often the desired override will be 307
+                            (Temporary Redirect). Any HTTP Status Code could be
+                            used but odd things will happen if a value like 500 is
+                            returned. This Status Code is only returned when a
                             loaded redirect entry is found and returned. Default
                             Status Code is 308 (Permanent Redirect)
       --allow-remote-reload
