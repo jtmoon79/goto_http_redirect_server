@@ -90,12 +90,13 @@ privilege process.
                                      [--port PORT] [--status-code STATUS_CODE]
                                      [--allow-remote-reload]
                                      [--field-delimiter FIELD_DELIMITER]
-                                     [--verbose] [--version] [-?]
+                                     [--shutdown SHUTDOWN] [--verbose] [--version]
+                                     [-?]
 
     The *Go To HTTP Redirect Server*!
 
     HTTP 308 Permanent Redirect reply server. Load this server with redirect mappings
-    of "from" and "to" and let it run indefinitely. Update running server by
+    of "from" and "to" and let it run indefinitely. Reload the running server by
     signaling the process.
 
     Redirects:
@@ -129,6 +130,8 @@ privilege process.
       --field-delimiter FIELD_DELIMITER
                             Field delimiter string for --redirects files. Defaults
                             to " " (tab character) between fields.
+      --shutdown SHUTDOWN   Shutdown the server after passed seconds. Intended for
+                            testing.
       --verbose             Set logging level to DEBUG. Logging level default is
                             INFO.
       --version             show program version and exit
