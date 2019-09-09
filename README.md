@@ -13,7 +13,7 @@ Trivial to run and reload.  Only uses Python built-in modules.  Super handy 😄
 ## Setup and run
 
 1. create a tab-separated values file (`'\t'`) with a list of HTTP redirects.<br />
-   Columns are "_from path_", "_to URL_", "_added by user_", and "_added on datetime_".<br />
+   Fields are "_from path_", "_to URL_", "_added by user_", and "_added on datetime_".<br />
    For example, given a file `./redirects1.csv`
 
        /builds	https://build-server.mycorp.local/build-list	alice	2019-08-10 00:05:10
