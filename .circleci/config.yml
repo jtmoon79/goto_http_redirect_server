@@ -34,6 +34,46 @@ jobs:
           command: |
             chmod +x ./.circleci/build_install_run.sh  # force +x
             ./.circleci/build_install_run.sh
+  build_install_run_py37_wincore:
+    docker:
+      - image: python/3.7-windowsservercore
+    steps:
+      - checkout
+      - run:
+          name: build, install, and run using provided shell script in Python 3.7 on Windows Server Core
+          command: |
+            chmod +x ./.circleci/build_install_run.sh  # force +x
+            ./.circleci/build_install_run.sh
+  build_install_run_py36_stretch:
+    docker:
+      - image: python/3.6-slim-stretch
+    steps:
+      - checkout
+      - run:
+          name: build, install, and run using provided shell script in Python 3.6 on Debian Stretch
+          command: |
+            chmod +x ./.circleci/build_install_run.sh  # force +x
+            ./.circleci/build_install_run.sh
+  build_install_run_py36_buster:
+    docker:
+      - image: python/3.6-slim-buster
+    steps:
+      - checkout
+      - run:
+          name: build, install, and run using provided shell script in Python 3.6 on Debian Buster
+          command: |
+            chmod +x ./.circleci/build_install_run.sh  # force +x
+            ./.circleci/build_install_run.sh
+  build_install_run_py3_alpine:
+    docker:
+      - image: python/3-alpine
+    steps:
+      - checkout
+      - run:
+          name: build, install, and run using provided shell script in Python 3 on Alpine Linux
+          command: |
+            chmod +x ./.circleci/build_install_run.sh  # force +x
+            ./.circleci/build_install_run.sh
 workflows:
   version: 2
   workflow_py:
@@ -41,3 +81,6 @@ workflows:
       - build_install_run_py35
       - build_install_run_py36
       - build_install_run_py37
+      - build_install_run_py37_wincore
+      - build_install_run_py36_buster
+      - build_install_run_py3_alpine
