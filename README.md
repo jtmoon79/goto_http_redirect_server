@@ -1,5 +1,5 @@
 
-# goto HTTP redirect server
+# Go To HTTP Redirect Server
 
 [![CircleCI](https://circleci.com/gh/jtmoon79/coverlovin2.svg?style=svg)](https://circleci.com/gh/jtmoon79/goto_http_redirect_server)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
@@ -17,14 +17,23 @@ Trivial to run and reload.  Only uses Python built-in modules.  Super useful �
        /hr	http://human-resources.mycorp.local	bob	2018-07-11 22:15:10
        /aws	https://us-west-2.console.aws.amazon.com/console/home?region=us-west-2#	carl	2019-01-05 12:35:10
 
-2.  start the _goto HTTP redirect server_ using at least Python 3.5
+2. Run `build-install.sh` or `build-install.ps1`
+
+3.  start the _Go To HTTP redirect server_
+
+        goto_http_redirect_server --redirects .\redirects1.csv
+
+    or
 
         python goto_http_redirect_server.py --redirects .\redirects1.csv
+
+    Depends on how it was copied or installed.<br />
+    Requires at least Python version 3.5.2.
 
 ### Use
 
 From your browser, browse to a redirect path!  For example, given a network host
-`goto` running `goto_http_redirect_server.py` on port `80`, and given the
+`goto` running `goto_http_redirect_server` on port `80`, and given the
 example redirects file above, then<br />
 in your browser, type **`goto/hr⏎`**. Your browser will end up at
 **`http://human-resources.mycorp.local`**!
@@ -34,7 +43,7 @@ in your browser, type **`goto/hr⏎`**. Your browser will end up at
 Sadly, some browsers will assume a single word host, e.g. `goto/foo`, is a
 search engine query, i.e. the browser will query Google for `goto/foo`. 
 Users may need to pass the local network domain name, e.g. `goto.local/hr`, to
-force the browser to use host `goto.local`.
+force the browser to use host `goto.local`.\*\*
 
 </small>
 
@@ -48,10 +57,10 @@ No service downtime.
  1. Note during startup the Process ID (or query the host System). This is
     necessary to send a process signal. 
  
- 2. Send the process signal to the running `goto_http_redirect_server.py`.<br />
+ 2. Send the process signal to the running `goto_http_redirect_server`.<br />
     In Unix, use `kill`.<br />
     In Windows, use [`windows-kill.exe`](https://github.com/alirdn/windows-kill/releases)<br />
-    The running `goto_http_redirect_server.py` will re-read all files passed via
+    The running `goto_http_redirect_server` will re-read all files passed via
     `--redirects`.
 
 #### Reload via browser
@@ -63,11 +72,11 @@ No service downtime.
 ### Pro Tips
 
 - Add a DNS addressable host on your network named `goto`. Run
-`goto_http_redirect_server.py` on the host.<br />
+`goto_http_redirect_server` on the host.<br />
 Network users can type in their browser address bar `goto/…⏎` to easily use the
-_goto HTTP redirect server_.
+_Go To HTTP redirect server_.\*\*
 
-- Consider using `authbind` to run `goto_http_redirect_server.py` as a low
+- Consider using `authbind` to run `goto_http_redirect_server` as a low
 privilege process.
 
       apt install authbind
@@ -76,10 +85,10 @@ privilege process.
       chmod 0500 /etc/authbind/byport/80
       sudo -u nobody -- authbind --deep python goto_http_redirect_server …
 
-- There are many methods to periodically (or on-demand)
-  1. modify a file
-  2. signal a process<br />
-  That is an exercise for the user.
+- Initiating the reload signal requires
+  1. noticing a modified file
+  2. signaling the `goto_http_redirect_server` process.<br />
+  There are many methods to accomplish this. That is an exercise for the user.
 
 ----
 
@@ -177,3 +186,5 @@ privilege process.
     Other Notes:
 
       Path "/status" will dump the current status of the process.
+
+\*\* _Mileage May Vary_
