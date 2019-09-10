@@ -26,7 +26,7 @@ import logging
 from collections import defaultdict
 
 
-__version__ = '0.2.1'  # canonical version
+__version__ = '0.3.0'  # canonical version
 __author__ = 'jtmoon79'
 __url__ = 'https://github.com/jtmoon79/goto_http_redirect_server'
 __url_issues__ = 'https://github.com/jtmoon79/goto_http_redirect_server/issues'
