@@ -5,15 +5,14 @@
 set -e
 set -u
 
-URL='https://raw.githubusercontent.com/jtmoon79/goto_http_redirect_server/master/goto_http_redirect_server/goto_http_redirect_server.py'
-NAME='goto_http_redirect_server.py'
-SCRIPT="./${NAME}"
+readonly URL='https://raw.githubusercontent.com/jtmoon79/goto_http_redirect_server/master/goto_http_redirect_server/goto_http_redirect_server.py'
+readonly SCRIPT='./goto_http_redirect_server.py'
 
 function exists() {
     which "${1}" &>/dev/null
 }
 
-if ! [ -f "${NAME}" ]; then
+if [[ ! -f "${SCRIPT}" ]]; then
     if exists wget; then
         wget --quiet -O "${SCRIPT}" "${URL}"
     elif exists curl; then
