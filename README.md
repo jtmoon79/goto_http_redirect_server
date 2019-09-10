@@ -22,15 +22,15 @@ Trivial to run and reload.  Only uses Python built-in modules.  Super handy 😄
 
 2. (optional) Install
 
-    1. Install<br />
+    - Install manually
 
-           python setup.py bdist_wheel
-           python -m pip install --user ./dist/goto_http_redirect_server-*-py3.7-none-any.whl
+          python setup.py bdist_wheel
+          python -m pip install --user ./dist/goto_http_redirect_server-*-py3.7-none-any.whl
 
-    2. Or, try helper scripts [`build-install.sh`](./build-install.sh) or [`build-install.ps1`](./build-install.ps1)
+    - Or, try helper scripts [`build-install.sh`](./build-install.sh) or [`build-install.ps1`](./build-install.ps1)
 
-    3. Or, try [`eazy-run.sh`](./eazy-run.sh) and pass command-line options as if
-       running `goto_http_redirect_server.py`.
+    - Or, try [`eazy-run.sh`](./eazy-run.sh) and pass command-line options as if
+      running `goto_http_redirect_server.py`.
 
 3.  start the _Go To HTTP redirect server_
 
