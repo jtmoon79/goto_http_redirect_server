@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# a lazy way to download and run goto_Http_redirect_server
+# a ~lazy~ eazy! way to download and run goto_Http_redirect_server
 
 set -e
 set -u
