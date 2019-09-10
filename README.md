@@ -57,12 +57,11 @@ force the browser to use local network host `goto.local`.\*\*
 ### Live Reload
 
 When the tab-separated values files are modified, this program can reload them.
-No service downtime.
+No service downtime!
 
 #### Reload via Signals
 
- 1. Note during startup the Process ID (or query the host System). This is
-    necessary to send a process signal. 
+ 1. Note during startup the Process ID (or query the host System).
  
  2. Send the process signal to the running `goto_http_redirect_server`.<br />
     In Unix, use `kill`.<br />
@@ -72,7 +71,7 @@ No service downtime.
 
 #### Reload via browser
 
-1. Pass `--allow-remote-reload` as a program command-line options.
+1. Pass `--reload-path /reload` as a program command-line options.
 
 2. Browse to `http://host/reload`.
 
@@ -94,7 +93,7 @@ privilege process.
 
 - Initiating the reload signal requires
   1. noticing a modified file
-  2. signaling the `goto_http_redirect_server` process.<br />
+  2. signal the `goto_http_redirect_server` process.<br />
   There are many methods to accomplish this. That is an exercise for the user.
 
 ----
@@ -104,8 +103,8 @@ privilege process.
     usage: goto_http_redirect_server [--from-to from to]
                                      [--redirects REDIRECTS_FILES] [--ip IP]
                                      [--port PORT] [--status-path STATUS_PATH]
+                                     [--reload-path RELOAD_PATH]
                                      [--redirect-code REDIRECT_CODE]
-                                     [--allow-remote-reload]
                                      [--field-delimiter FIELD_DELIMITER]
                                      [--shutdown SHUTDOWN] [--verbose] [--version]
                                      [-?]
@@ -119,21 +118,21 @@ privilege process.
     Redirects:
       One or more required. May be passed multiple times.
 
-      --from-to from to     A redirection pair of "from path" and "to URL" fields.
-                            For example, --from-to "/hr" "http://human-
+      --from-to from to     A single redirection of "from path" and "to URL"
+                            fields. For example, --from-to "/hr" "http://human-
                             resources.mycorp.local/login"
       --redirects REDIRECTS_FILES
                             File of redirection information. Within a file, is one
-                            entry per line. An entry is four fields using tab
-                            character for field separator. The four entry fields
-                            are: "from path", "to URL", "added by user", and
-                            "added on datetime" separated by a tab.
+                            redirection entry per line. An entry is four fields
+                            using tab character for field separator. The four
+                            entry fields are: "from path", "to URL", "added by
+                            user", and "added on datetime" separated by a tab.
 
     Network Options:
       --ip IP, -i IP        IP interface to listen on. Defaults to 127.0.0.1 .
       --port PORT, -p PORT  IP port to listen on. Defaults to 80 .
 
-    Miscellaneous:
+    Miscellaneous Options:
       --status-path STATUS_PATH
                             Override status page path. This is the page that dumps
                             information about the process and loaded redirects.
@@ -142,6 +141,15 @@ privilege process.
                             . Conversely, it could be the default landing page
                             e.g. --status-path "/" . Default status page path is
                             "/status".
+      --reload-path RELOAD_PATH
+                            Allow reloads by HTTP GET Request to passed URI Path.
+                            e.g. --reload-path "/reload" or to obscure the
+                            capability, --reload-path
+                            "/766c8dca-e087-4479-bb26-b86af8ae8f06". May be a
+                            potential security or stability issue. Reload may
+                            always be done via process signals. Default is off.
+                            The program will always allow reload by process
+                            signal.
       --redirect-code REDIRECT_CODE
                             Override default HTTP Redirect Status Code as an
                             integer. Most often the desired override will be 307
@@ -151,10 +159,6 @@ privilege process.
                             loaded redirect entry is found and returned. Default
                             successful redirect Status Code is 308 (Permanent
                             Redirect).
-      --allow-remote-reload
-                            Allow reloads via request URI Path "/reload". This is
-                            in addition to sending the process a signal. May be a
-                            potential security or stability risk.
       --field-delimiter FIELD_DELIMITER
                             Field delimiter string for --redirects files. Defaults
                             to " " (tab character) between fields.
@@ -162,8 +166,8 @@ privilege process.
                             testing.
       --verbose             Set logging level to DEBUG. Logging level default is
                             INFO.
-      --version             show program version and exit
-      -?, -h, --help        show this help message and exit
+      --version             show program version and exit.
+      -?, -h, --help        show this help message and exit.
 
     About Redirect Entries:
 
@@ -185,19 +189,20 @@ privilege process.
 
       A passed redirect (either via --from-to or --redirects file) should have a
       leading "/" as this is the URI path given for processing.
-      For example, the URL "http://host/hr" is parsed by goto_http_redirect_server
+      For example, the URL "http://host/hr" is parsed by SIGUSR1
       as URI path "/hr".
 
-    About Signals and Reloads:
+    About Reloads:
 
-      Sending goto_http_redirect_server the signal 21 (Signals.SIGBREAK) will cause
+      Sending a process signal to the running process will cause
       a reload of any files passed via --redirects.  This allows live updating of
       redirect information without disrupting the running server process.
-      On Unix, use program `kill`.  On Windows, use program `windows-kill.exe`.
       On Unix, the signal is SIGUSR1.  On Windows, the signal is SIGBREAK.
+      On this system, the signal is 21 (Signals.SIGBREAK).
+      On Unix, use program `kill`.  On Windows, use program `windows-kill.exe`.
 
-      A reload of redirection files may also be requested via URI path "/reload"
-      but only if --allow-remote-reload .
+      A reload of redirection files may also be requested via passed URI path
+      --reload-path '/path'.
 
       If security and stability are a concern then only allow reloads via process
       signals.

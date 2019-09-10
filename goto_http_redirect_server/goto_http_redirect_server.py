@@ -78,6 +78,7 @@ Re_Entry_Dict = typing.NewType('Re_Entry_Dict',
 Path_List = typing.List[pathlib.Path]
 FromTo_List = typing.List[typing.Tuple[str, str]]
 Redirect_Counter = typing.DefaultDict[str, int]
+str_None = typing.Union[str, None]
 
 # volatile global instances
 Redirect_FromTo_List = []  # global list of --from-to passed redirects
@@ -85,7 +86,7 @@ Redirect_Files_List = []  # global list of --redirects files
 reload = False  # XXX: not thread-safe! but good enough.
 reload_datetime = None  # XXX: not thread-safe! but good enough.
 redirect_counter = defaultdict(int)  # XXX: not thread-safe!
-allow_remote_reload = False
+reload_path = None
 program_start_time = time.time()
 STATUS_PAGE_PATH_DEFAULT = '/status'
 FIELD_DELMITER_DEFAULT = '\t'
@@ -161,11 +162,13 @@ def fromisoformat(dts: str) -> datetime.datetime:
 
 def redirect_handler_factory(redirects: Re_Entry_Dict,
                              status_code: http.HTTPStatus,
-                             status_path: str):
+                             status_path_: str,
+                             reload_path_: str_None):
     """
     :param redirects: dictionary of from-to redirects for the server
     :param status_code: HTTPStatus instance to use for successful redirects
-    :param status_path: server status page path
+    :param status_path_: server status page path
+    :param reload_path_: reload request path
     :return: RedirectHandler type: request handler class type for
              RedirectServer.RequestHandlerClass
     """
@@ -191,11 +194,11 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
             except Exception as ex:
                 print('Error during log_message\n%s' % str(ex), file=sys.stderr)
 
-        def do_GET_status(self, status_path_: str):
+        def do_GET_status(self, status_path__: str):
             """dump status information about this server instance"""
 
             self.log_message('%s requested, returning %s (%s)',
-                             status_path_,
+                             status_path__,
                              int(http.HTTPStatus.OK),
                              http.HTTPStatus.OK.phrase,
                              loglevel=logging.INFO)
@@ -231,8 +234,8 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
                 )
             # TODO: make the paths and URLs in the strings into
             #       <a>...</a> anchor elements.
-            esc_reload_info = html_escape(" (e.g. '/reload')") if \
-                allow_remote_reload else ''
+            esc_reload_info = html_escape(" (e.g. '%s')" % str(reload_path_)) \
+                if reload_path_ else ''
             esc_redirects_counter = obj_to_html(redirect_counter,
                                                 sort_keys=True)
             esc_redirects = obj_to_html(redirects)
@@ -289,9 +292,10 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
             self.end_headers()
             self.wfile.write(body)
 
-        def do_GET_reload(self):
+        def do_GET_reload(self, reload_path__: str):
             # XXX: Could this be a security or stability risk?
-            self.log_message('/reload requested, returning %s (%s)',
+            self.log_message('%s reload requested, returning %s (%s)',
+                             reload_path__,
                              int(http.HTTPStatus.NO_CONTENT),
                              http.HTTPStatus.NO_CONTENT.phrase,
                              loglevel=logging.INFO)
@@ -381,11 +385,11 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
             except:
                 log.exception('Failed to log GET request')
 
-            if self.path == status_path:
+            if self.path == status_path_:
                 self.do_GET_status(self.path)
                 return
-            elif self.path == '/reload' and allow_remote_reload:
-                self.do_GET_reload()
+            elif self.path == reload_path_:
+                self.do_GET_reload(reload_path_)
                 return
             elif self.path == '/favicon.ico':
                 self.do_GET_favicon()
@@ -503,7 +507,7 @@ class RedirectServer(socketserver.TCPServer):
 
         Polled during socketserver.TCPServer.serve_forever.
         Checks global reload and create new handler (which will re-read
-        the Redirect_Files_List
+        the Redirect_Files_List)
         """
         #log.debug("{0}.service_actions(0x{1:08x})".format(self.__class__.__name__, id(self)))
         print_debug('.', end='')
@@ -518,9 +522,14 @@ class RedirectServer(socketserver.TCPServer):
         entrys = load_redirects(Redirect_FromTo_List,
                                 Redirect_Files_List,
                                 self.field_delimiter)
+        global status_path
         global reload_datetime
+        global reload_path
         reload_datetime = datetime.datetime.now().replace(microsecond=0)  # distracting to read microsecond  
-        redirect_handler = redirect_handler_factory(entrys, Redirect_Code)
+        redirect_handler = redirect_handler_factory(entrys,
+                                                    Redirect_Code,
+                                                    status_path,
+                                                    reload_path)
         pid = os.getpid()
         log.debug(
             "reload {0} (0x{1:08x})\n"
@@ -575,14 +584,14 @@ signaling the process.
     pgroup.add_argument('--from-to',
                         nargs=2, metavar=('from', 'to'),
                         action='append',
-                        help='A redirection pair of "from path" and "to URL"'
-                             ' fields. For example,'
+                        help='A single redirection of "from path" and'
+                             ' "to URL" fields. For example,'
                              ' --from-to "/hr" "http://human-resources.mycorp.local/login"',
                         default=list())
     pgroup.add_argument('--redirects', dest='redirects_files', action='append',
                         help='File of redirection information. Within a file,'
-                        ' is one entry per line. An entry is four fields'
-                        ' using tab character for field separator. The'
+                        ' is one redirection entry per line. An entry is four'
+                        ' fields using tab character for field separator. The'
                         ' four entry fields are:'
                         ' "from path", "to URL", "added by user", and'
                         ' "added on datetime"'
@@ -597,7 +606,7 @@ signaling the process.
                         help='IP port to listen on.'
                              ' Defaults to %(default)s .')
 
-    pgroup = parser.add_argument_group(title='Miscellaneous')
+    pgroup = parser.add_argument_group(title='Miscellaneous Options')
 
     pgroup.add_argument('--status-path', action='store',
                         default=STATUS_PAGE_PATH_DEFAULT, type=str,
@@ -609,8 +618,21 @@ signaling the process.
                              ' Conversely, it could be the default landing page'
                              ' e.g. --status-path "/" .'
                              ' Default status page path is "%(default)s".')
-    # TODO: change this to '--redirect-code' because term 'status' is taken and
-    #       unrelated.
+    # TODO: change to just --remote-reload '/path' so if passed it also turned
+    #       on. Else, it is off. Also allows obscuring the path to '/reload'
+    #       Consider doing similar for --status-path ?
+    #       Maybe change this to --reload-path to be similar phrasing?
+    pgroup.add_argument('--reload-path', action='store',
+                        default=None, type=str,
+                        help='Allow reloads by HTTP GET Request to passed URI'
+                             ' Path. e.g. --reload-path "/reload" or to'
+                             ' obscure the capability, --reload-path'
+                             ' "/766c8dca-e087-4479-bb26-b86af8ae8f06".'
+                             ' May be a potential security or stability issue.'
+                             ' Reload may always be done via process signals.'
+                             ' Default is off.'
+                             ' The program will always allow reload by'
+                             ' process signal. ')
     rc_302 = http.HTTPStatus.TEMPORARY_REDIRECT
     pgroup.add_argument('--redirect-code', action='store',
                         default=int(rcd), type=int,
@@ -624,12 +646,6 @@ signaling the process.
                              ' loaded redirect entry is found and returned.'
                              ' Default successful redirect Status Code is'
                              ' %(default)s (' + rcd.phrase + ').')
-    pgroup.add_argument('--allow-remote-reload', action='store_true',
-                        default=False,
-                        help='Allow reloads via request URI Path "/reload".'
-                             ' This is in addition to sending the process a'
-                             ' signal. May be a potential security or'
-                             ' stability risk.')
     pgroup.add_argument('--field-delimiter', action='store',
                         default=FIELD_DELMITER_DEFAULT,
                         help='Field delimiter string for --redirects files.'
@@ -643,10 +659,10 @@ signaling the process.
                         help='Set logging level to DEBUG.'
                              ' Logging level default is INFO.')
     pgroup.add_argument('--version', action='version',
-                        help='show program version and exit',
+                        help='show program version and exit.',
                         version='%(prog)s ' + __version__)
     pgroup.add_argument('-?', '-h', '--help', action='help',  # add last
-                        help='show this help message and exit')
+                        help='show this help message and exit.')
     parser.epilog = """
 About Redirect Entries:
 
@@ -671,27 +687,28 @@ About Redirect Entries:
   For example, the URL "http://host/hr" is parsed by {0}
   as URI path "/hr".
 
-About Signals and Reloads:
+About Reloads:
 
-  Sending {0} the signal {1} ({2}) will cause
+  Sending a process signal to the running process will cause
   a reload of any files passed via --redirects.  This allows live updating of
   redirect information without disrupting the running server process.
+  On Unix, the signal is {0}.  On Windows, the signal is {1}.
+  On this system, the signal is {2} ({3}).
   On Unix, use program `kill`.  On Windows, use program `windows-kill.exe`.
-  On Unix, the signal is {3}.  On Windows, the signal is {4}.
 
-  A reload of redirection files may also be requested via URI path "/reload"
-  but only if --allow-remote-reload .
+  A reload of redirection files may also be requested via passed URI path
+  --reload-path '/path'.
 
   If security and stability are a concern then only allow reloads via process
   signals.
 
 Other Notes:
 
-  By default, path "{5}" will dump the server status.
+  By default, path "{4}" will dump the server status.
 
 """.format(
-        PROGRAM_NAME, int(SIGNAL_RELOAD), str(SIGNAL_RELOAD),
         SIGNAL_RELOAD_UNIX, SIGNAL_RELOAD_WINDOWS,
+        int(SIGNAL_RELOAD), str(SIGNAL_RELOAD),
         STATUS_PAGE_PATH_DEFAULT
        )
 
@@ -704,13 +721,13 @@ Other Notes:
         sys.exit(1)
 
     return str(args.ip), int(args.port), args.verbose, \
-        args.allow_remote_reload, args.status_path, args.redirect_code, \
+        args.status_path, args.reload_path, args.redirect_code, \
         args.shutdown, args.field_delimiter, \
         args.from_to, args.redirects_files
 
 
 def main() -> None:
-    ip, port, verbose, allow_remote_reload_, status_path, redirect_code, \
+    ip, port, verbose, status_path_,  reload_path_, redirect_code, \
         shutdown, field_delimiter_, from_to, redirects_files = process_options()
 
     logging_init(verbose)
@@ -734,9 +751,13 @@ def main() -> None:
     if len(entry_list) < 1:
         log.warning('There are no redirect entries')
 
-    global allow_remote_reload
-    allow_remote_reload = allow_remote_reload_
-    log.debug('allow_remote_reload %s', allow_remote_reload)
+    global status_path
+    status_path = status_path_
+    log.debug('status_path %s', status_path)
+
+    global reload_path
+    reload_path = reload_path_
+    log.debug('reload_path %s', reload_path)
 
     redirect_code = http.HTTPStatus(redirect_code)
     global Redirect_Code
@@ -764,7 +785,7 @@ def main() -> None:
 
     # create the first instance of the Redirect Handler
     redirect_handler = redirect_handler_factory(entry_list, redirect_code,
-                                                status_path)
+                                                status_path_, reload_path_)
     pid = os.getpid()
     with RedirectServer((ip, port), redirect_handler) as redirect_server:
         serve_time = 'forever'
