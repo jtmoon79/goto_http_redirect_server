@@ -20,15 +20,17 @@ Trivial to run and reload.  Only uses Python built-in modules.  Super handy 😄
        /hr	http://human-resources.mycorp.local/login	bob	2018-07-11 22:15:10
        /aws	https://us-west-2.console.aws.amazon.com/console/home?region=us-west-2#	carl	2019-01-05 12:35:10
 
-2a. (optional) Install<br />
+2. (optional) Install
 
-       python setup.py bdist_wheel
-       python -m pip install --user ./dist/goto_http_redirect_server-*-py3.7-none-any.whl
+    1. Install<br />
 
-2b. Or, try helper scripts [`build-install.sh`](./build-install.sh) or [`build-install.ps1`](./build-install.ps1)
+           python setup.py bdist_wheel
+           python -m pip install --user ./dist/goto_http_redirect_server-*-py3.7-none-any.whl
 
-2c. Or, try [`eazy-run.sh`](./eazy-run.sh) and pass command-line options as if
-    running `goto_http_redirect_server.py`.
+    2. Or, try helper scripts [`build-install.sh`](./build-install.sh) or [`build-install.ps1`](./build-install.ps1)
+
+    3. Or, try [`eazy-run.sh`](./eazy-run.sh) and pass command-line options as if
+       running `goto_http_redirect_server.py`.
 
 3.  start the _Go To HTTP redirect server_
 
