@@ -141,20 +141,13 @@ privilege process.
       --status-path STATUS_PATH
                             Override status page path. This is the page that dumps
                             information about the process and loaded redirects.
-                            This can be used to hide the status page. e.g.
-                            --status-path "/9663e0e8-d2ec-11e9-b93a-6c626d698de1"
-                            . Conversely, it could be the default landing page
-                            e.g. --status-path "/" . Default status page path is
-                            "/status".
+                            This can be the default landing page e.g. --status-
+                            path "/" . Default status page path is "/status".
       --reload-path RELOAD_PATH
                             Allow reloads by HTTP GET Request to passed URI Path.
-                            e.g. --reload-path "/reload" or to obscure the
-                            capability, --reload-path
-                            "/766c8dca-e087-4479-bb26-b86af8ae8f06". May be a
-                            potential security or stability issue. Reload may
-                            always be done via process signals. Default is off.
-                            The program will always allow reload by process
-                            signal.
+                            e.g. --reload-path "/reload" May be a potential
+                            security or stability issue. The program will always
+                            allow reload by process signal. Default is off.
       --redirect-code REDIRECT_CODE
                             Override default HTTP Redirect Status Code as an
                             integer. Most often the desired override will be 307
@@ -194,8 +187,15 @@ privilege process.
 
       A passed redirect (either via --from-to or --redirects file) should have a
       leading "/" as this is the URI path given for processing.
-      For example, the URL "http://host/hr" is parsed by SIGUSR1
+      For example, the URL "http://host/hr" is parsed by e92ff8fe-2e22-4c9b-9eab-12af0fbdf63a
       as URI path "/hr".
+
+    About Paths:
+
+      Options --status-path and --reload-path may be passed paths to obscure access
+      from unauthorized users. e.g.
+
+          --status-path '/e92ff8fe-2e22-4c9b-9eab-12af0fbdf63a'
 
     About Reloads:
 
