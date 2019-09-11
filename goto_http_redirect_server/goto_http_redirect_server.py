@@ -14,6 +14,7 @@ import signal
 import threading
 import socket
 import socketserver
+import uuid
 import http
 from http import server
 import html
@@ -607,32 +608,22 @@ signaling the process.
                              ' Defaults to %(default)s .')
 
     pgroup = parser.add_argument_group(title='Miscellaneous Options')
-
     pgroup.add_argument('--status-path', action='store',
                         default=STATUS_PAGE_PATH_DEFAULT, type=str,
                         help='Override status page path. This is the page that'
                              ' dumps information about the process and loaded'
-                             ' redirects. This can be used to hide the status'
-                             ' page. e.g. --status-path'
-                             ' "/9663e0e8-d2ec-11e9-b93a-6c626d698de1" .'
-                             ' Conversely, it could be the default landing page'
+                             ' redirects.'
+                             ' This can be the default landing page'
                              ' e.g. --status-path "/" .'
                              ' Default status page path is "%(default)s".')
-    # TODO: change to just --remote-reload '/path' so if passed it also turned
-    #       on. Else, it is off. Also allows obscuring the path to '/reload'
-    #       Consider doing similar for --status-path ?
-    #       Maybe change this to --reload-path to be similar phrasing?
     pgroup.add_argument('--reload-path', action='store',
                         default=None, type=str,
                         help='Allow reloads by HTTP GET Request to passed URI'
-                             ' Path. e.g. --reload-path "/reload" or to'
-                             ' obscure the capability, --reload-path'
-                             ' "/766c8dca-e087-4479-bb26-b86af8ae8f06".'
+                             ' Path. e.g. --reload-path "/reload"'
                              ' May be a potential security or stability issue.'
-                             ' Reload may always be done via process signals.'
-                             ' Default is off.'
                              ' The program will always allow reload by'
-                             ' process signal. ')
+                             ' process signal.'
+                             ' Default is off.')
     rc_302 = http.HTTPStatus.TEMPORARY_REDIRECT
     pgroup.add_argument('--redirect-code', action='store',
                         default=int(rcd), type=int,
@@ -687,13 +678,20 @@ About Redirect Entries:
   For example, the URL "http://host/hr" is parsed by {0}
   as URI path "/hr".
 
+About Paths:
+
+  Options --status-path and --reload-path may be passed paths to obscure access
+  from unauthorized users. e.g.
+
+      --status-path '/{0}'
+
 About Reloads:
 
   Sending a process signal to the running process will cause
   a reload of any files passed via --redirects.  This allows live updating of
   redirect information without disrupting the running server process.
-  On Unix, the signal is {0}.  On Windows, the signal is {1}.
-  On this system, the signal is {2} ({3}).
+  On Unix, the signal is {1}.  On Windows, the signal is {2}.
+  On this system, the signal is {3} ({4}).
   On Unix, use program `kill`.  On Windows, use program `windows-kill.exe`.
 
   A reload of redirection files may also be requested via passed URI path
@@ -704,9 +702,10 @@ About Reloads:
 
 Other Notes:
 
-  By default, path "{4}" will dump the server status.
+  By default, path "{5}" will dump the server status.
 
 """.format(
+        str(uuid.uuid4()),
         SIGNAL_RELOAD_UNIX, SIGNAL_RELOAD_WINDOWS,
         int(SIGNAL_RELOAD), str(SIGNAL_RELOAD),
         STATUS_PAGE_PATH_DEFAULT
@@ -716,6 +715,12 @@ Other Notes:
 
     if not (args.from_to or args.redirects_files):
         print('ERROR: No redirect information was passed (--from-to or --redirects)',
+              file=sys.stderr)
+        parser.print_usage()
+        sys.exit(1)
+
+    if args.status_path == args.reload_path:
+        print('ERROR: --status-path and --reload-path must be different paths',
               file=sys.stderr)
         parser.print_usage()
         sys.exit(1)
@@ -771,6 +776,7 @@ def main() -> None:
     signal.signal(SIGNAL_RELOAD, reload_signal_handler)
 
     do_shutdown = False  # signal between threads __main__ and shutdown_thread
+
     def shutdown_server(redirect_server: RedirectServer, shutdown: int):
         log.debug('Server will shutdown in %s seconds', shutdown)
         start = time.time()
