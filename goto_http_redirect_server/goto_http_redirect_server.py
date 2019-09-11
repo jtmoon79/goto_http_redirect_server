@@ -103,6 +103,10 @@ def html_escape(s_: str) -> str:
         .replace('  ', r'&nbsp; ')
 
 
+def html_a(s_: str) -> str:
+    """create HTML <a> from s_"""
+    return '<a href="' + s_ + '">' + s_ + '</a>'
+
 def logging_init(verbose: bool) -> None:
     """initialize logging module to my preferences"""
 
@@ -206,40 +210,53 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
             self.send_response(http.HTTPStatus.OK)
             self.send_header('Redirect-Server-Host', HOSTNAME)
             self.send_header('Redirect-Server-Version', __version__)
+            he = html_escape  # abbreviate
+
             # create the html body
-            pid = os.getpid()
-            esc_title = html_escape(
+            esc_title = he(
                 '%s status' % PROGRAM_NAME)
             start_datetime = datetime.datetime.\
                 fromtimestamp(program_start_time).replace(microsecond=0)
             uptime = time.time() - program_start_time
-            esc_overall = html_escape(
+            esc_overall = he(
                 'Program %s version %s and Project Page (%s)\n'
                 'Process ID %s listening on %s:%s on host %s\n'
                 'Process start datetime %s (up time %s)\n'
                 'Successful Redirect Status Code is %s (%s)'
                 % (PROGRAM_NAME, __version__, __url__,
-                   pid, self.server.server_address[0],
+                   os.getpid(), self.server.server_address[0],
                    self.server.server_address[1], HOSTNAME,
                    start_datetime, datetime.timedelta(seconds=uptime),
                    int(status_code), status_code.phrase,)
             )
-            esc_args = html_escape(' '.join(sys_args))
-            esc_reload_datetime = html_escape(reload_datetime.isoformat())
+            esc_args = he(' '.join(sys_args))
+            esc_reload_datetime = he(reload_datetime.isoformat())
 
             def obj_to_html(obj, sort_keys=False):
-                return html_escape(
+                """Convert an object to html"""
+                return he(
                     json.dumps(obj, indent=2, ensure_ascii=False,
                                sort_keys=sort_keys, default=str)
                     # pprint.pformat(obj)
                 )
-            # TODO: make the paths and URLs in the strings into
-            #       <a>...</a> anchor elements.
-            esc_reload_info = html_escape(" (e.g. '%s')" % str(reload_path_)) \
+
+            def redirects_to_html(rd: Re_Entry_Dict):
+                """Convert Re_Entry_Dict linkable html"""
+                s_ = he('{\n')
+                for key in sorted(rd.keys()):
+                    val = rd[key]
+                    s_ += he('  "') + html_a(key) + he('": [\n')
+                    s_ += he('    "') + html_a(val[0]) + he('",\n')
+                    s_ += he('    "%s",\n' % val[1])
+                    s_ += he('    "%s"\n' % val[2])
+                    s_ += he('  ]\n')
+                s_ += he('\n}')
+                return s_
+
+            esc_reload_info = he(" (e.g. '%s')" % str(reload_path_)) \
                 if reload_path_ else ''
-            esc_redirects_counter = obj_to_html(redirect_counter,
-                                                sort_keys=True)
-            esc_redirects = obj_to_html(redirects)
+            esc_redirects_counter = obj_to_html(redirect_counter)
+            esc_redirects = redirects_to_html(redirects)
             esc_files = obj_to_html(Redirect_Files_List)
             body = """\
 <!DOCTYPE html>
