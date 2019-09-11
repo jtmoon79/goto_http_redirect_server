@@ -80,13 +80,12 @@ Path_List = typing.List[pathlib.Path]
 FromTo_List = typing.List[typing.Tuple[str, str]]
 Redirect_Counter = typing.DefaultDict[str, int]
 str_None = typing.Union[str, None]
-
 # volatile global instances
 Redirect_FromTo_List = []  # global list of --from-to passed redirects
 Redirect_Files_List = []  # global list of --redirects files
-reload = False  # XXX: not thread-safe! but good enough.
-reload_datetime = None  # XXX: not thread-safe! but good enough.
-redirect_counter = defaultdict(int)  # XXX: not thread-safe!
+reload = False
+reload_datetime = None
+redirect_counter = defaultdict(int)
 reload_path = None
 program_start_time = time.time()
 STATUS_PAGE_PATH_DEFAULT = '/status'
@@ -322,7 +321,7 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
             self.send_header('Redirect-Server-Version', __version__)
             self.end_headers()
             global reload
-            reload = True  # XXX: not thread-safe
+            reload = True
 
         def do_GET_favicon(self):
             """
@@ -385,7 +384,7 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
             self.send_header('Redirect-Created-Date', dt.isoformat())
             self.end_headers()
             count_key = '(%s) → (%s)' % (self.path, to)
-            redirect_counter[count_key] += 1  # XXX: not thread-safe!
+            redirect_counter[count_key] += 1
             return
 
         def do_GET(self) -> None:
@@ -557,14 +556,13 @@ class RedirectServer(socketserver.TCPServer):
                 id(redirect_handler), id(self.RequestHandlerClass),
                 pid,)
         )
-        # XXX: how to make this handler replacement thread-safe?
+
         self.RequestHandlerClass = redirect_handler
 
 
 def reload_signal_handler(signum, _) -> None:
     """
     Catch signal and set global reload (which is checked elsewhere)
-    XXX: not thread-safe
     :param signum: signal number (int)
     :param _: Python frame (unused)
     :return: None
@@ -576,7 +574,7 @@ def reload_signal_handler(signum, _) -> None:
     reload = True
 
 
-def process_options() -> typing.Tuple[str, int, bool, bool, str, int, int, str,
+def process_options() -> typing.Tuple[str, int, bool, str, str, int, int, str,
                                       FromTo_List, typing.List[str]]:
     """Process script command-line options."""
 
@@ -792,19 +790,19 @@ def main() -> None:
               int(SIGNAL_RELOAD), str(SIGNAL_RELOAD))
     signal.signal(SIGNAL_RELOAD, reload_signal_handler)
 
-    do_shutdown = False  # signal between threads __main__ and shutdown_thread
+    do_shutdown = False  # signal between threads MainThread and shutdown_thread
 
-    def shutdown_server(redirect_server: RedirectServer, shutdown: int):
-        log.debug('Server will shutdown in %s seconds', shutdown)
+    def shutdown_server(redirect_server_: RedirectServer, shutdown_: int):
+        log.debug('Server will shutdown in %s seconds', shutdown_)
         start = time.time()
-        while time.time() - start < shutdown:
+        while time.time() - start < shutdown_:
             if do_shutdown:
                 time.sleep(0.5)
                 break
             time.sleep(0.5)
         log.info("Calling shutdown on Redirect_Server {0} (0x{1:08x})".
-                 format(str(redirect_server), id(redirect_server)))
-        redirect_server.shutdown()
+                 format(str(redirect_server_), id(redirect_server_)))
+        redirect_server_.shutdown()
 
     # create the first instance of the Redirect Handler
     redirect_handler = redirect_handler_factory(entry_list, redirect_code,
