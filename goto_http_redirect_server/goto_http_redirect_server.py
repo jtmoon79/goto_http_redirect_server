@@ -809,7 +809,6 @@ def main() -> None:
     # create the first instance of the Redirect Handler
     redirect_handler = redirect_handler_factory(entry_list, redirect_code,
                                                 status_path_, reload_path_)
-    pid = os.getpid()
     with RedirectServer((ip, port), redirect_handler) as redirect_server:
         serve_time = 'forever'
         if shutdown:
@@ -819,7 +818,8 @@ def main() -> None:
                 target=shutdown_server,
                 args=(redirect_server, shutdown,))
             st.start()
-        log.info("Serve %s at %s:%s, Process ID %s", serve_time, ip, port, pid)
+        log.info("Serve %s at %s:%s, Process ID %s", serve_time, ip, port,
+                 os.getpid())
         try:
             log.debug("Redirect_Server {0} (0x{1:08x})".
                       format(str(redirect_server), id(redirect_server)))
