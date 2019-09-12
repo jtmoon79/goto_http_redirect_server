@@ -690,7 +690,7 @@ About Redirect Entries:
 
   A passed redirect (either via --from-to or --redirects file) should have a
   leading "/" as this is the URI path given for processing.
-  For example, the URL "http://host/hr" is parsed by {0}
+  For example, the URL "http://host/hr" is processed by {0}
   as URI path "/hr".
 
 About Paths:
@@ -698,15 +698,15 @@ About Paths:
   Options --status-path and --reload-path may be passed paths to obscure access
   from unauthorized users. e.g.
 
-      --status-path '/{0}'
+      --status-path '/{1}'
 
 About Reloads:
 
   Sending a process signal to the running process will cause
   a reload of any files passed via --redirects.  This allows live updating of
   redirect information without disrupting the running server process.
-  On Unix, the signal is {1}.  On Windows, the signal is {2}.
-  On this system, the signal is {3} ({4}).
+  On Unix, the signal is {2}.  On Windows, the signal is {3}.
+  On this system, the signal is {4:d} ({5}).
   On Unix, use program `kill`.  On Windows, use program `windows-kill.exe`.
 
   A reload of redirection files may also be requested via passed URI path
@@ -717,9 +717,10 @@ About Reloads:
 
 Other Notes:
 
-  By default, path "{5}" will dump the server status.
+  By default, path "{6}" will dump the server status.
 
 """.format(
+        PROGRAM_NAME,
         str(uuid.uuid4()),
         SIGNAL_RELOAD_UNIX, SIGNAL_RELOAD_WINDOWS,
         int(SIGNAL_RELOAD), str(SIGNAL_RELOAD),

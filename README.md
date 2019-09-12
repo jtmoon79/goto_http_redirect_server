@@ -5,8 +5,8 @@
 [![Requirements Status](https://requires.io/github/jtmoon79/goto_http_redirect_server/requirements.svg?branch=master)](https://requires.io/github/jtmoon79/goto_http_redirect_server/requirements/?branch=master)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-The **_"Go To" HTTP redirect server_**. For sharing shortened HTTP URLs on your
-private network.
+The **_"Go To" HTTP redirect server_**. For sharing custom shortened HTTP URLs
+on your network.
 
 Trivial to run and reload.  Only uses Python built-in modules.  Super handy 😄 ‼
 
@@ -187,7 +187,7 @@ privilege process.
 
       A passed redirect (either via --from-to or --redirects file) should have a
       leading "/" as this is the URI path given for processing.
-      For example, the URL "http://host/hr" is parsed by e92ff8fe-2e22-4c9b-9eab-12af0fbdf63a
+      For example, the URL "http://host/hr" is processed by goto_http_redirect_server
       as URI path "/hr".
 
     About Paths:
@@ -195,7 +195,7 @@ privilege process.
       Options --status-path and --reload-path may be passed paths to obscure access
       from unauthorized users. e.g.
 
-          --status-path '/e92ff8fe-2e22-4c9b-9eab-12af0fbdf63a'
+          --status-path '/49e336fc-13a1-4464-85fc-65f8809893ea'
 
     About Reloads:
 
