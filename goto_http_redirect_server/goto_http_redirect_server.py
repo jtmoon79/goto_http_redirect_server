@@ -587,10 +587,12 @@ def process_options() -> typing.Tuple[str, int, bool, str, str, int, int, str,
     sys_args = copy.copy(sys.argv)
 
     parser = argparse.ArgumentParser(
-        description="""The *Go To HTTP Redirect Server*!
+        description="""\
+The "Go To" HTTP Redirect Server! For sharing custom shortened HTTP URLs on your
+network.
 
-HTTP %s %s reply server. Load this server with redirect mappings
-of "from path" and "to URL" and let it run indefinitely. Reload the running server by
+HTTP %s %s reply server. Load this server with redirects of "from path" and
+"to URL" and let it run indefinitely. Reload the running server by
 signaling the process.
 """
                     % (int(rcd), rcd.phrase),
@@ -638,7 +640,7 @@ signaling the process.
     pgroup.add_argument('--reload-path', action='store',
                         default=None, type=str,
                         help='Allow reloads by HTTP GET Request to passed URI'
-                             ' Path. e.g. --reload-path "/reload"'
+                             ' Path. e.g. --reload-path "/reload".'
                              ' May be a potential security or stability issue.'
                              ' The program will always allow reload by'
                              ' process signal.'
@@ -710,7 +712,7 @@ About Reloads:
   a reload of any files passed via --redirects.  This allows live updating of
   redirect information without disrupting the running server process.
   On Unix, the signal is {2}.  On Windows, the signal is {3}.
-  On this system, the signal is {4:d} ({5}).
+  On this system, the signal is {4} ({5:d}).
   On Unix, use program `kill`.  On Windows, use program `windows-kill.exe`.
 
   A reload of redirection files may also be requested via passed URI path
@@ -727,7 +729,7 @@ Other Notes:
         PROGRAM_NAME,
         str(uuid.uuid4()),
         SIGNAL_RELOAD_UNIX, SIGNAL_RELOAD_WINDOWS,
-        int(SIGNAL_RELOAD), str(SIGNAL_RELOAD),
+        str(SIGNAL_RELOAD), int(SIGNAL_RELOAD),
         STATUS_PAGE_PATH_DEFAULT
        )
 

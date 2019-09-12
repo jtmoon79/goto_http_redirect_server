@@ -5,7 +5,7 @@
 [![Requirements Status](https://requires.io/github/jtmoon79/goto_http_redirect_server/requirements.svg?branch=master)](https://requires.io/github/jtmoon79/goto_http_redirect_server/requirements/?branch=master)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-The **_"Go To" HTTP redirect server_**. For sharing custom shortened HTTP URLs
+The **_"Go To" HTTP Redirect Server_**. For sharing custom shortened HTTP URLs
 on your network.
 
 Trivial to run and reload.  Only uses Python built-in modules.  Super handy 😄 ‼
@@ -86,9 +86,10 @@ No service downtime!
 - Add a DNS addressable host on your network named `goto`. Run
   `goto_http_redirect_server` on the host.<br />
   Network users can type in their browser address bar `goto/…⏎` to easily use
-  the _Go To HTTP redirect server_.\*\*
+  the _"Go To" HTTP redirect server_.\*\*
 
-- Consider using `authbind` to run `goto_http_redirect_server` as a low
+- There are many methods to constrain the a running process.
+  One method is to use `authbind` to run `goto_http_redirect_server` as a low
   privilege process.
 
       apt install authbind
@@ -115,10 +116,11 @@ No service downtime!
                                      [--shutdown SHUTDOWN] [--verbose] [--version]
                                      [-?]
 
-    The *Go To HTTP Redirect Server*!
+    The "Go To" HTTP Redirect Server! For sharing custom shortened HTTP URLs on your
+    network.
 
-    HTTP 308 Permanent Redirect reply server. Load this server with redirect mappings
-    of "from path" and "to URL" and let it run indefinitely. Reload the running server by
+    HTTP 308 Permanent Redirect reply server. Load this server with redirects of "from path" and
+    "to URL" and let it run indefinitely. Reload the running server by
     signaling the process.
 
     Redirects:
@@ -146,7 +148,7 @@ No service downtime!
                             path "/" . Default status page path is "/status".
       --reload-path RELOAD_PATH
                             Allow reloads by HTTP GET Request to passed URI Path.
-                            e.g. --reload-path "/reload" May be a potential
+                            e.g. --reload-path "/reload". May be a potential
                             security or stability issue. The program will always
                             allow reload by process signal. Default is off.
       --redirect-code REDIRECT_CODE
@@ -196,7 +198,7 @@ No service downtime!
       Options --status-path and --reload-path may be passed paths to obscure access
       from unauthorized users. e.g.
 
-          --status-path '/49e336fc-13a1-4464-85fc-65f8809893ea'
+          --status-path '/9d4f1a5f-9155-467a-a8b2-128439b00d06'
 
     About Reloads:
 
@@ -204,7 +206,7 @@ No service downtime!
       a reload of any files passed via --redirects.  This allows live updating of
       redirect information without disrupting the running server process.
       On Unix, the signal is SIGUSR1.  On Windows, the signal is SIGBREAK.
-      On this system, the signal is 21 (Signals.SIGBREAK).
+      On this system, the signal is Signals.SIGBREAK (21).
       On Unix, use program `kill`.  On Windows, use program `windows-kill.exe`.
 
       A reload of redirection files may also be requested via passed URI path
