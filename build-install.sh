@@ -108,4 +108,11 @@ or run this script with '--uninstall'
 "
 fi
 
-echo 'Success!'
+${PYTHON} -m twine check "${cv_whl}"
+
+echo "Success!
+
+To upload to pypi:
+
+    ${PYTHON} -m twine upload --verbose '${cv_whl}'
+"

@@ -7,7 +7,7 @@
 [![Python versions](https://img.shields.io/pypi/pyversions/goto-http-redirect-server.svg?longCache=True)](https://pypi.org/pypi/goto-http-redirect-server/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-The **_"Go To" HTTP Redirect Server_**. For sharing custom shortened HTTP URLs
+The **_"Go To" HTTP Redirect Server_** for sharing custom shortened HTTP URLs
 on your network.
 
 Trivial to run and reload.  Only uses Python built-in modules.  Super handy 😄 ‼
