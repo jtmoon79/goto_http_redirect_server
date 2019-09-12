@@ -27,7 +27,7 @@ import logging
 from collections import defaultdict
 
 
-__version__ = '0.3.0'  # canonical version
+__version__ = '0.3.1'  # canonical version
 __author__ = 'jtmoon79'
 __url__ = 'https://github.com/jtmoon79/goto_http_redirect_server'
 __url_issues__ = 'https://github.com/jtmoon79/goto_http_redirect_server/issues'
@@ -98,7 +98,7 @@ FIELD_DELMITER_DEFAULT = '\t'
 
 def html_escape(s_: str) -> str:
     return html.escape(s_)\
-        .replace('\n', r'<br />')\
+        .replace('\n', '<br />\n')\
         .replace('  ', r'&nbsp; ')
 
 
