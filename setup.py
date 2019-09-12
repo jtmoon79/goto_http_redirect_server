@@ -39,13 +39,13 @@ setup(
     setup_requires=['wheel'],
     # see https://pypi.org/classifiers/
     classifiers=[
-        'Development Status :: 3 - Beta',
+        'Development Status :: 4 - Beta',
         'Environment :: Console',
         'Operating System :: OS Independent',
         'Natural Language :: English',
         'License :: OSI Approved :: Apache Software License',
         'Programming Language :: Python :: 3.5',
-        'Topic :: Multimedia :: Sound/Audio'
+        'Topic :: Internet :: WWW/HTTP :: HTTP Servers'
     ],
     keywords='http-server redirect-urls shortcuts shorturl shorturl-services shorturls url-shortener ',
     python_requires='>=3.5',
