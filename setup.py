@@ -30,7 +30,7 @@ setup(
     version=__version__,
     author=__author__,
     url=__url__,
-    description=__doc__,
+    description="""The "Go To" HTTP Redirect Server, an HTTP Redirect Server for shareable network shortcuts.""",
     long_description=long_description,
     long_description_content_type='text/markdown',
     license='Apache License 2.0 (Apache-2.0)',
@@ -39,7 +39,7 @@ setup(
     setup_requires=['wheel'],
     # see https://pypi.org/classifiers/
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 3 - Beta',
         'Environment :: Console',
         'Operating System :: OS Independent',
         'Natural Language :: English',
@@ -47,7 +47,7 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Topic :: Multimedia :: Sound/Audio'
     ],
-    keywords='http server',
+    keywords='http-server redirect-urls shortcuts shorturl shorturl-services shorturls url-shortener ',
     python_requires='>=3.5',
     packages=['goto_http_redirect_server'],
     entry_points={
