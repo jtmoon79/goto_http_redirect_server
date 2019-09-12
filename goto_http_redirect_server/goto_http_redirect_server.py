@@ -31,9 +31,9 @@ __version__ = '0.3.4'  # canonical version
 __author__ = 'jtmoon79'
 __url__ = 'https://github.com/jtmoon79/goto_http_redirect_server'
 __url_issues__ = 'https://github.com/jtmoon79/goto_http_redirect_server/issues'
-__doc__ = """
-The "Go To" HTTP Redirect Server - an HTTP 308 PERMANENT_REDIRECT Server for
-shareable local network "shortcuts".
+# first line of __doc__ is used in setup.py. Should match README.md
+__doc__ = """\
+The "Go To" HTTP Redirect Server, an HTTP Redirect Server for shareable network shortcuts.
 
 Modules used are available within the standard CPython distribution.
 Written for Python 3.7 but hacked to run with at least Python 3.5.

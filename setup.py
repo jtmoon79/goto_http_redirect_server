@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Python setup for goto_http_redirect_server.
+Python setup_tools setup.py for goto_http_redirect_server.
 
 Based on sample https://github.com/pypa/sampleproject/blob/master/setup.py
 and instructions at
@@ -30,7 +30,7 @@ setup(
     version=__version__,
     author=__author__,
     url=__url__,
-    description="""The "Go To" HTTP Redirect Server, an HTTP Redirect Server for shareable network shortcuts.""",
+    description=__doc__.splitlines()[0],
     long_description=long_description,
     long_description_content_type='text/markdown',
     license='Apache License 2.0 (Apache-2.0)',
@@ -47,8 +47,10 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Topic :: Internet :: WWW/HTTP :: HTTP Servers'
     ],
-    keywords='http-server redirect-urls shortcuts shorturl shorturl-services shorturls url-shortener ',
-    python_requires='>=3.5',
+    # keywords should match "topics" listed at github project
+    keywords='http-server redirect-urls shortcuts shorturl shorturl-services'
+             'shorturls url-shortener',
+    python_requires='>=3.5.2',
     packages=['goto_http_redirect_server'],
     entry_points={
         'console_scripts': [
