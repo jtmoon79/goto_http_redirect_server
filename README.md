@@ -3,6 +3,8 @@
 
 [![CircleCI](https://circleci.com/gh/jtmoon79/coverlovin2.svg?style=svg)](https://circleci.com/gh/jtmoon79/goto_http_redirect_server)
 [![Requirements Status](https://requires.io/github/jtmoon79/goto_http_redirect_server/requirements.svg?branch=master)](https://requires.io/github/jtmoon79/goto_http_redirect_server/requirements/?branch=master)
+[![PyPI version](https://badge.fury.io/py/goto-http-redirect-server.svg)](https://badge.fury.io/py/goto-http-redirect-server)
+[![Python versions](https://img.shields.io/pypi/pyversions/goto-http-redirect-server.svg?longCache=True)](https://pypi.org/pypi/goto-http-redirect-server/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 The **_"Go To" HTTP Redirect Server_**. For sharing custom shortened HTTP URLs
