@@ -252,8 +252,10 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
                 s_ += he('\n}')
                 return s_
 
-            esc_reload_info = he(" (e.g. '%s')" % str(reload_path_)) \
-                if reload_path_ else ''
+            esc_reload_info =\
+                '(process signal %d (%s)' % (SIGNAL_RELOAD, SIGNAL_RELOAD) \
+                + (' or path "%s")' % reload_path_ if reload_path_ else ')')
+            esc_reload_info = he(esc_reload_info)
             esc_redirects_counter = obj_to_html(redirect_counter)
             esc_redirects = redirects_to_html(redirects)
             esc_files = obj_to_html(Redirect_Files_List)
@@ -299,7 +301,8 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
   </body>
 </html>
 """\
-                .format(esc_title, esc_overall, esc_args,
+                .format(esc_title,
+                        esc_overall, esc_args,
                         esc_redirects_counter, esc_reload_datetime,
                         esc_redirects,
                         esc_reload_info,
@@ -787,8 +790,8 @@ def main() -> None:
               redirect_code.phrase)
 
     # register the signal handler function
-    log.debug('Register handler for signal %s (%s)',
-              int(SIGNAL_RELOAD), str(SIGNAL_RELOAD))
+    log.debug('Register handler for signal %d (%s)',
+              SIGNAL_RELOAD, SIGNAL_RELOAD)
     signal.signal(SIGNAL_RELOAD, reload_signal_handler)
 
     do_shutdown = False  # signal between threads MainThread and shutdown_thread
