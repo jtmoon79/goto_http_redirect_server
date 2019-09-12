@@ -1,3 +1,4 @@
+#!powershell
 #
 # uninstall, build, install, run
 #

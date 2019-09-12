@@ -56,6 +56,10 @@ cv_whl=$(readlink -f -- "./dist/${PACKAGE_NAME}-${version}-py3-none-any.whl")
 if ! [[ -f "${cv_whl}" ]]; then
     cv_whl=$(readlink -f -- "./dist/${PACKAGE_NAME}-${version}-py3.7-none-any.whl")
 fi
+if ! [[ -f "${cv_whl}" ]]; then
+    echo "ERROR: could not find expected wheel file at './dist/${PACKAGE_NAME}-${version}-py3-none-any.whl'" >&2
+    exit 1
+fi
 
 # install the wheel (must be done outside the project directory)
 (   
@@ -77,7 +81,7 @@ function on_exit(){
 }
 trap on_exit EXIT
 
-PORT=55923  # hopefully not used
+PORT=55923  # hopefully not in-use!
 (
     set -x
     # does it run?
