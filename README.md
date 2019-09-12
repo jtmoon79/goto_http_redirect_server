@@ -23,9 +23,10 @@ Trivial to run and reload.  Only uses Python built-in modules.  Super handy 😄
 2. (optional) Install
 
     - Install manually
-
-          python setup.py bdist_wheel
-          python -m pip install --user ./dist/goto_http_redirect_server-*-py3.7-none-any.whl
+      ```
+      python setup.py bdist_wheel
+      python -m pip install --user ./dist/goto_http_redirect_server-*-py3.7-none-any.whl
+      ```
 
     - Or, try helper scripts [`build-install.sh`](./build-install.sh) or [`build-install.ps1`](./build-install.ps1)
 
@@ -83,12 +84,12 @@ No service downtime!
 ### Pro Tips
 
 - Add a DNS addressable host on your network named `goto`. Run
-`goto_http_redirect_server` on the host.<br />
-Network users can type in their browser address bar `goto/…⏎` to easily use the
-_Go To HTTP redirect server_.\*\*
+  `goto_http_redirect_server` on the host.<br />
+  Network users can type in their browser address bar `goto/…⏎` to easily use
+  the _Go To HTTP redirect server_.\*\*
 
 - Consider using `authbind` to run `goto_http_redirect_server` as a low
-privilege process.
+  privilege process.
 
       apt install authbind
       touch /etc/authbind/byport/80
