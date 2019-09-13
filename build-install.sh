@@ -7,7 +7,10 @@ set -e
 set -u
 set -o pipefail
 
+#
+# make a good effort to get the path to the local python 3 installation
 # if $PTYHON is set, assume it's the PYTHON interpreter
+#
 if [ ! "${PYTHON+x}" ]; then
     # attempt to set python to most portable invocation
     PYTHON='python'  # fallback
@@ -17,7 +20,13 @@ if [ ! "${PYTHON+x}" ]; then
         PYTHON='py -3'  # Windows launcher
     fi
 fi
-${PYTHON} --version  # sanity check it runs
+
+# check $PYTHON runs
+${PYTHON} --version
+
+#
+# build package
+#
 
 cd "$(dirname -- "${0}")"  # cd to project top-level
 
@@ -41,8 +50,10 @@ rm -rfv ./build/ ./dist/ "./${PACKAGE_NAME}.egg-info/"
 # build using wheels
 cd -
 version=$(${PYTHON} -B -c 'from goto_http_redirect_server import goto_http_redirect_server as gh;print(gh.__version__)')
-userbase=$(${PYTHON} -B -c 'import site; site.getuserbase(); print(site.USER_BASE)')  # pip will install to here
-export PATH="${PATH}:${userbase}"
+usersite=$(${PYTHON} -B -c 'import site; print(site.USER_SITE);')  # pip may install to here
+userscripts="${usersite}/../Scripts"   # pip in minGW bash may install to here
+userbase=$(${PYTHON} -B -c 'import site; print(site.USER_BASE);')  # pip may install to here
+export PATH="${PATH}:${usersite}:${userscripts}:${userbase}"
 
 ${PYTHON} setup.py -v bdist_wheel
 
@@ -52,20 +63,29 @@ ls -l ./dist/
 set +x
 # get the full path to the wheel file
 # (usually, `basename $PWD` is 'goto_http_redirect_server' but on circleci it's 'project')
-cv_whl=$(readlink -f -- "./dist/${PACKAGE_NAME}-${version}-py3-none-any.whl")
+cv_whl=$(readlink -f -- "./dist/${PACKAGE_NAME}-${version}-py3-none-any.whl") || true
 if ! [[ -f "${cv_whl}" ]]; then
-    cv_whl=$(readlink -f -- "./dist/${PACKAGE_NAME}-${version}-py3.7-none-any.whl")
+    cv_whl=$(readlink -f -- "./dist/${PACKAGE_NAME}-${version}-py3.7-none-any.whl") || true
 fi
 if ! [[ -f "${cv_whl}" ]]; then
     echo "ERROR: could not find expected wheel file at './dist/${PACKAGE_NAME}-${version}-py3-none-any.whl'" >&2
     exit 1
 fi
 
+(
+    set -x
+    ${PYTHON} -m twine check "${cv_whl}"
+)
+
 # install the wheel (must be done outside the project directory)
 (   
     cd ..
+    user_arg=--user
+    if [ "${VIRTUAL_ENV+x}" ]; then  # if virtualenv then do not pass --user
+        user_arg=''
+    fi
     set -x
-    ${PYTHON} -m pip install --user --verbose "${cv_whl}"
+    ${PYTHON} -m pip install ${user_arg} --verbose "${cv_whl}"
 )
 
 # make sure to attempt uninstall if asked
@@ -90,6 +110,10 @@ PORT=55923  # hopefully not in-use!
     "${PACKAGE_NAME}" --verbose --shutdown 2 --port ${PORT} --from-to '/a' 'http://foo.com'
 )
 
+#
+# exit with hint
+#
+
 if ${uninstall}; then
     # and test uninstall if asked
     (
@@ -102,13 +126,11 @@ else
     echo "
 To uninstall remaining package:
 
-        ${PYTHON} -m pip uninstall --yes --verbose '${PACKAGE_NAME}'
+        (cd ..; ${PYTHON} -m pip uninstall --yes --verbose '${PACKAGE_NAME}')
 
 or run this script with '--uninstall'
 "
 fi
-
-${PYTHON} -m twine check "${cv_whl}"
 
 echo "Success!
 

@@ -29,8 +29,10 @@ function Get-Command-Safely {
     }
 }
 
+#
 # make a good effort to get the path to the local python 3 installation
-Foreach ($pythonpath in @("$env:PYTHON",  # user may pass preferred Python interpreter by environment
+#
+Foreach ($pythonpath in @("$env:PYTHON",  # if $PTYHON is set, assume it's the PYTHON interpreter
                           'python3.7',
                           'python3.7.exe',
                           'C:\Windows\py.exe',
@@ -46,7 +48,12 @@ Foreach ($pythonpath in @("$env:PYTHON",  # user may pass preferred Python inter
     $PYTHON = $null
 }
 
-& $PYTHON --version  # does $PYTHON run? if not script will stop
+# check $PYTHON runs
+& $PYTHON --version
+
+#
+# build package
+#
 
 $PACKAGE_NAME = 'goto_http_redirect_server'
 $PROGRAM_NAME = 'goto_http_redirect_server'
@@ -68,15 +75,32 @@ Get-ChildItem ./dist/
 
 # get the full path to the wheel file
 $cv_whl = Get-ChildItem "./dist/$PACKAGE_NAME-$version-py3-none-any.whl" -ErrorAction SilentlyContinue
-if ( -not (Test-Path $cv_whl)) {
-    $cv_whl = Get-ChildItem  "./dist/${PACKAGE_NAME}-${version}-py3.7-none-any.whl"
+if (-not (Test-Path-Safely $cv_whl)) {
+    $cv_whl = Get-ChildItem  "./dist/$PACKAGE_NAME-$version-py3.7-none-any.whl"
 }
+
+& $PYTHON -m twine check $cv_whl
 
 # install the wheel (must be done outside the project directory)
 Push-Location ..
-& $PYTHON -m pip install -v "$cv_whl"
+
+& $PYTHON -m pip install -v $cv_whl
 
 & $PACKAGE_NAME --version
+
+#
+# verify it runs
+#
+
+$PORT = 55923  # hopefully not in-use!
+# does it run?
+& $PACKAGE_NAME --version
+# does it run and listen on the socket?
+& $PACKAGE_NAME --verbose --shutdown 2 --port $PORT --from-to '/a' 'http://foo.com'
+
+#
+# exit with hint
+#
 
 Write-Host "
 To uninstall remaining package:
@@ -84,4 +108,9 @@ To uninstall remaining package:
         $PYTHON -m pip uninstall -y '$PACKAGE_NAME'
 "
 
-Write-Host 'Success!'
+Write-Host "Success!
+
+To upload to pypi:
+
+    $PYTHON -m twine upload --verbose $cv_whl
+"
