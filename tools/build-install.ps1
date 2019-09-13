@@ -10,6 +10,7 @@ $ErrorActionPreference = "Stop"
 Set-PSDebug -Trace 1
  
 Set-Location $PSScriptRoot
+Set-Location '..'
 
 function Test-Path-Safely {
     param([string]$path)

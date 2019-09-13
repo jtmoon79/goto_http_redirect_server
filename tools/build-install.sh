@@ -7,6 +7,8 @@ set -e
 set -u
 set -o pipefail
 
+cd "$(dirname -- "${0}")/.."  # cd to project top-level
+
 #
 # make a good effort to get the path to the local python 3 installation
 # if $PTYHON is set, assume it's the PYTHON interpreter
@@ -27,8 +29,6 @@ ${PYTHON} --version
 #
 # build package
 #
-
-cd "$(dirname -- "${0}")"  # cd to project top-level
 
 readonly PACKAGE_NAME='goto_http_redirect_server'
 readonly PROGRAM_NAME='goto_http_redirect_server'
