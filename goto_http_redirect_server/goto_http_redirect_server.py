@@ -461,7 +461,11 @@ def load_redirects_files(redirects_files: Path_List,
                         log.debug('File Line (%s:%s):%s', rfilen, csvr.line_num, row)
                         if not row:  # quietly skip empty rows
                             continue
-                        from_path, to_url, user_added, date_added = row
+                        from_path = row[0]
+                        to_url = row[1]
+                        user_added = row[2]
+                        date_added = row[3]
+                        # ignore remaining fields
                         dt = fromisoformat(date_added)
                         entrys[Re_EntryKey(Re_From(from_path))] = \
                             Re_EntryValue((
