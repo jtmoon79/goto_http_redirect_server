@@ -115,8 +115,8 @@ No service downtime!
                                      [--reload-path RELOAD_PATH]
                                      [--redirect-code REDIRECT_CODE]
                                      [--field-delimiter FIELD_DELIMITER]
-                                     [--shutdown SHUTDOWN] [--verbose] [--version]
-                                     [-?]
+                                     [--shutdown SHUTDOWN] [--log LOG] [--verbose]
+                                     [--version] [-?]
 
     The "Go To" HTTP Redirect Server! For sharing custom shortened HTTP URLs on your
     network.
@@ -167,6 +167,8 @@ No service downtime!
                             to " " (tab character) between fields.
       --shutdown SHUTDOWN   Shutdown the server after passed seconds. Intended for
                             testing.
+      --log LOG             Log to file at path LOG. Default logging is to
+                            sys.stderr.
       --verbose             Set logging level to DEBUG. Logging level default is
                             INFO.
       --version             show program version and exit.
@@ -200,7 +202,7 @@ No service downtime!
       Options --status-path and --reload-path may be passed paths to obscure access
       from unauthorized users. e.g.
 
-          --status-path '/9d4f1a5f-9155-467a-a8b2-128439b00d06'
+          --status-path '/65bde50a-53af-4aa2-93f5-179febe36f3f'
 
     About Reloads:
 

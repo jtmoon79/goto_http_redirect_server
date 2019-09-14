@@ -109,12 +109,17 @@ def html_a(s_: str) -> str:
     """create HTML <a> from s_"""
     return '<a href="' + s_ + '">' + s_ + '</a>'
 
-def logging_init(verbose: bool) -> None:
+
+def logging_init(verbose: bool, filename: pathlib.Path) -> None:
     """initialize logging module to my preferences"""
 
     global LOGGING_FORMAT
-    logging.basicConfig(level=logging.DEBUG, format=LOGGING_FORMAT,
-                        datefmt=LOGGING_FORMAT_DATETIME)
+    logging.basicConfig(
+        filename=filename,
+        level=logging.DEBUG,
+        format=LOGGING_FORMAT,
+        datefmt=LOGGING_FORMAT_DATETIME
+    )
     global log
     log = logging.getLogger(PROGRAM_NAME)
     if verbose:
@@ -584,8 +589,17 @@ def reload_signal_handler(signum, _) -> None:
     reload = True
 
 
-def process_options() -> typing.Tuple[str, int, bool, str, str, int, int, str,
-                                      FromTo_List, typing.List[str]]:
+def process_options() -> typing.Tuple[str,
+                                      int,
+                                      bool,
+                                      pathlib.Path,
+                                      str,
+                                      str,
+                                      int,
+                                      int,
+                                      str,
+                                      FromTo_List,
+                                      typing.List[str]]:
     """Process script command-line options."""
 
     rcd = REDIRECT_CODE_DEFAULT  # abbreviate
@@ -673,6 +687,9 @@ signaling the process.
                         default=0,
                         help='Shutdown the server after passed seconds.'
                              ' Intended for testing.')
+    pgroup.add_argument('--log', action='store', type=str, default=None,
+                        help='Log to file at path LOG.'
+                             ' Default logging is to sys.stderr.')
     pgroup.add_argument('--verbose', action='store_true', default=False,
                         help='Set logging level to DEBUG.'
                              ' Logging level default is INFO.')
@@ -753,17 +770,41 @@ Other Notes:
         parser.print_usage()
         sys.exit(1)
 
-    return str(args.ip), int(args.port), args.verbose, \
-        args.status_path, args.reload_path, args.redirect_code, \
-        args.shutdown, args.field_delimiter, \
-        args.from_to, args.redirects_files
+    log_filename = None
+    if args.log:
+        log_filename = pathlib.Path(args.log)
+
+    return \
+        str(args.ip), \
+        int(args.port), \
+        args.verbose, \
+        log_filename, \
+        args.status_path, \
+        args.reload_path, \
+        args.redirect_code, \
+        args.shutdown,\
+        args.field_delimiter, \
+        args.from_to, \
+        args.redirects_files
 
 
 def main() -> None:
-    ip, port, verbose, status_path_,  reload_path_, redirect_code, \
-        shutdown, field_delimiter_, from_to, redirects_files = process_options()
+    ip, \
+        port, \
+        log_verbose, \
+        log_filename, \
+        status_path_, \
+        reload_path_, \
+        redirect_code, \
+        shutdown, \
+        field_delimiter_, \
+        from_to, \
+        redirects_files \
+        = process_options()
 
-    logging_init(verbose)
+    logging_init(log_verbose, log_filename)
+    log.debug('Start %s version %s\nRun command:\n%s %s',
+              PROGRAM_NAME, __version__, sys.executable, ' '.join(sys.argv))
 
     # setup field delimiter
     RedirectServer.field_delimiter = field_delimiter_  # set once
