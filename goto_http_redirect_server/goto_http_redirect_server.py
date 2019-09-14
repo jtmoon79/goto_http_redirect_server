@@ -115,7 +115,7 @@ def logging_init(verbose: bool, filename: pathlib.Path) -> None:
 
     global LOGGING_FORMAT
     logging.basicConfig(
-        filename=filename,
+        filename=str(filename.absolute()),
         level=logging.DEBUG,
         format=LOGGING_FORMAT,
         datefmt=LOGGING_FORMAT_DATETIME
