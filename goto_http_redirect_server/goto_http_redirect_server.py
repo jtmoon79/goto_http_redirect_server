@@ -35,7 +35,7 @@ __url_issues__ = 'https://github.com/jtmoon79/goto_http_redirect_server/issues'
 # first line of __doc__ is used in setup.py. Should match README.md and title at
 # github.com project site.
 __doc__ = """\
-The *"Go To" HTTP Redirect Server* for sharing custom shortened HTTP URLs on your network.
+The "Go To" HTTP Redirect Server for sharing custom shortened HTTP URLs on your network.
 
 Modules used are available within the standard CPython distribution.
 Written for Python 3.7 but hacked to run with at least Python 3.5.

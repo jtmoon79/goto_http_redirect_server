@@ -27,7 +27,7 @@ Trivial to run and reload.  Only uses Python built-in modules.  Super handy 😄
     - Install manually
       ```
       python setup.py bdist_wheel
-      python -m pip install --user ./dist/goto_http_redirect_server-*-py3.7-none-any.whl
+      python -m pip install --user ./dist/goto_http_redirect_server-*-py3-none-any.whl
       ```
 
     - Or, try helper scripts [`tools/build-install.sh`](./tools/build-install.sh) or [`tools/build-install.ps1`](./tools/build-install.ps1)
@@ -90,7 +90,7 @@ No service downtime!
   Network users can type in their browser address bar `goto/…⏎` to easily use
   the _"Go To" HTTP redirect server_.\*\*
 
-- There are many methods to constrain the a running process.
+- There are many methods to secure a running process.
   One method is to use `authbind` to run `goto_http_redirect_server` as a low
   privilege process.
 
