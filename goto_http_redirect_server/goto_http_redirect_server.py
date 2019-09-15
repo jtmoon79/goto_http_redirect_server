@@ -83,6 +83,7 @@ Path_List = typing.List[pathlib.Path]
 FromTo_List = typing.List[typing.Tuple[str, str]]
 Redirect_Counter = typing.DefaultDict[str, int]
 str_None = typing.Union[str, None]
+Path_None = typing.Union[pathlib.Path, None]
 # volatile global instances
 Redirect_FromTo_List = []  # global list of --from-to passed redirects
 Redirect_Files_List = []  # global list of --redirects files
@@ -110,12 +111,14 @@ def html_a(s_: str) -> str:
     return '<a href="' + s_ + '">' + s_ + '</a>'
 
 
-def logging_init(verbose: bool, filename: pathlib.Path) -> None:
+def logging_init(verbose: bool, filename: Path_None) \
+        -> None:
     """initialize logging module to my preferences"""
 
     global LOGGING_FORMAT
+    filename = str(filename.absolute()) if filename else None
     logging.basicConfig(
-        filename=str(filename.absolute()),
+        filename=filename,
         level=logging.DEBUG,
         format=LOGGING_FORMAT,
         datefmt=LOGGING_FORMAT_DATETIME
