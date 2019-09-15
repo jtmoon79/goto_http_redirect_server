@@ -103,7 +103,10 @@ No service downtime!
 - Initiating the reload signal requires
   1. noticing a modified file
   2. signal the `goto_http_redirect_server` process.<br />
-  There are many methods to accomplish this. That is an exercise for the user.
+  One Linux, you may use `inotify` in a small script
+
+      inotify path/to/redirects1.csv
+      
 
 ----
 
@@ -115,7 +118,7 @@ No service downtime!
                                      [--reload-path RELOAD_PATH]
                                      [--redirect-code REDIRECT_CODE]
                                      [--field-delimiter FIELD_DELIMITER]
-                                     [--shutdown SHUTDOWN] [--log LOG] [--verbose]
+                                     [--shutdown SHUTDOWN] [--log LOG] [--debug]
                                      [--version] [-?]
 
     The "Go To" HTTP Redirect Server! For sharing custom shortened HTTP URLs on your
@@ -139,8 +142,8 @@ No service downtime!
                             user", and "added on datetime" separated by a tab.
 
     Network Options:
-      --ip IP, -i IP        IP interface to listen on. Defaults to 127.0.0.1 .
-      --port PORT, -p PORT  IP port to listen on. Defaults to 80 .
+      --ip IP, -i IP        IP interface to listen on. Default is 127.0.0.1 .
+      --port PORT, -p PORT  IP port to listen on. Default is 80 .
 
     Miscellaneous Options:
       --status-path STATUS_PATH
@@ -163,14 +166,13 @@ No service downtime!
                             successful redirect Status Code is 308 (Permanent
                             Redirect).
       --field-delimiter FIELD_DELIMITER
-                            Field delimiter string for --redirects files. Defaults
-                            to " " (tab character) between fields.
+                            Field delimiter string for --redirects files. Default
+                            is " " (tab character) between fields.
       --shutdown SHUTDOWN   Shutdown the server after passed seconds. Intended for
                             testing.
       --log LOG             Log to file at path LOG. Default logging is to
                             sys.stderr.
-      --verbose             Set logging level to DEBUG. Logging level default is
-                            INFO.
+      --debug               Set logging level to DEBUG. Default is INFO.
       --version             show program version and exit.
       -?, -h, --help        show this help message and exit.
 
@@ -202,7 +204,7 @@ No service downtime!
       Options --status-path and --reload-path may be passed paths to obscure access
       from unauthorized users. e.g.
 
-          --status-path '/65bde50a-53af-4aa2-93f5-179febe36f3f'
+          --status-path '/aaa5309f-cad4-441a-9075-259ddf1545e6'
 
     About Reloads:
 
@@ -218,10 +220,6 @@ No service downtime!
 
       If security and stability are a concern then only allow reloads via process
       signals.
-
-    Other Notes:
-
-      By default, path "/status" will dump the server status.
 
 \*\* _Mileage May Vary_ 😔
 
