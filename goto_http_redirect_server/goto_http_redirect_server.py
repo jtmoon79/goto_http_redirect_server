@@ -139,7 +139,7 @@ def html_a(s_: str) -> str:
     return '<a href="' + s_ + '">' + s_ + '</a>'
 
 
-def logging_init(verbose: bool, filename: Path_None) \
+def logging_init(debug: bool, filename: Path_None) \
         -> None:
     """initialize logging module to my preferences"""
 
@@ -153,7 +153,7 @@ def logging_init(verbose: bool, filename: Path_None) \
     )
     global log
     log = logging.getLogger(PROGRAM_NAME)
-    if verbose:
+    if debug:
         log.setLevel(logging.DEBUG)
     else:
         log.setLevel(logging.INFO)
@@ -708,9 +708,9 @@ signaling the process.
     pgroup.add_argument('--log', action='store', type=str, default=None,
                         help='Log to file at path LOG.'
                              ' Default logging is to sys.stderr.')
-    pgroup.add_argument('--verbose', action='store_true', default=False,
+    pgroup.add_argument('--debug', action='store_true', default=False,
                         help='Set logging level to DEBUG.'
-                             ' Logging level default is INFO.')
+                             ' Default is INFO.')
     pgroup.add_argument('--version', action='version',
                         help='show program version and exit.',
                         version='%(prog)s ' + __version__)
@@ -795,7 +795,7 @@ Other Notes:
     return \
         str(args.ip), \
         int(args.port), \
-        args.verbose, \
+        args.debug, \
         log_filename, \
         args.status_path, \
         args.reload_path, \
@@ -809,7 +809,7 @@ Other Notes:
 def main() -> None:
     ip, \
         port, \
-        log_verbose, \
+        log_debug, \
         log_filename, \
         status_path_, \
         reload_path_, \
@@ -820,7 +820,7 @@ def main() -> None:
         redirects_files \
         = process_options()
 
-    logging_init(log_verbose, log_filename)
+    logging_init(log_debug, log_filename)
     log.debug('Start %s version %s\nRun command:\n%s %s',
               PROGRAM_NAME, __version__, sys.executable, ' '.join(sys.argv))
 
