@@ -224,7 +224,10 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
     class RedirectHandler(server.SimpleHTTPRequestHandler):
 
         def log_message(self, format_, *args, **kwargs):
-            """override to use module-level logging instance"""
+            """
+            override the RedirectHandler.log_message so RedirectHanlder
+            instances use the module-level logging.Logger instance `log`
+            """
             try:
                 prepend = str(self.client_address[0]) + ':' + \
                            str(self.client_address[1]) + ' '
@@ -475,7 +478,8 @@ def load_redirects_files(redirects_files: Path_List,
                 csvr = csv.reader(rfile, delimiter=field_delimiter)
                 for row in csvr:
                     try:
-                        log.debug('File Line (%s:%s):%s', rfilen, csvr.line_num, row)
+                        log.debug('File Line (%s:%s):%s',
+                                  rfilen, csvr.line_num, row)
                         if not row:  # quietly skip empty rows
                             continue
                         from_path = row[0]
@@ -582,12 +586,12 @@ class RedirectServer(socketserver.TCPServer):
                                                     reload_path)
         pid = os.getpid()
         log.debug(
-            "reload {0} (0x{1:08x})\n"
-            "new RequestHandlerClass (0x{2:08x}) to replace old (0x{3:08x})\n"
-            "PID {3}".format(
-                reload, id(reload),
-                id(redirect_handler), id(self.RequestHandlerClass),
-                pid,)
+            "reload %s (0x%08x)\n"
+            "new RequestHandlerClass (0x%08x) to replace old (0x%08x)\n"
+            "PID %d",
+            reload, id(reload),
+            id(redirect_handler), id(self.RequestHandlerClass),
+            pid
         )
 
         self.RequestHandlerClass = redirect_handler
@@ -602,8 +606,8 @@ def reload_signal_handler(signum, _) -> None:
     """
     global reload
     log.debug(
-        'reload_signal_handler: Signal Number %s, reload {1} (0x{2:08x})'
-        .format(signum, reload, id(reload)))
+        'reload_signal_handler: Signal Number %s, reload %s (0x%08x)',
+        signum, reload, id(reload))
     reload = True
 
 
@@ -622,7 +626,7 @@ def process_options() -> typing.Tuple[str,
 
     rcd = REDIRECT_CODE_DEFAULT  # abbreviate
     global sys_args
-    sys_args = copy.copy(sys.argv)
+    sys_args = copy.copy(sys.argv)  # set once
 
     parser = argparse.ArgumentParser(
         description="""\
@@ -661,10 +665,10 @@ signaling the process.
     pgroup = parser.add_argument_group(title='Network Options')
     pgroup.add_argument('--ip', '-i', action='store', default=IP_LOCALHOST,
                         help='IP interface to listen on.'
-                             ' Defaults to %(default)s .')
+                             ' Default is %(default)s .')
     pgroup.add_argument('--port', '-p', action='store', type=int, default=80,
                         help='IP port to listen on.'
-                             ' Defaults to %(default)s .')
+                             ' Default is %(default)s .')
 
     pgroup = parser.add_argument_group(title='Miscellaneous Options')
     pgroup.add_argument('--status-path', action='store',
@@ -699,7 +703,7 @@ signaling the process.
     pgroup.add_argument('--field-delimiter', action='store',
                         default=FIELD_DELMITER_DEFAULT,
                         help='Field delimiter string for --redirects files.'
-                             ' Defaults to "%(default)s" (tab character)'
+                             ' Default is "%(default)s" (tab character)'
                              ' between fields.')
     pgroup.add_argument('--shutdown', action='store', type=int,
                         default=0,
@@ -762,16 +766,11 @@ About Reloads:
   If security and stability are a concern then only allow reloads via process
   signals.
 
-Other Notes:
-
-  By default, path "{6}" will dump the server status.
-
 """.format(
         PROGRAM_NAME,
         str(uuid.uuid4()),
         SIGNAL_RELOAD_UNIX, SIGNAL_RELOAD_WINDOWS,
         str(SIGNAL_RELOAD), int(SIGNAL_RELOAD),
-        STATUS_PAGE_PATH_DEFAULT
        )
 
     args = parser.parse_args()
@@ -862,18 +861,18 @@ def main() -> None:
               SIGNAL_RELOAD, SIGNAL_RELOAD)
     signal.signal(SIGNAL_RELOAD, reload_signal_handler)
 
-    do_shutdown = False  # signal between threads MainThread and shutdown_thread
+    do_shutdown = False  # flag between threads MainThread and shutdown_thread
 
     def shutdown_server(redirect_server_: RedirectServer, shutdown_: int):
         log.debug('Server will shutdown in %s seconds', shutdown_)
         start = time.time()
         while time.time() - start < shutdown_:
             if do_shutdown:
-                time.sleep(0.5)
+                time.sleep(0.1)  # allow main thread time to print stacktrace
                 break
             time.sleep(0.5)
-        log.info("Calling shutdown on Redirect_Server {0} (0x{1:08x})".
-                 format(str(redirect_server_), id(redirect_server_)))
+        log.info("Calling shutdown on Redirect_Server %s (0x%08x)",
+                 str(redirect_server_), id(redirect_server_))
         redirect_server_.shutdown()
 
     # create the first instance of the Redirect Handler
@@ -891,8 +890,8 @@ def main() -> None:
         log.info("Serve %s at %s:%s, Process ID %s", serve_time, ip, port,
                  os.getpid())
         try:
-            log.debug("Redirect_Server {0} (0x{1:08x})".
-                      format(str(redirect_server), id(redirect_server)))
+            log.debug("Redirect_Server %s (0x%08x)",
+                      redirect_server, id(redirect_server))
             redirect_server.serve_forever(poll_interval=1)  # never returns
         except (KeyboardInterrupt, InterruptedError):
             do_shutdown = True
