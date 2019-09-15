@@ -102,6 +102,32 @@ REDIRECT_PATHS_NOT_ALLOWED = (PATH_FAVICON,)
 #
 
 
+class str_delay(object):
+    """
+    delayed evaluation call to object.__str__, for logging calls that may not
+    need to execute a passed function. e.g.
+       logging.debug('foo:%s', high_memory_str(foo))
+    The call to high_memory_str(foo) may not be necessary because logging.level
+    is logging.INFO. So skip the call to high_memory_str(foo) if it is not used,
+    e.g.
+       logging.debug('foo:%s', str_delay(high_memory_str, foo))
+
+    XXX: There are probably more succinct implementations. Good enough.
+    """
+    def __init__(self, func, *args, **kwargs):
+        self._func = func
+        self._args = args
+        self._kwargs = kwargs
+
+    def __str__(self):
+        #print('%s.__str__ of instance 0x%08X' %
+        # (self.__class__.__name__, id(self)))
+        out = ''
+        if self._func:
+            out = str(self._func(*self._args, **self._kwargs))
+        return out
+
+
 def html_escape(s_: str) -> str:
     return html.escape(s_)\
         .replace('\n', '<br />\n')\
@@ -190,10 +216,9 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
              RedirectServer.RequestHandlerClass
     """
 
-    log.debug('using redirect dictionary (0x{0:08x}) with {1} entries:\n{2}'
-        .format(
-            id(redirects), len(redirects.keys()),
-            pprint.pformat(redirects, indent=2))
+    log.debug('using redirect dictionary (0x%08x) with %s entries:\n%s',
+              id(redirects), len(redirects.keys()),
+              str_delay(pprint.pformat, redirects, indent=2)
     )
 
     class RedirectHandler(server.SimpleHTTPRequestHandler):
