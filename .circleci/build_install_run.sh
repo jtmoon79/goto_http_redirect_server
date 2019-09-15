@@ -5,7 +5,7 @@ set -e
 set -u
 set -o pipefail
 
-BUILD_INSTALL="$(dirname -- "${0}")/../build-install.sh"
+BUILD_INSTALL="$(dirname -- "${0}")/../tools/build-install.sh"
 set -x
 whoami
 pwd
