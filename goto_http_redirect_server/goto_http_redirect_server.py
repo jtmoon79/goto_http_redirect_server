@@ -94,6 +94,8 @@ reload_path = None
 program_start_time = time.time()
 STATUS_PAGE_PATH_DEFAULT = '/status'
 FIELD_DELMITER_DEFAULT = '\t'
+PATH_FAVICON = '/favicon.ico'
+REDIRECT_PATHS_NOT_ALLOWED = (PATH_FAVICON,)
 
 #
 # functions, classes, code
@@ -337,21 +339,6 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
             global reload
             reload = True
 
-        def do_GET_favicon(self):
-            """
-            do not allow favicon.ico for it could mess up clients if it
-            had an errant Re_Entry
-            """
-
-            self.log_message('Do not allow (%s), returning %s (%s)',
-                             self.path, int(http.HTTPStatus.NOT_FOUND),
-                             http.HTTPStatus.NOT_FOUND.phrase,
-                             loglevel=logging.INFO)
-            self.send_response(http.HTTPStatus.NOT_FOUND)
-            self.send_header('Redirect-Server-Host', HOSTNAME)
-            self.send_header('Redirect-Server-Version', __version__)
-            self.end_headers()
-
         def do_GET_redirect(self, redirects_: Re_Entry_Dict):
             if self.path not in redirects_.keys():
                 self.log_message('no redirect found for (%s), returning %s (%s)',
@@ -421,9 +408,6 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
                 return
             elif self.path == reload_path_:
                 self.do_GET_reload(reload_path_)
-                return
-            elif self.path == '/favicon.ico':
-                self.do_GET_favicon()
                 return
 
             self.do_GET_redirect(redirects)
@@ -509,6 +493,11 @@ def load_redirects(from_to: FromTo_List,
     #       e.g. given redirects '/a' → '/b' and '/b' → '/a',
     #       the browser will (in theory) redirect forever.
     #       (browsers I tested force stopped the redirect loop; Edge, Chrome).
+    for path in REDIRECT_PATHS_NOT_ALLOWED:
+        if path in entrys_files.keys():
+            log.warning('Removing not allowed path "%s" from redirect entries.',
+                        path)
+            entrys_files.pop(path)
     return entrys_files
 
 
