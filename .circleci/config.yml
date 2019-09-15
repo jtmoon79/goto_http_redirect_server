@@ -81,6 +81,6 @@ workflows:
       - build_install_run_py35
       - build_install_run_py36
       - build_install_run_py37
-      - build_install_run_py37_wincore
-      - build_install_run_py36_buster
-      - build_install_run_py3_alpine
+      #- build_install_run_py37_wincore
+      #- build_install_run_py36_buster
+      #- build_install_run_py3_alpine
