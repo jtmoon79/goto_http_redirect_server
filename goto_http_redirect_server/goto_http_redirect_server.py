@@ -131,7 +131,7 @@ def logging_init(verbose: bool, filename: Path_None) \
         log.setLevel(logging.INFO)
 
 
-def print_debug(message: str, end: str='\n', file=sys.stderr) -> None:
+def print_debug(message: str, end: str = '\n', file=sys.stderr) -> None:
     """
     Helper for printing (preferrably to stderr) and checking logging.DEBUG.
     Sometimes a full logging message is too much.
@@ -196,16 +196,16 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
 
     class RedirectHandler(server.SimpleHTTPRequestHandler):
 
-        def log_message(self, format, *args, **kwargs):
+        def log_message(self, format_, *args, **kwargs):
             """override to use module-level logging instance"""
             try:
                 prepend = str(self.client_address[0]) + ':' + \
                            str(self.client_address[1]) + ' '
                 if 'loglevel' in kwargs and \
                    isinstance(kwargs['loglevel'], type(log.level)):
-                    log.log(kwargs['loglevel'], prepend + format, *args)
+                    log.log(kwargs['loglevel'], prepend + format_, *args)
                     return
-                log.debug(prepend + format, *args)
+                log.debug(prepend + format_, *args)
             except Exception as ex:
                 print('Error during log_message\n%s' % str(ex), file=sys.stderr)
 
@@ -498,6 +498,7 @@ def load_redirects(from_to: FromTo_List,
     load (or reload) all redirect information, process into Re_EntryList
     :param from_to: list --from-to passed redirects for Re_Entry
     :param redirects_files: list of files to process for Re_Entry
+    :param field_delimiter: field delimiter within passed redirects_files
     :return: Re_Entry_Dict: all processed information
     """
     entrys_fromto = load_redirects_fromto(from_to)
@@ -544,7 +545,7 @@ class RedirectServer(socketserver.TCPServer):
         Checks global reload and create new handler (which will re-read
         the Redirect_Files_List)
         """
-        #log.debug("{0}.service_actions(0x{1:08x})".format(self.__class__.__name__, id(self)))
+
         print_debug('.', end='')
         super(RedirectServer, self).service_actions()
 
