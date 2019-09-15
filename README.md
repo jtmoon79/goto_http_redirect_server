@@ -35,7 +35,7 @@ Trivial to run and reload.  Only uses Python built-in modules.  Super handy 😄
     - Or, try [`tools/eazy-run.sh`](./tools/eazy-run.sh) and pass command-line options as if
       running `goto_http_redirect_server.py`.
 
-3.  start the _Go To HTTP redirect server_
+3.  start the _Go To HTTP Redirect Server_
 
         goto_http_redirect_server --redirects ./redirects1.csv
 
@@ -88,7 +88,7 @@ No service downtime!
 - Add a DNS addressable host on your network named `goto`. Run
   `goto_http_redirect_server` on the host.<br />
   Network users can type in their browser address bar `goto/…⏎` to easily use
-  the _"Go To" HTTP redirect server_.\*\*
+  the _"Go To" HTTP Redirect Server_.\*\*
 
 - There are many methods to secure a running process.
   One method is to use `authbind` to run `goto_http_redirect_server` as a low
