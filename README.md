@@ -100,14 +100,6 @@ No service downtime!
       chmod 0500 /etc/authbind/byport/80
       sudo -u nobody -- authbind --deep python goto_http_redirect_server …
 
-- Initiating the reload signal requires
-  1. noticing a modified file
-  2. signal the `goto_http_redirect_server` process.<br />
-  One Linux, you may use `inotify` in a small script
-
-      inotify path/to/redirects1.csv
-      
-
 ----
 
 ## `--help` message
