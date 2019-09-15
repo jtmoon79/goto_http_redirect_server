@@ -14,7 +14,7 @@ pwd
 env | sort
 ls -la .
 uname -a
-docker info
+docker info || true
 python --version
 pip --version
 
