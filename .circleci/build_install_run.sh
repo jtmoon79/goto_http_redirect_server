@@ -14,6 +14,6 @@ ls -la .
 uname -a
 python --version
 pip --version
-pip install twine
+pip install --user twine
 chmod +x "${BUILD_INSTALL}"  # force +x
 "${BUILD_INSTALL}" --uninstall
