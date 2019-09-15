@@ -107,7 +107,7 @@ PORT=55923  # hopefully not in-use!
     # does it run?
     "${PACKAGE_NAME}" --version
     # does it run and listen on the socket?
-    "${PACKAGE_NAME}" --verbose --shutdown 2 --port ${PORT} --from-to '/a' 'http://foo.com'
+    "${PACKAGE_NAME}" --debug --shutdown 2 --port ${PORT} --from-to '/a' 'http://foo.com'
 )
 
 #
