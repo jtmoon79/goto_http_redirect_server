@@ -76,11 +76,11 @@ jobs:
             ./.circleci/build_install_run.sh
 workflows:
   version: 2
+  #filters:
+  #  branches:
+  #    only:
+  #      - master
   workflow_py:
-    filters:
-      branches:
-        only:
-          - master
     jobs:
       - build_install_run_py35
       - build_install_run_py36
