@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# for Azure Pipelines task
+# for Azure Pipelines job where
+#     vmImage: 'ubuntu-16.04'
 
 set -e
 set -u
