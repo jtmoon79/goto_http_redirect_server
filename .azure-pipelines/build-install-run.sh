@@ -21,6 +21,9 @@ python --version
 pip --version
 pip list -vvv
 
+python -m pip install --quiet --upgrade pip
+python -m pip install --quiet --user twine
+
 # run the build-install.sh
 chmod +x "${BUILD_INSTALL}"  # force +x
 "${BUILD_INSTALL}" --uninstall

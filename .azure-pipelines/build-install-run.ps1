@@ -10,11 +10,15 @@
 $DebugPreference = "Continue"
 $ErrorActionPreference = "Stop"
 Set-PSDebug -Trace 1
+
+$PYTHON = 'python'
  
 Set-Location "$PSScriptRoot/.."
 
-$PYTHON = 'python'
 & $PYTHON --version
+
+& $PYTHON -m pip install --quiet --upgrade pip
+& $PYTHON -m pip install --quiet --user twine
 
 #
 # build package
