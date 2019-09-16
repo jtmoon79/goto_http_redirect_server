@@ -13,7 +13,11 @@ Set-PSDebug -Trace 1
 # dump much information about the Azure Pipelines environment
 HOSTNAME.EXE
 Get-Location
-Print-Env
+try {
+    Print-Env
+} catch {
+    Get-ChildItem env:  # fallback
+}
 Get-ChildItem
 Get-CimInstance Win32_OperatingSystem | Select-Object $Properties | Format-Table -AutoSize
 
