@@ -1,8 +1,7 @@
 #!powershell
 #
 # uninstall, build, install, run
-# intended for a clean Azure Pipelines environment with
-# Python, pip, wheels already installed
+# intended for a clean Azure Pipelines environment
 #
 # test this script in a new powershell instance with
 #     Start-Process -NoNewWindow powershell .\build-install.ps1
@@ -10,6 +9,18 @@
 $DebugPreference = "Continue"
 $ErrorActionPreference = "Stop"
 Set-PSDebug -Trace 1
+
+# dump much information about the Azure Pipelines environment
+HOSTNAME.EXE
+Get-Location
+Print-Env
+Get-ChildItem
+Get-CimInstance Win32_OperatingSystem | Select-Object $Properties | Format-Table -AutoSize
+
+& docker info
+& python --version
+& pip --version
+& pip list -vvv
 
 $PYTHON = 'python'
  
