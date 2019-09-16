@@ -20,7 +20,9 @@ pip --version
 pip list -vvv
 
 # install ahead of time
-pip install --user twine
+python -m pip install --quiet --upgrade pip
+python -m pip install --quiet --upgrade setuptools
+python -m pip install --quiet --user twine
 
 # run the build-install.sh
 chmod +x "${BUILD_INSTALL}"  # force +x

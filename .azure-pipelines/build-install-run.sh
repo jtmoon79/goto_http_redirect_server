@@ -22,6 +22,7 @@ python -m pip --version
 python -m pip list -vvv
 
 python -m pip install --quiet --upgrade pip
+python -m pip install --quiet --upgrade setuptools
 python -m pip install --quiet --user twine
 
 # run the build-install.sh
