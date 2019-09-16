@@ -19,6 +19,7 @@ uname -a
 docker info || true
 python --version
 pip --version
+pip list -vvv
 
 # run the build-install.sh
 chmod +x "${BUILD_INSTALL}"  # force +x
