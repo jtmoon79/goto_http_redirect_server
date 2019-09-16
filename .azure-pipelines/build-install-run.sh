@@ -34,7 +34,7 @@ python -m twine --version
 # build
 version=$(python -B -c 'from goto_http_redirect_server import goto_http_redirect_server as gh;print(gh.__version__)')
 python setup.py -v bdist_wheel
-cv_whl=$(readlink -f -- "./dist/${PACKAGE_NAME}-${version}-py3.7-none-any.whl")
+cv_whl=$(readlink -f -- "./dist/${PACKAGE_NAME}-${version}-py3-none-any.whl")
 python -m twine check "${cv_whl}"
 cd ..  # move out of project directory
 # install
