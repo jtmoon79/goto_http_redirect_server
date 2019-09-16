@@ -42,7 +42,7 @@ Written for Python 3.7 but hacked to run with at least Python 3.5.
 """
 
 #
-# globals initialization
+# globals and constants initialization
 #
 
 PROGRAM_NAME = 'goto_http_redirect_server'
@@ -90,6 +90,7 @@ Redirect_Files_List = []  # global list of --redirects files
 reload = False
 reload_datetime = None
 redirect_counter = defaultdict(int)
+status_path = None
 reload_path = None
 program_start_time = time.time()
 STATUS_PAGE_PATH_DEFAULT = '/status'
@@ -119,7 +120,7 @@ class str_delay(object):
         self._args = args
         self._kwargs = kwargs
 
-    def __str__(self):
+    def __str__(self) -> str:
         #print('%s.__str__ of instance 0x%08X' %
         # (self.__class__.__name__, id(self)))
         out = ''
@@ -139,8 +140,7 @@ def html_a(s_: str) -> str:
     return '<a href="' + s_ + '">' + s_ + '</a>'
 
 
-def logging_init(debug: bool, filename: Path_None) \
-        -> None:
+def logging_init(debug: bool, filename: Path_None) -> None:
     """initialize logging module to my preferences"""
 
     global LOGGING_FORMAT
@@ -184,14 +184,17 @@ def fromisoformat(dts: str) -> datetime.datetime:
        0123456789012345678
     """
 
-    _fromisoformat = lambda s: datetime.datetime(
-        int(s[0:4]),  # year
-        month=int(s[5:7]),
-        day=int(s[8:10]),
-        hour=int(s[11:13]),
-        minute=int(s[14:16]),
-        second=int(s[17:19])
-    )
+    def _fromisoformat_impl(s_: str) -> datetime.datetime:
+        return datetime.datetime(
+            int(s_[0:4]),  # year
+            month=int(s_[5:7]),
+            day=int(s_[8:10]),
+            hour=int(s_[11:13]),
+            minute=int(s_[14:16]),
+            second=int(s_[17:19])
+        )
+
+    _fromisoformat = _fromisoformat_impl
     if hasattr(datetime.datetime, 'fromisoformat'):
         _fromisoformat = datetime.datetime.fromisoformat
 
@@ -300,7 +303,7 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
             esc_redirects_counter = obj_to_html(redirect_counter)
             esc_redirects = redirects_to_html(redirects)
             esc_files = obj_to_html(Redirect_Files_List)
-            body = """\
+            html_doc = """\
 <!DOCTYPE html>
 
 <html lang="en">
@@ -348,10 +351,11 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
                         esc_redirects,
                         esc_reload_info,
                         esc_files)
-            body = bytes(body, encoding='utf-8', errors='xmlcharrefreplace')
-            self.send_header('Content-Length', len(body))
+            html_doc = bytes(html_doc, encoding='utf-8',
+                             errors='xmlcharrefreplace')
+            self.send_header('Content-Length', len(html_doc))
             self.end_headers()
-            self.wfile.write(body)
+            self.wfile.write(html_doc)
 
         def do_GET_reload(self, reload_path__: str):
             # XXX: Could this be a security or stability risk?
@@ -404,7 +408,7 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
             # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Location
             self.send_header('Redirect-Server-Host', HOSTNAME)
             self.send_header('Redirect-Server-Version', __version__)
-            self.send_header('Location', to)
+            self.send_header('Location', to)  # the most important statement in this program
             try:
                 self.send_header('Redirect-Created-By', user)
             except UnicodeEncodeError:
