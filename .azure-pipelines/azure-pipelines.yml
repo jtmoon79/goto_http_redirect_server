@@ -32,4 +32,4 @@ steps:
 
 - task: Bash@3
   inputs:
-    filePath: '.azure-pipelines/build_install_run.sh'
+    filePath: '.azure-pipelines/build-install-run.sh'

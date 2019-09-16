@@ -5,7 +5,8 @@ set -e
 set -u
 set -o pipefail
 
-BUILD_INSTALL="$(dirname -- "${0}")/../tools/build-install.sh"
+# initial $PWD is at project root directory
+BUILD_INSTALL='./tools/build-install.sh'
 
 # dump much information about the Azure Pipelines environment
 set -x
