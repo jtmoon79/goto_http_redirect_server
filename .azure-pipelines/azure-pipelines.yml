@@ -6,6 +6,7 @@
 
 trigger:
 - master
+- azure-pipelines
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -19,15 +20,15 @@ strategy:
       python.version: '3.7'
 
 steps:
-- task: UsePythonVersion@0
-  inputs:
-    versionSpec: '$(python.version)'
-  displayName: 'Python $(python.version)'
-
 - script: |
     python -m pip install --upgrade pip
     python -m pip install twine
   displayName: 'Install dependencies'
+
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '$(python.version)'
+  displayName: 'Python $(python.version)'
 
 - task: Bash@3
   inputs:
