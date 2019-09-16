@@ -100,6 +100,10 @@ No service downtime!
       chmod 0500 /etc/authbind/byport/80
       sudo -u nobody -- authbind --deep python goto_http_redirect_server …
 
+<br />
+
+\*\* _Mileage May Vary_ 😔
+
 ----
 
 ## `--help` message
@@ -213,8 +217,6 @@ No service downtime!
       If security and stability are a concern then only allow reloads via process
       signals.
 
-\*\* _Mileage May Vary_ 😔
-
-<br />
+----
 
 <a href="https://stackexchange.com/users/216253/jamesthomasmoon1979"><img src="https://stackexchange.com/users/flair/216253.png" width="208" height="58" alt="profile for JamesThomasMoon1979 on Stack Exchange, a network of free, community-driven Q&amp;A sites" title="profile for JamesThomasMoon1979 on Stack Exchange, a network of free, community-driven Q&amp;A sites" /></a>
