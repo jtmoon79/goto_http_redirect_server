@@ -8,7 +8,7 @@ trigger:
 - master
 - azure-pipelines
 jobs:
-  - job: Ubuntu Pythons
+  - job: Pythons_Ubuntu
     pool:
       vmImage: 'ubuntu-latest'
     strategy:
@@ -31,7 +31,7 @@ jobs:
     - task: Bash@3
       inputs:
         filePath: '.azure-pipelines/build-install-run.sh'
-  - job: Windows Pythons
+  - job: Pythons_Windows
     pool:
       vmImage: 'vs2017-win2016'
     strategy:
