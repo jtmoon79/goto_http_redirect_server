@@ -74,6 +74,7 @@ fi
 
 (
     set -x
+    ${PYTHON} -m twine --version
     ${PYTHON} -m twine check "${cv_whl}"
 )
 

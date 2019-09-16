@@ -56,6 +56,7 @@ Get-ChildItem ./dist/
 # get the full path to the wheel file
 $cv_whl = Get-ChildItem "./dist/$PACKAGE_NAME-$version-py3-none-any.whl" -ErrorAction SilentlyContinue
 
+& $PYTHON -m twine --version
 & $PYTHON -m twine check $cv_whl
 
 # install the wheel (must be done outside the project directory)
