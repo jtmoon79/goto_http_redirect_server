@@ -18,8 +18,8 @@ ls -la .
 uname -a
 docker info || true
 python --version
-pip --version
-pip list -vvv
+python -m pip --version
+python -m pip list -vvv
 
 python -m pip install --quiet --upgrade pip
 python -m pip install --quiet --user twine

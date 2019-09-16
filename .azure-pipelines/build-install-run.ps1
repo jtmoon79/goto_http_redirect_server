@@ -34,6 +34,7 @@ Set-Location "$PSScriptRoot/.."
 
 & $PYTHON -m pip install --quiet --upgrade pip
 & $PYTHON -m pip install --quiet --user twine
+& $PYTHON -m pip list -vvv
 
 #
 # build package

@@ -39,6 +39,9 @@ if [ -d ~/.local/bin ]; then
 fi
 
 set -x
+
+${PYTHON} -m pip list -vvv
+
 # uninstall any previous install (must be done outside the project directory)
 cd ..
 
