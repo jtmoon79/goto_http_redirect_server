@@ -19,7 +19,7 @@ try {
     Get-ChildItem env:  # fallback
 }
 Get-ChildItem
-Get-CimInstance Win32_OperatingSystem | Select-Object $Properties | Format-Table -AutoSize
+#Get-CimInstance Win32_OperatingSystem | Select-Object $Properties | Format-Table -AutoSize
 
 & docker info
 & python --version
