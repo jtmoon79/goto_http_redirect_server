@@ -31,8 +31,8 @@ setup(
     author=__author__,
     url=__url__,
     description=__doc__.splitlines()[0],
-    long_description=long_description,
     long_description_content_type='text/markdown',
+    long_description=long_description,
     license='Apache License 2.0 (Apache-2.0)',
     install_requires=[
     ],
