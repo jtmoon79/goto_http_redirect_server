@@ -8,27 +8,49 @@ trigger:
 - master
 - azure-pipelines
 jobs:
-- deployment: Deploy Program!
-  pool:
-    vmImage: 'ubuntu-latest'
-  environment: 'clean place to do buziness'
-  strategy:
-    matrix:
-      Python35:
-        python.version: '3.5'
-      Python36:
-        python.version: '3.6'
-      Python37:
-        python.version: '3.7'
-  steps:
-  - script: |
-      python -m pip install --upgrade pip
-      python -m pip install --user twine
-    displayName: 'Install dependencies'
-  - task: UsePythonVersion@0
-    inputs:
-      versionSpec: '$(python.version)'
-    displayName: 'Python $(python.version)'
-  - task: Bash@3
-    inputs:
-      filePath: '.azure-pipelines/build-install-run.sh'
+  - job: Ubuntu Pythons
+    pool:
+      vmImage: 'ubuntu-latest'
+    strategy:
+      matrix:
+        Python35:
+          python.version: '3.5'
+        Python36:
+          python.version: '3.6'
+        Python37:
+          python.version: '3.7'
+    steps:
+    - script: |
+        python -m pip install --upgrade pip
+        python -m pip install --user twine
+      displayName: 'Install dependencies'
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '$(python.version)'
+      displayName: 'Python $(python.version)'
+    - task: Bash@3
+      inputs:
+        filePath: '.azure-pipelines/build-install-run.sh'
+  - job: Windows Pythons
+    pool:
+      vmImage: 'vs2017-win2016'
+    strategy:
+      matrix:
+        Python35:
+          python.version: '3.5'
+        Python36:
+          python.version: '3.6'
+        Python37:
+          python.version: '3.7'
+    steps:
+    - script: |
+        python -m pip install --upgrade pip
+        python -m pip install --user twine
+      displayName: 'Install dependencies'
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '$(python.version)'
+      displayName: 'Python $(python.version)'
+    - task: PowerShell@2
+      inputs:
+        filePath: '.azure-pipelines/build-install-run.ps1'
