@@ -17,6 +17,7 @@ uname -a
 docker info || true
 python --version
 pip --version
+pip list -vvv
 
 # install ahead of time
 pip install --user twine
