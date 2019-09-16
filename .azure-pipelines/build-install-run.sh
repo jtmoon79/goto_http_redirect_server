@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # for Azure Pipelines job where
 #     vmImage: 'ubuntu-16.04'
+# or
+#     vmImage: 'macOS-10.14'
 
 set -e
 set -u
