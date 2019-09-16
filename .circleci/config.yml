@@ -78,10 +78,9 @@ workflows:
   version: 2
   workflow_py:
     triggers:
-      filters:
-        branches:
-          only:
-            - master
+      branches:
+        only:
+          - master
     jobs:
       - build_install_run_py35
       - build_install_run_py36
