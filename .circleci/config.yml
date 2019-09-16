@@ -11,8 +11,9 @@ jobs:
       - run:
           name: build, install, and run using provided shell script in Python 3.5
           command: |
-            chmod +x ./.circleci/build_install_run.sh  # force +x
-            ./.circleci/build_install_run.sh
+            set -ex
+            chmod +x ./.circleci/build-install-run.sh  # force +x
+            ./.circleci/build-install-run.sh
   build_install_run_py36:
     docker:
       
@@ -22,8 +23,9 @@ jobs:
       - run:
           name: build, install, and run using provided shell script in Python 3.6
           command: |
-            chmod +x ./.circleci/build_install_run.sh  # force +x
-            ./.circleci/build_install_run.sh
+            set -ex
+            chmod +x ./.circleci/build-install-run.sh  # force +x
+            ./.circleci/build-install-run.sh
   build_install_run_py37:
     docker:
       - image: circleci/python:3.7
@@ -32,8 +34,9 @@ jobs:
       - run:
           name: build, install, and run using provided shell script in Python 3.7
           command: |
-            chmod +x ./.circleci/build_install_run.sh  # force +x
-            ./.circleci/build_install_run.sh
+            set -ex
+            chmod +x ./.circleci/build-install-run.sh  # force +x
+            ./.circleci/build-install-run.sh
   build_install_run_py37_wincore:
     docker:
       - image: python/3.7-windowsservercore
@@ -42,8 +45,9 @@ jobs:
       - run:
           name: build, install, and run using provided shell script in Python 3.7 on Windows Server Core
           command: |
-            chmod +x ./.circleci/build_install_run.sh  # force +x
-            ./.circleci/build_install_run.sh
+            set -ex
+            chmod +x ./.circleci/build-install-run.sh  # force +x
+            ./.circleci/build-install-run.sh
   build_install_run_py36_stretch:
     docker:
       - image: python/3.6-slim-stretch
@@ -52,8 +56,9 @@ jobs:
       - run:
           name: build, install, and run using provided shell script in Python 3.6 on Debian Stretch
           command: |
-            chmod +x ./.circleci/build_install_run.sh  # force +x
-            ./.circleci/build_install_run.sh
+            set -ex
+            chmod +x ./.circleci/build-install-run.sh  # force +x
+            ./.circleci/build-install-run.sh
   build_install_run_py36_buster:
     docker:
       - image: python/3.6-slim-buster
@@ -62,8 +67,9 @@ jobs:
       - run:
           name: build, install, and run using provided shell script in Python 3.6 on Debian Buster
           command: |
-            chmod +x ./.circleci/build_install_run.sh  # force +x
-            ./.circleci/build_install_run.sh
+            set -ex
+            chmod +x ./.circleci/build-install-run.sh  # force +x
+            ./.circleci/build-install-run.sh
   build_install_run_py3_alpine:
     docker:
       - image: python/3-alpine
@@ -72,8 +78,9 @@ jobs:
       - run:
           name: build, install, and run using provided shell script in Python 3 on Alpine Linux
           command: |
-            chmod +x ./.circleci/build_install_run.sh  # force +x
-            ./.circleci/build_install_run.sh
+            set -ex
+            chmod +x ./.circleci/build-install-run.sh  # force +x
+            ./.circleci/build-install-run.sh
 workflows:
   version: 2
   #filters:
