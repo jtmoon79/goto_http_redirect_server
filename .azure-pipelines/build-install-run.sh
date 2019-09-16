@@ -34,7 +34,8 @@ python -m twine --version
 # update path with potential pip install locations
 usersite=$(python -B -c 'import site; print(site.USER_SITE);')
 userbase=$(python -B -c 'import site; print(site.USER_BASE);')
-export PATH="${PATH}:${usersite}:${userbase}"
+userbasebin=${userbase}/bin  # --user install location on Ubuntu
+export PATH="${PATH}:${usersite}:${userbase}:${userbasebin}"
 # build
 version=$(python -B -c 'from goto_http_redirect_server import goto_http_redirect_server as gh;print(gh.__version__)')
 python setup.py -v bdist_wheel
