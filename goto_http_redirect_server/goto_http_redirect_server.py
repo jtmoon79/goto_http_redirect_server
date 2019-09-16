@@ -584,6 +584,9 @@ class RedirectServer(socketserver.TCPServer):
         Polled during socketserver.TCPServer.serve_forever.
         Checks global reload and create new handler (which will re-read
         the Redirect_Files_List)
+
+        TODO: avoid use of globals, somehow pass instance variables to this
+              function or class instance
         """
 
         print_debug('.', end='')
