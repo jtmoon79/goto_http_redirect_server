@@ -3,7 +3,7 @@
 ---
 version: 2.1
 jobs:
-  build_install_run_py35:
+  build_install_run__circleci_python_3_5:
     docker:
       - image: circleci/python:3.5
     steps:
@@ -14,9 +14,8 @@ jobs:
             set -ex
             chmod +x ./.circleci/build-install-run.sh  # force +x
             ./.circleci/build-install-run.sh
-  build_install_run_py36:
+  build_install_run__circleci_python_3_6:
     docker:
-      
       - image: circleci/python:3.6
     steps:
       - checkout
@@ -26,7 +25,7 @@ jobs:
             set -ex
             chmod +x ./.circleci/build-install-run.sh  # force +x
             ./.circleci/build-install-run.sh
-  build_install_run_py37:
+  build_install_run__circleci_python_3_7:
     docker:
       - image: circleci/python:3.7
     steps:
@@ -37,7 +36,7 @@ jobs:
             set -ex
             chmod +x ./.circleci/build-install-run.sh  # force +x
             ./.circleci/build-install-run.sh
-  build_install_run_py37_wincore:
+  build_install_run__python_3_7_windowsservercore:
     docker:
       - image: python/3.7-windowsservercore
     steps:
@@ -48,7 +47,7 @@ jobs:
             set -ex
             chmod +x ./.circleci/build-install-run.sh  # force +x
             ./.circleci/build-install-run.sh
-  build_install_run_py36_stretch:
+  build_install_run__python_3_6_slim_stretch:
     docker:
       - image: python/3.6-slim-stretch
     steps:
@@ -59,7 +58,7 @@ jobs:
             set -ex
             chmod +x ./.circleci/build-install-run.sh  # force +x
             ./.circleci/build-install-run.sh
-  build_install_run_py36_buster:
+  build_install_run__python_3_6_slim_buster:
     docker:
       - image: python/3.6-slim-buster
     steps:
@@ -70,7 +69,7 @@ jobs:
             set -ex
             chmod +x ./.circleci/build-install-run.sh  # force +x
             ./.circleci/build-install-run.sh
-  build_install_run_py3_alpine:
+  build_install_run__python_3_6_alpine:
     docker:
       - image: python/3-alpine
     steps:
@@ -89,9 +88,10 @@ workflows:
   #      - master
   workflow_py:
     jobs:
-      - build_install_run_py35
-      - build_install_run_py36
-      - build_install_run_py37
-      #- build_install_run_py37_wincore
-      #- build_install_run_py36_buster
-      #- build_install_run_py3_alpine
+      - build_install_run__circleci_python_3_5
+      - build_install_run__circleci_python_3_6
+      - build_install_run__circleci_python_3_7
+      #- build_install_run__python_3_7_windowsservercore
+      #- build_install_run__python_3_6_slim_stretch
+      #- build_install_run__python_3_6_slim_buster
+      #- build_install_run__python_3_6_alpine
