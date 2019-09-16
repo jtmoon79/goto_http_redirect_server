@@ -392,17 +392,6 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
                              int(status_code), status_code.phrase,
                              loglevel=logging.INFO)
 
-            # test "Location" header value before send_response(status_code)
-            try:
-                to.encode('latin-1', 'strict')  # from BaseServer.send_header
-            except UnicodeEncodeError:
-                err_status = http.HTTPStatus.INTERNAL_SERVER_ERROR
-                log.error('header "Location" bad value (%s), returning %s (%s)',
-                          to, int(err_status), err_status.phrase)
-                self.send_response(err_status)
-                self.end_headers()
-                return
-
             self.send_response(status_code)
             # The 'Location' Header is used by browsers for HTTP 30X Redirects
             # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Location
@@ -507,12 +496,48 @@ def load_redirects_files(redirects_files: Path_List,
     return entrys
 
 
+def clean_redirects(entrys_files: Re_Entry_Dict) -> Re_Entry_Dict:
+    """remove entries with To paths that are reserved or cannot be encoded"""
+
+    # TODO: process re_entry for circular loops of redirects, either
+    #       break those loops or log.warning
+    #       e.g. given redirects '/a' → '/b' and '/b' → '/a',
+    #       the browser will (in theory) redirect forever.
+    #       (browsers I tested force stopped the redirect loop; Edge, Chrome).
+
+    for path in REDIRECT_PATHS_NOT_ALLOWED:
+        re_key = Re_EntryKey(path)
+        if re_key in entrys_files.keys():
+            log.warning('Removing reserved From value "%s" from redirect entries.',
+                        path)
+            entrys_files.pop(path)
+
+    # check for To "Location" Header values that will fail to encode
+    remove = []
+    for re_key in entrys_files.keys():
+        # test "Location" header value before send_response(status_code)
+        to = entrys_files[re_key][0]
+        try:
+            # this is done in standard library http/server.py
+            # method BaseServer.send_header
+            to.encode('latin-1', 'strict')
+        except UnicodeEncodeError:
+            log.warning('Removing To "Location" value "%s"; it fails encoding to "latin-1"',
+                        to)
+            remove.append(re_key)
+    for re_key in remove:
+        entrys_files.pop(re_key)
+
+    return entrys_files
+
+
 def load_redirects(from_to: FromTo_List,
                    redirects_files: Path_List,
                    field_delimiter: str) \
         -> Re_Entry_Dict:
     """
     load (or reload) all redirect information, process into Re_EntryList
+    Remove bad entries.
     :param from_to: list --from-to passed redirects for Re_Entry
     :param redirects_files: list of files to process for Re_Entry
     :param field_delimiter: field delimiter within passed redirects_files
@@ -521,16 +546,9 @@ def load_redirects(from_to: FromTo_List,
     entrys_fromto = load_redirects_fromto(from_to)
     entrys_files = load_redirects_files(redirects_files, field_delimiter)
     entrys_files.update(entrys_fromto)
-    # TODO: process re_entry for circular loops of redirects, either
-    #       break those loops or log.warning
-    #       e.g. given redirects '/a' → '/b' and '/b' → '/a',
-    #       the browser will (in theory) redirect forever.
-    #       (browsers I tested force stopped the redirect loop; Edge, Chrome).
-    for path in REDIRECT_PATHS_NOT_ALLOWED:
-        if path in entrys_files.keys():
-            log.warning('Removing not allowed path "%s" from redirect entries.',
-                        path)
-            entrys_files.pop(path)
+
+    entrys_files = clean_redirects(entrys_files)
+
     return entrys_files
 
 
