@@ -31,6 +31,14 @@ python -m pip install --quiet --user twine
 python -m pip --version
 python -m twine --version
 
+function readlink_(){
+    # portable readlink
+    echo -n "${1}" | python -B -c '\
+import os, sys
+input_ = sys.stdin.read()
+print(os.path.realpath(input_))'
+}
+
 # condensed from tools/build-install.sh
 # update path with potential pip install locations
 usersite=$(python -B -c 'import site; print(site.USER_SITE);')
@@ -40,7 +48,7 @@ export PATH="${PATH}:${usersite}:${userbase}:${userbasebin}"
 # build
 version=$(python -B -c 'from goto_http_redirect_server import goto_http_redirect_server as gh;print(gh.__version__)')
 python setup.py -v bdist_wheel
-cv_whl=$(readlink -f -- "./dist/${PACKAGE_NAME}-${version}-py3-none-any.whl")
+cv_whl=$(readlink_ "./dist/${PACKAGE_NAME}-${version}-py3-none-any.whl")
 python -m twine check "${cv_whl}"
 cd ..  # move out of project directory
 # install
