@@ -2,6 +2,19 @@
 #
 # uninstall, build, install, run
 #
+# This script does not pip install any other package.
+# Requires python modules:
+#   pip
+#   wheel
+#   twine
+#   setuptools
+#
+# Manually tested to run under differing environments including:
+#   Python 3.7 on MinGW64 shell on Windows 10
+#   Python 3.5.3 on Debian 9 Stretch Linux on WLS
+#   Python 3.6.5 on OpenSUSE 15 Leap Linux on WLS
+#   Python 3.5 on Debian 9 Stretch Linux on Raspberry Pi
+#
 
 set -e
 set -u
