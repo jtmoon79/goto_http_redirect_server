@@ -53,10 +53,12 @@ rm -rfv ./build/ ./dist/ "./${PACKAGE_NAME}.egg-info/"
 # build using wheels
 cd -
 version=$(${PYTHON} -B -c 'from goto_http_redirect_server import goto_http_redirect_server as gh;print(gh.__version__)')
+# add various possible `pip install` destinations
 usersite=$(${PYTHON} -B -c 'import site; print(site.USER_SITE);')  # pip may install to here
-userscripts="${usersite}/../Scripts"   # pip in minGW bash may install to here
+userscripts="${usersite}/../Scripts"   # pip in Windows may install to here
+userbin="${usersite}/../bin"   # pip in Windows may install to here
 userbase=$(${PYTHON} -B -c 'import site; print(site.USER_BASE);')  # pip may install to here
-export PATH="${PATH}:${usersite}:${userscripts}:${userbase}"
+export PATH="${PATH}:${usersite}:${userscripts}:${userbin}:${userbase}"
 
 ${PYTHON} setup.py -v bdist_wheel
 
