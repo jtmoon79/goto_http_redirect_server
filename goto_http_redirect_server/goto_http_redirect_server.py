@@ -105,13 +105,15 @@ REDIRECT_PATHS_NOT_ALLOWED = (PATH_FAVICON,)
 
 class str_delay(object):
     """
-    delayed evaluation call to object.__str__, for logging calls that may not
-    need to execute a passed function. e.g.
-       logging.debug('foo:%s', high_memory_str(foo))
-    The call to high_memory_str(foo) may not be necessary because logging.level
-    is logging.INFO. So skip the call to high_memory_str(foo) if it is not used,
+    Delayed evaluation of object.__str__.
+    Intended for logging messages that may not need to execute a passed function
+    because the logging level may not be set.
     e.g.
-       logging.debug('foo:%s', str_delay(high_memory_str, foo))
+       logging.debug('%s', complex_function(foo))
+    The call to complex_function(foo) may not be necessary because logging.level
+    might be logging.INFO. So skip the call to complex_function(foo) if it is
+    not necessary, e.g.
+       logging.debug('%s', str_delay(complex_function, foo))
 
     XXX: There are probably more succinct implementations. Good enough.
     """
