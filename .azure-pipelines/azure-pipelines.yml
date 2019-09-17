@@ -1,33 +1,38 @@
-# Python package
-# Create and test a Python package on multiple Python versions.
-# Add steps that analyze code, save the dist with the build record, publish to a PyPI-compatible index, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/python
-# default Pipelines YAML template for Python, modifed by jtmoon79
-
+# Azure Pipelines configuration file
+# source: https://circleci.com/gh/jtmoon79/goto_http_redirect_server/tree/master
+# project: https://dev.azure.com/jtmmoon/goto_http_redirect_server/_build
+#
+# YAML Schema from
+# https://docs.microsoft.com/en-us/azure/devops/pipelines/yaml-schema?view=azure-devops&tabs=schema
+# (http://archive.fo/TFpib)
+---
 trigger:
-- master
-- azure-pipelines
+  - master
+  - azure-pipelines
 jobs:
   - job: Pythons_Ubuntu
+    displayName: 'job: Ubuntu 16.04'
     pool:
       vmImage: 'ubuntu-16.04'
     strategy:
       matrix:
-        Python35:  # python -m twine check fails
+        Python_3_5:  # python -m twine check fails
           python.version: '3.5'
         Python36:
           python.version: '3.6'
         Python37:
           python.version: '3.7'
     steps:
-    - task: UsePythonVersion@0
-      inputs:
-        versionSpec: '$(python.version)'
-      displayName: 'Python $(python.version)'
-    - task: Bash@3
-      inputs:
-        filePath: '.azure-pipelines/build-install-run.sh'
+      - task: UsePythonVersion@0
+        displayName: 'task: <UsePythonVersion@0> Python $(python.version)'
+        inputs:
+          versionSpec: '$(python.version)'
+      - task: Bash@3
+        displayName: 'task: <Bash@3> Bash .azure-pipelines/build-install-run.sh'
+        inputs:
+          filePath: '.azure-pipelines/build-install-run.sh'
   - job: Pythons_Windows
+    displayName: 'job: Windows 2016'
     pool:
       vmImage: 'vs2017-win2016'
     strategy:
@@ -39,14 +44,16 @@ jobs:
         Python37:
           python.version: '3.7'
     steps:
-    - task: UsePythonVersion@0
-      inputs:
-        versionSpec: '$(python.version)'
-      displayName: 'Python $(python.version)'
-    - task: PowerShell@2
-      inputs:
-        filePath: '.azure-pipelines/build-install-run.ps1'
+      - task: UsePythonVersion@0
+        displayName: 'task: <UsePythonVersion@0> Python $(python.version)'
+        inputs:
+          versionSpec: '$(python.version)'
+      - task: PowerShell@2
+        displayName: 'task: <PowerShell@2> Powershell .azure-pipelines/build-install-run.ps1'
+        inputs:
+          filePath: '.azure-pipelines/build-install-run.ps1'
   - job: Pythons_MacOSX
+    displayName: 'job: Mac OSX 10.14'
     pool:
       vmImage: 'macOS-10.14'
     strategy:
@@ -58,10 +65,11 @@ jobs:
         Python37:
           python.version: '3.7'
     steps:
-    - task: UsePythonVersion@0
-      inputs:
-        versionSpec: '$(python.version)'
-      displayName: 'Python $(python.version)'
-    - task: Bash@3
-      inputs:
-        filePath: '.azure-pipelines/build-install-run.sh'
+      - task: UsePythonVersion@0
+        displayName: 'task: <UsePythonVersion@0> Python $(python.version)'
+        inputs:
+          versionSpec: '$(python.version)'
+      - task: Bash@3
+        displayName: 'task: <Bash@3> Bash .azure-pipelines/build-install-run.sh'
+        inputs:
+          filePath: '.azure-pipelines/build-install-run.sh'
