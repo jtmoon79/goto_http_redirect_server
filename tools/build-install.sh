@@ -13,7 +13,7 @@ cd "$(dirname -- "${0}")/.."  # cd to project top-level
 # make a good effort to get the path to the local python 3 installation
 # if $PTYHON is set, assume it's the PYTHON interpreter
 #
-if [ ! "${PYTHON+x}" ]; then
+if [[ ! "${PYTHON+x}" ]]; then
     # attempt to set python to most portable invocation
     PYTHON='python'  # fallback
     if which 'python3' &> /dev/null; then
@@ -34,7 +34,7 @@ readonly PACKAGE_NAME='goto_http_redirect_server'
 readonly PROGRAM_NAME='goto_http_redirect_server'
 
 # Debian bash on Windows Linux Subsystem may not have default pip install path
-if [ -d ~/.local/bin ]; then
+if [[ -d ~/.local/bin ]]; then
     export PATH=${PATH}:~/.local/bin
 fi
 
@@ -85,7 +85,7 @@ fi
 (   
     cd ..
     user_arg=--user
-    if [ "${VIRTUAL_ENV+x}" ]; then  # if virtualenv then do not pass --user
+    if [[ "${VIRTUAL_ENV+x}" ]]; then  # if virtualenv then do not pass --user
         user_arg=''
     fi
     set -x
