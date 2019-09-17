@@ -1,5 +1,11 @@
 # CircleCI 2.0 configuration file
-# image list at https://circleci.com/docs/2.0/circleci-images/
+# source: https://circleci.com/gh/jtmoon79/goto_http_redirect_server/tree/master
+#
+# YAML Schema from
+# https://circleci.com/docs/2.0/configuration-reference/
+# (http://archive.fo/y0dxX)
+# CircleCI image list
+# https://circleci.com/docs/2.0/circleci-images/ (http://archive.fo/z2SyE)
 ---
 version: 2.1
 jobs:
@@ -9,7 +15,7 @@ jobs:
     steps:
       - checkout
       - run:
-          name: build, install, and run using provided shell script in Python 3.5
+          name: build, install, and run in Python 3.5
           command: |
             set -ex
             chmod +x ./.circleci/build-install-run.sh  # force +x
@@ -20,7 +26,7 @@ jobs:
     steps:
       - checkout
       - run:
-          name: build, install, and run using provided shell script in Python 3.6
+          name: build, install, and run in Python 3.6
           command: |
             set -ex
             chmod +x ./.circleci/build-install-run.sh  # force +x
@@ -31,7 +37,7 @@ jobs:
     steps:
       - checkout
       - run:
-          name: build, install, and run using provided shell script in Python 3.7
+          name: build, install, and run in Python 3.7
           command: |
             set -ex
             chmod +x ./.circleci/build-install-run.sh  # force +x
@@ -42,7 +48,7 @@ jobs:
     steps:
       - checkout
       - run:
-          name: build, install, and run using provided shell script in Python 3.7 on Windows Server Core
+          name: build, install, and run in Python 3.7 on Windows Server Core
           command: |
             set -ex
             chmod +x ./.circleci/build-install-run.sh  # force +x
@@ -53,7 +59,7 @@ jobs:
     steps:
       - checkout
       - run:
-          name: build, install, and run using provided shell script in Python 3.6 on Debian Stretch
+          name: build, install, and run in Python 3.6 on Debian Stretch
           command: |
             set -ex
             chmod +x ./.circleci/build-install-run.sh  # force +x
@@ -64,7 +70,7 @@ jobs:
     steps:
       - checkout
       - run:
-          name: build, install, and run using provided shell script in Python 3.6 on Debian Buster
+          name: build, install, and run in Python 3.6 on Debian Buster
           command: |
             set -ex
             chmod +x ./.circleci/build-install-run.sh  # force +x
@@ -75,7 +81,7 @@ jobs:
     steps:
       - checkout
       - run:
-          name: build, install, and run using provided shell script in Python 3 on Alpine Linux
+          name: build, install, and run in Python 3 on Alpine Linux
           command: |
             set -ex
             chmod +x ./.circleci/build-install-run.sh  # force +x
