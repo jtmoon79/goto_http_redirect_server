@@ -58,8 +58,8 @@ in your browser, type **`goto/hr⏎`**. Your browser will end up at
 
 Sadly, some browsers will assume a single word host, e.g. `goto/hr`, is a
 search engine query, i.e. the browser will query Google for "`goto/hr`".
-Either, type in the local network domain name, e.g. `goto.local/hr`,
-or, type in a prepended http protocol, e.g. `http://goto/hr`.\*\*
+Either, type in the local network domain name, e.g. `goto.local/hr⏎`,
+or, type in a prepended http protocol, e.g. `http://goto/hr⏎`.\*\*
 
 </small>
 
