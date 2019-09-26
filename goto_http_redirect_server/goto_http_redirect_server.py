@@ -743,10 +743,11 @@ signaling the process.
                         help='Set logging level to DEBUG.'
                              ' Default is INFO.')
     pgroup.add_argument('--version', action='version',
-                        help='show program version and exit.',
+                        help='Print "%s %s" and exit.' %
+                             (PROGRAM_NAME, __version__),
                         version='%(prog)s ' + __version__)
     pgroup.add_argument('-?', '-h', '--help', action='help',  # add last
-                        help='show this help message and exit.')
+                        help='Print this help message and exit.')
     parser.epilog = """
 About Redirect Entries:
 

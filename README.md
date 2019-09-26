@@ -170,8 +170,8 @@ No service downtime!
       --log LOG             Log to file at path LOG. Default logging is to
                             sys.stderr.
       --debug               Set logging level to DEBUG. Default is INFO.
-      --version             show program version and exit.
-      -?, -h, --help        show this help message and exit.
+      --version             Print "goto_http_redirect_server 0.4.1" and exit.
+      -?, -h, --help        Print this help message and exit.
 
     About Redirect Entries:
 
@@ -201,7 +201,7 @@ No service downtime!
       Options --status-path and --reload-path may be passed paths to obscure access
       from unauthorized users. e.g.
 
-          --status-path '/aaa5309f-cad4-441a-9075-259ddf1545e6'
+          --status-path '/fc8953c0-1cde-4254-8974-d23c61678310'
 
     About Reloads:
 
