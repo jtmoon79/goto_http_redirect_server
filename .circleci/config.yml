@@ -77,7 +77,7 @@ jobs:
             ./.circleci/build-install-run.sh
   build_install_run__python_3_6_alpine:
     docker:
-      - image: python/3-alpine
+      - image: python:3-alpine
     steps:
       - checkout
       - run:
@@ -97,7 +97,7 @@ workflows:
       - build_install_run__circleci_python_3_5
       - build_install_run__circleci_python_3_6
       - build_install_run__circleci_python_3_7
+      - build_install_run__python_3_6_alpine
       #- build_install_run__python_3_7_windowsservercore
       #- build_install_run__python_3_6_slim_stretch
       #- build_install_run__python_3_6_slim_buster
-      #- build_install_run__python_3_6_alpine
