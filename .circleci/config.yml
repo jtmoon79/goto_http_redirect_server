@@ -98,6 +98,6 @@ workflows:
       - build_install_run__circleci_python_3_6
       - build_install_run__circleci_python_3_7
       - build_install_run__python_3_6_alpine
-      - build_install_run__python_3_7_windowsservercore
+      #- build_install_run__python_3_7_windowsservercore
       - build_install_run__python_3_6_slim_stretch
       - build_install_run__python_3_6_slim_buster
