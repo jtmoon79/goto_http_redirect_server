@@ -20,8 +20,8 @@ pip --version
 pip list -vvv
 
 # install ahead of time
-python -m pip install --quiet --upgrade pip
-python -m pip install --quiet --upgrade setuptools
+python -m pip install --quiet --user --upgrade pip
+python -m pip install --quiet --user --upgrade setuptools
 python -m pip install --quiet --user twine
 
 # run the build-install.sh
