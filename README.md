@@ -136,7 +136,8 @@ No service downtime!
                             redirection entry per line. An entry is four fields
                             using tab character for field separator. The four
                             entry fields are: "from path", "to URL", "added by
-                            user", and "added on datetime" separated by a tab.
+                            user", and "added on datetime" separated by a tab
+                            character.
 
     Network Options:
       --ip IP, -i IP        IP interface to listen on. Default is 127.0.0.1 .
@@ -170,7 +171,7 @@ No service downtime!
       --log LOG             Log to file at path LOG. Default logging is to
                             sys.stderr.
       --debug               Set logging level to DEBUG. Default is INFO.
-      --version             Print "goto_http_redirect_server 0.4.1" and exit.
+      --version             Print "goto_http_redirect_server 0.5.1" and exit.
       -?, -h, --help        Print this help message and exit.
 
     About Redirect Entries:
@@ -186,7 +187,7 @@ No service downtime!
       A redirects file entry has four fields separated by a tab character "\t";
       "from path", "to URL", "added by user", "added on datetime".  For example,
 
-        hr  http://human-resources.mycorp.local/login       bob     2019-09-07 12:00:00
+        /hr http://human-resources.mycorp.local/login       bob     2019-09-07 12:00:00
 
       The last two fields, "added by user" and "added on datetime", are intended
       for record-keeping within an organization.
@@ -196,12 +197,41 @@ No service downtime!
       For example, the URL "http://host/hr" is processed by goto_http_redirect_server
       as URI path "/hr".
 
+      A redirect will combine the various incoming URI parts.
+      For example, given redirect entry:
+
+        /b  http://bug-tracker.mycorp.local/view.cgi        bob     2019-09-07 12:00:00
+
+      And incoming request:
+
+        http://goto/b?id=123
+
+      will result in a redirect URL:
+
+        http://bug-tracker.mycorp.local/view.cgi?id=123
+
+      Additionally, a special case for a redirect entry with trailing character '='
+      in the query string will append URI query parameters directly.
+      For example, given redirect entry:
+
+        /b  http://bug-tracker.mycorp.local/view.cgi?id=    bob     2019-09-07 12:00:00
+
+      And incoming request:
+
+        http://goto/b?123
+
+      will result in a redirect URL:
+
+        http://bug-tracker.mycorp.local/view.cgi?id=123
+
+      See function 'combine_parseresult'.
+
     About Paths:
 
       Options --status-path and --reload-path may be passed paths to obscure access
       from unauthorized users. e.g.
 
-          --status-path '/fc8953c0-1cde-4254-8974-d23c61678310'
+          --status-path '/77498db2-ef41-410b-9860-234ec2f537fe'
 
     About Reloads:
 

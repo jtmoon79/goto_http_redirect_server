@@ -754,7 +754,7 @@ signaling the process.
                         ' four entry fields are:'
                         ' "from path", "to URL", "added by user", and'
                         ' "added on datetime"'
-                        ' separated by a tab.',
+                        ' separated by a tab character.',
                         default=list())
 
     pgroup = parser.add_argument_group(title='Network Options')
@@ -830,7 +830,7 @@ About Redirect Entries:
   A redirects file entry has four fields separated by a tab character "\\t";
   "from path", "to URL", "added by user", "added on datetime".  For example,
 
-    hr	http://human-resources.mycorp.local/login	bob	2019-09-07 12:00:00
+    /hr	http://human-resources.mycorp.local/login	bob	2019-09-07 12:00:00
 
   The last two fields, "added by user" and "added on datetime", are intended
   for record-keeping within an organization.
@@ -839,6 +839,35 @@ About Redirect Entries:
   leading "/" as this is the URI path given for processing.
   For example, the URL "http://host/hr" is processed by {0}
   as URI path "/hr".
+
+  A redirect will combine the various incoming URI parts.
+  For example, given redirect entry:
+
+    /b	http://bug-tracker.mycorp.local/view.cgi	bob	2019-09-07 12:00:00
+
+  And incoming request:
+
+    http://goto/b?id=123
+
+  will result in a redirect URL:
+
+    http://bug-tracker.mycorp.local/view.cgi?id=123
+
+  Additionally, a special case for a redirect entry with trailing character '='
+  in the query string will append URI query parameters directly.
+  For example, given redirect entry:
+
+    /b	http://bug-tracker.mycorp.local/view.cgi?id=	bob	2019-09-07 12:00:00
+
+  And incoming request:
+
+    http://goto/b?123
+
+  will result in a redirect URL:
+
+    http://bug-tracker.mycorp.local/view.cgi?id=123
+
+  See function 'combine_parseresult'.
 
 About Paths:
 
