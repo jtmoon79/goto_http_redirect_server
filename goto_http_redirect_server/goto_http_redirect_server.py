@@ -709,7 +709,7 @@ def reload_signal_handler(signum, _) -> None:
 def process_options() -> typing.Tuple[str,
                                       int,
                                       bool,
-                                      pathlib.Path,
+                                      typing.Union[pathlib.Path, None],
                                       str,
                                       str,
                                       int,
@@ -921,7 +921,7 @@ About Reloads:
         str(args.ip), \
         int(args.port), \
         bool(args.debug), \
-        pathlib.Path(str(log_filename)), \
+        log_filename, \
         str(args.status_path), \
         str(args.reload_path), \
         int(args.redirect_code), \
