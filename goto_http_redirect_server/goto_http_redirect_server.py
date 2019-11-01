@@ -68,9 +68,12 @@ LOGGING_FORMAT_DATETIME = '%Y-%m-%d %H:%M:%S'
 LOGGING_FORMAT = '%(asctime)s %(name)s %(levelname)s: %(message)s'
 # importers can override 'log'
 log = logging.getLogger(PROGRAM_NAME)
-sys_args = []  # write-once copy of sys.argv
+# write-once copy of sys.argv
+sys_args = []  # type: typing.List[str]
 
+#
 # Redirect Entry types
+#
 Re_From = typing.NewType('Re_From', str)  # Redirect From URI Path
 Re_To = typing.NewType('Re_To', str)  # Redirect To URL Location
 Re_User = typing.NewType('Re_User', str)  # User that created the Redirect (records-keeping thing, does not affect behavior)
@@ -80,18 +83,24 @@ Re_EntryValue = typing.NewType('Re_EntryValue',
                                 typing.Tuple[Re_To, Re_User, Re_Date])
 Re_Entry_Dict = typing.NewType('Re_Entry_Dict',
                                typing.Dict[Re_EntryKey, Re_EntryValue])
+#
 # other helpful types
+#
 Path_List = typing.List[pathlib.Path]
 FromTo_List = typing.List[typing.Tuple[str, str]]
 Redirect_Counter = typing.DefaultDict[str, int]
 str_None = typing.Union[str, None]
 Path_None = typing.Union[pathlib.Path, None]
+#
 # volatile global instances
-Redirect_FromTo_List = []  # global list of --from-to passed redirects
-Redirect_Files_List = []  # global list of --redirects files
+#
+# global list of --from-to passed redirects
+Redirect_FromTo_List = []  # type: FromTo_List
+# global list of --redirects files
+Redirect_Files_List = []  # type: Path_List
 reload = False
 reload_datetime = None
-redirect_counter = defaultdict(int)
+redirect_counter = defaultdict(int)  # type: typing.DefaultDict[str, int]
 status_path = None
 reload_path = None
 program_start_time = time.time()
@@ -197,9 +206,9 @@ def logging_init(debug: bool, filename: Path_None) -> None:
     """initialize logging module to my preferences"""
 
     global LOGGING_FORMAT
-    filename = str(filename.absolute()) if filename else None
+    filename_ = str(filename.absolute()) if filename else None
     logging.basicConfig(
-        filename=filename,
+        filename=filename_,
         level=logging.DEBUG,
         format=LOGGING_FORMAT,
         datefmt=LOGGING_FORMAT_DATETIME
