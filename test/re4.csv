@@ -1,0 +1,6 @@
+/a	http://a.xz	bob1	
+/b	http://b.xz/pathB?p2=22	bob2	
+/c	http://c.xz/pathC1/pathC2?p3=333	bob3	
+/d	http://d.xz/pathD1/pathD2;oparm1=1?p4=4444	bob4	
+/e?bug=	http://e.xz/pathE1/pathE2?ebug=	bob4
+/f	http://f.xz/pathF1/pathF2?fbug=	bob4	

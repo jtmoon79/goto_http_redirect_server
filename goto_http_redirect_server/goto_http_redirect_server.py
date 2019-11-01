@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- encoding: utf-8 -*-
 # -*- pyversion: >=3.5.2 -*-
+# TODO: BUG: status page reveals reload path and command line args.
 
 
 import sys
@@ -24,6 +25,7 @@ import copy
 import json
 import pprint
 import logging
+from urllib import parse
 from collections import defaultdict
 
 
@@ -142,6 +144,55 @@ def html_a(s_: str) -> str:
     return '<a href="' + s_ + '">' + s_ + '</a>'
 
 
+def combine_parseresult(pr1: parse.ParseResult, pr2: parse.ParseResult) -> str:
+    """
+    Combine parse.ParseResult parts.
+    A parse.ParseResults example is
+       parse.urlparse('http://host.com/path1;parmA=a,parmB=b?a=A&b=%20B&cc=CCC#FRAG')
+    returns
+        ParseResult(scheme='http', netloc='host.com', path='/path1',
+                    params='parm2', query='a=A&b=%20B&cc=CCC', fragment='FRAG')
+
+    pr1 is assumed to represent a Re_To supplied at startup-time
+    pr2 is assumed to be an incoming request
+
+    From pr1 use .scheme, .netloc, .path
+
+    Combine .params, .query
+
+    .query is combined such that a shorter redirect may be typed.
+    For example, given RedirectEntry
+       /b	http://bugzilla.corp.local/bug.cgi?id=	bob	
+    User can GET URL (assuming running at host 'goto')
+       'http://goto/b?123
+    Which will become URL
+       'http://bugzilla.corp.local/bug.cgi?id=123'
+
+    From pr2 use .fragment
+
+    Return a URL suitable for HTTP Header 'To'.
+    """
+    pr = pr1._asdict()
+    pr['fragment'] = pr2.fragment
+    if pr2.params:
+        if pr1.params:
+            # XXX: how are URI Object Parameters combined?
+            #      see https://tools.ietf.org/html/rfc1808.html#section-2.1
+            pr['params'] = pr1.params + ';' + pr2.params
+        else:
+            pr['params'] = pr2.params
+    if pr2.query:
+        if pr1.query:
+            if pr1.query.endswith('='):
+                pr['query'] = pr1.query + pr2.query
+            else:
+                pr['query'] = pr1.query + '&' + pr2.query
+        else:
+            pr['query'] = pr2.query
+    url = parse.urlunparse(parse.ParseResult(**pr))
+    return url
+
+
 def logging_init(debug: bool, filename: Path_None) -> None:
     """initialize logging module to my preferences"""
 
@@ -244,11 +295,11 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
             except Exception as ex:
                 print('Error during log_message\n%s' % str(ex), file=sys.stderr)
 
-        def do_GET_status(self, status_path__: str):
+        def do_GET_status(self, path_: str):
             """dump status information about this server instance"""
 
             self.log_message('%s requested, returning %s (%s)',
-                             status_path__,
+                             path_,
                              int(http.HTTPStatus.OK),
                              http.HTTPStatus.OK.phrase,
                              loglevel=logging.INFO)
@@ -359,10 +410,10 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
             self.end_headers()
             self.wfile.write(html_doc)
 
-        def do_GET_reload(self, reload_path__: str):
+        def do_GET_reload(self, path_: str):
             # XXX: Could this be a security or stability risk?
             self.log_message('%s reload requested, returning %s (%s)',
-                             reload_path__,
+                             path_,
                              int(http.HTTPStatus.NO_CONTENT),
                              http.HTTPStatus.NO_CONTENT.phrase,
                              loglevel=logging.INFO)
@@ -373,10 +424,13 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
             global reload
             reload = True
 
-        def do_GET_redirect(self, redirects_: Re_Entry_Dict):
-            if self.path not in redirects_.keys():
+        def do_GET_redirect(self,
+                            parseresult: parse.ParseResult,
+                            redirects_: Re_Entry_Dict):
+
+            if parseresult.path not in redirects_.keys():
                 self.log_message('no redirect found for (%s), returning %s (%s)',
-                                 self.path, int(http.HTTPStatus.NOT_FOUND),
+                                 parseresult.path, int(http.HTTPStatus.NOT_FOUND),
                                  http.HTTPStatus.NOT_FOUND.phrase,
                                  loglevel=logging.INFO)
                 self.send_response(http.HTTPStatus.NOT_FOUND)
@@ -385,10 +439,13 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
                 self.end_headers()
                 return
 
-            key = Re_EntryKey(Re_From(self.path))
-            to, user, dt = redirects_[key][0],\
-                           redirects_[key][1],\
-                           redirects_[key][2]
+            key = Re_EntryKey(Re_From(parseresult.path))
+            parseresult_to = parse.urlparse(redirects_[key][0])
+            user = redirects_[key][1]
+            dt = redirects_[key][2]
+            # merge RedirectEntry URI parts with incoming requested URI parts
+            to = combine_parseresult(parseresult_to, parseresult)
+
             self.log_message('redirect found (%s) → (%s), returning %s (%s)',
                              key, to,
                              int(status_code), status_code.phrase,
@@ -399,7 +456,8 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
             # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Location
             self.send_header('Redirect-Server-Host', HOSTNAME)
             self.send_header('Redirect-Server-Version', __version__)
-            self.send_header('Location', to)  # the most important statement in this program
+            # the most important statement in this program
+            self.send_header('Location', to)
             try:
                 self.send_header('Redirect-Created-By', user)
             except UnicodeEncodeError:
@@ -407,7 +465,7 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
                 self.send_header('Redirect-Created-By', 'Error Encoding User')
             self.send_header('Redirect-Created-Date', dt.isoformat())
             self.end_headers()
-            count_key = '(%s) → (%s)' % (self.path, to)
+            count_key = '(%s) → (%s)' % (parseresult.path, to)
             redirect_counter[count_key] += 1
             return
 
@@ -426,14 +484,15 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
             except:
                 log.exception('Failed to log GET request')
 
-            if self.path == status_path_:
-                self.do_GET_status(self.path)
+            parseresult = parse.urlparse(self.path)
+            if parseresult.path == status_path_:
+                self.do_GET_status(parseresult.path)
                 return
-            elif self.path == reload_path_:
-                self.do_GET_reload(reload_path_)
+            elif parseresult.path == reload_path_:
+                self.do_GET_reload(parseresult.path)
                 return
 
-            self.do_GET_redirect(redirects)
+            self.do_GET_redirect(parseresult, redirects)
             return
 
     return RedirectHandler
