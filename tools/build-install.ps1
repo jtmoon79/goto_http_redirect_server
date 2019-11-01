@@ -74,6 +74,7 @@ Remove-Item -Recurse -Path './build/','./dist/',"./$PACKAGE_NAME.egg-info/"  -Er
 Pop-Location
 $version = & $PYTHON -B -c 'from goto_http_redirect_server import goto_http_redirect_server as gh;print(gh.__version__)'
 & $PYTHON setup.py -v bdist_wheel
+if ($LASTEXITCODE) { exit $LASTEXITCODE }
 
 # note the contents of dist
 Get-ChildItem ./dist/
@@ -85,13 +86,16 @@ if (-not (Test-Path-Safely $cv_whl)) {
 }
 
 & $PYTHON -m twine check $cv_whl
+if ($LASTEXITCODE) { exit $LASTEXITCODE }
 
 # install the wheel (must be done outside the project directory)
 Push-Location ..
 
 & $PYTHON -m pip install -v $cv_whl
+if ($LASTEXITCODE) { exit $LASTEXITCODE }
 
 & $PACKAGE_NAME --version
+if ($LASTEXITCODE) { exit $LASTEXITCODE }
 
 #
 # verify it runs
@@ -100,8 +104,10 @@ Push-Location ..
 $PORT = 55923  # hopefully not in-use!
 # does it run?
 & $PACKAGE_NAME --version
+if ($LASTEXITCODE) { exit $LASTEXITCODE }
 # does it run and listen on the socket?
 & $PACKAGE_NAME --debug --shutdown 2 --port $PORT --from-to '/a' 'http://foo.com'
+if ($LASTEXITCODE) { exit $LASTEXITCODE }
 
 #
 # exit with hint
