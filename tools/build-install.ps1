@@ -59,6 +59,10 @@ Foreach ($pythonpath in @("$env:PYTHON",  # if $PTYHON is set, assume it's the P
 $PACKAGE_NAME = 'goto_http_redirect_server'
 $PROGRAM_NAME = 'goto_http_redirect_server'
 
+# mypy check first
+& $PYTHON -m mypy 'goto_http_redirect_server/goto_http_redirect_server.py'
+if ($LASTEXITCODE) { exit $LASTEXITCODE }
+
 Push-Location ..
 
 & $PYTHON -m pip uninstall --yes "$PACKAGE_NAME"

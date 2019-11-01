@@ -23,6 +23,7 @@ pip list -vvv
 python -m pip install --quiet --user --upgrade pip
 python -m pip install --quiet --user --upgrade setuptools
 python -m pip install --quiet --user twine
+python -m pip install --quiet --user mypy
 
 # run the build-install.sh
 chmod +x "${BUILD_INSTALL}"  # force +x

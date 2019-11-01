@@ -46,6 +46,9 @@ ${PYTHON} --version
 readonly PACKAGE_NAME='goto_http_redirect_server'
 readonly PROGRAM_NAME='goto_http_redirect_server'
 
+# mypy check first
+${PYTHON} -m mypy 'goto_http_redirect_server/goto_http_redirect_server.py'
+
 # Debian bash on Windows Linux Subsystem may not have default pip install path
 if [[ -d ~/.local/bin ]]; then
     export PATH=${PATH}:~/.local/bin
