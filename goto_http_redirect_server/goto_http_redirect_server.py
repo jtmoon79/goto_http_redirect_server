@@ -99,7 +99,7 @@ Redirect_FromTo_List = []  # type: FromTo_List
 # global list of --redirects files
 Redirect_Files_List = []  # type: Path_List
 reload = False
-reload_datetime = None  # type: datetime.datetime
+reload_datetime = datetime.datetime.now()  # initial set for mypy, will be set again
 redirect_counter = defaultdict(int)  # type: typing.DefaultDict[str, int]
 status_path = None
 reload_path = None
@@ -258,7 +258,7 @@ def fromisoformat(dts: str) -> datetime.datetime:
 
     _fromisoformat = _fromisoformat_impl
     if hasattr(datetime.datetime, 'fromisoformat'):
-        _fromisoformat = datetime.datetime.fromisoformat
+        _fromisoformat = datetime.datetime.fromisoformat  # type: ignore
 
     try:
         dt = _fromisoformat(dts)
