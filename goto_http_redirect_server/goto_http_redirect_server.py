@@ -80,7 +80,7 @@ Re_User = typing.NewType('Re_User', str)  # User that created the Redirect (reco
 Re_Date = typing.NewType('Re_Date', datetime.datetime)  # Datetime Redirect was created (records-keeping thing, does not affect behavior)
 Re_EntryKey = typing.NewType('Re_EntryKey', Re_From)
 Re_EntryValue = typing.NewType('Re_EntryValue',
-                                typing.Tuple[Re_To, Re_User, Re_Date])
+                               typing.Tuple[Re_To, Re_User, Re_Date])
 Re_Entry_Dict = typing.NewType('Re_Entry_Dict',
                                typing.Dict[Re_EntryKey, Re_EntryValue])
 #
@@ -99,7 +99,7 @@ Redirect_FromTo_List = []  # type: FromTo_List
 # global list of --redirects files
 Redirect_Files_List = []  # type: Path_List
 reload = False
-reload_datetime = None
+reload_datetime = None  # type: datetime.datetime
 redirect_counter = defaultdict(int)  # type: typing.DefaultDict[str, int]
 status_path = None
 reload_path = None
@@ -413,11 +413,11 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
                         esc_redirects,
                         esc_reload_info,
                         esc_files)
-            html_doc = bytes(html_doc, encoding='utf-8',
+            html_docb = bytes(html_doc, encoding='utf-8',
                              errors='xmlcharrefreplace')
-            self.send_header('Content-Length', len(html_doc))
+            self.send_header('Content-Length', str(len(html_docb)))
             self.end_headers()
-            self.wfile.write(html_doc)
+            self.wfile.write(html_docb)
 
         def do_GET_reload(self, path_: str):
             # XXX: Could this be a security or stability risk?
@@ -576,11 +576,11 @@ def clean_redirects(entrys_files: Re_Entry_Dict) -> Re_Entry_Dict:
     #       (browsers I tested force stopped the redirect loop; Edge, Chrome).
 
     for path in REDIRECT_PATHS_NOT_ALLOWED:
-        re_key = Re_EntryKey(path)
+        re_key = Re_EntryKey(Re_From(path))
         if re_key in entrys_files.keys():
             log.warning('Removing reserved From value "%s" from redirect entries.',
                         path)
-            entrys_files.pop(path)
+            entrys_files.pop(re_key)
 
     # check for To "Location" Header values that will fail to encode
     remove = []
@@ -916,18 +916,19 @@ About Reloads:
     if args.log:
         log_filename = pathlib.Path(args.log)
 
+    redirects_files = args.redirects_files  # type: typing.List[str]
     return \
         str(args.ip), \
         int(args.port), \
-        args.debug, \
-        log_filename, \
-        args.status_path, \
-        args.reload_path, \
-        args.redirect_code, \
-        args.shutdown,\
-        args.field_delimiter, \
+        bool(args.debug), \
+        pathlib.Path(str(log_filename)), \
+        str(args.status_path), \
+        str(args.reload_path), \
+        int(args.redirect_code), \
+        int(args.shutdown),\
+        str(args.field_delimiter), \
         args.from_to, \
-        args.redirects_files
+        redirects_files
 
 
 def main() -> None:
