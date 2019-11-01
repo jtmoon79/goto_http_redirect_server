@@ -30,7 +30,7 @@ from collections import defaultdict
 
 
 # canonical module informations used by setup.py
-__version__ = '0.4.1'
+__version__ = '0.5.0'
 __author__ = 'jtmoon79'
 __url__ = 'https://github.com/jtmoon79/goto_http_redirect_server'
 __url_issues__ = 'https://github.com/jtmoon79/goto_http_redirect_server/issues'
