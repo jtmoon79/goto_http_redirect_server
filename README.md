@@ -80,12 +80,20 @@ example redirects file `./redirects1.csv` above, then<br />
 in your browser, type **`goto/hr⏎`**. Your browser will end up at
 **`http://human-resources.mycorp.local/login`** 😝‼
 
+#### Gotchas
+
 <small>
 
-Sadly, some browsers will assume a single word host, e.g. `goto/hr`, is a
-search engine query, i.e. the browser will query Google for "`goto/hr`".
-Either, type in the local network domain name, e.g. `goto.local/hr⏎`,
-or, type in a prepended http protocol, e.g. `http://goto/hr⏎`.\*\*
+- Some browsers will assume a single word host, e.g. `goto/hr`, is a
+  search engine query, i.e. the browser will query Google for "`goto/hr`".
+  Type in a prepended http protocol, e.g. `http://goto/hr⏎`.\*\*
+
+- In most corporate networks, a user's workstation will DNS search the corporate
+  domain, e.g. `.local`.  This allows users to enter browser URL
+  `goto/hr` which will resolve to host `goto.local`. Sometimes workstations
+  do not search the corporate domain due to DNS Search Order setting not
+  including `.local`. In that case, the user must specify the domain, e.g.
+  instead of typing `goto/hr⏎`, the user must type `goto.local/hr⏎`.\*\*
 
 </small>
 
