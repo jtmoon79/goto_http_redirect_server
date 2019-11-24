@@ -52,8 +52,6 @@ userbase=$(python -B -c 'import site; print(site.USER_BASE);')
 userbasebin=${userbase}/bin  # --user install location on Ubuntu
 export PATH="${PATH}:${usersite}:${userbase}:${userbasebin}"
 
-# $PWD is most likely at project root directory, but be certain
-cd "$(dirname -- "${0}")/.."
 SERVER_TEST=$(readlink_ "./tools/server-test.sh")
 # build
 version=$(python -B -c 'from goto_http_redirect_server import goto_http_redirect_server as gh;print(gh.__version__)')
