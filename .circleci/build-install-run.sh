@@ -18,6 +18,7 @@ set -x
 whoami
 pwd
 env | sort
+cat /etc/os-release || true
 ls -la .
 uname -a
 docker info || true

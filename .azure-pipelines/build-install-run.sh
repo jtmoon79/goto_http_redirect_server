@@ -21,6 +21,7 @@ set -x
 whoami
 hostname
 pwd
+cat /etc/os-release || true
 env | sort
 ls -la .
 uname -a
