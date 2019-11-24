@@ -355,12 +355,11 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
         def do_GET_status(self, path_: str):
             """dump status information about this server instance"""
 
+            http_sc = http.HTTPStatus.OK  # HTTP Status Code
             self.log_message('%s requested, returning %s (%s)',
-                             path_,
-                             int(http.HTTPStatus.OK),
-                             http.HTTPStatus.OK.phrase,
+                             path_, int(http_sc), http_sc.phrase,
                              loglevel=logging.INFO)
-            self.send_response(http.HTTPStatus.OK)
+            self.send_response(http_sc)
             self.send_header('Redirect-Server-Host', HOSTNAME)
             self.send_header('Redirect-Server-Version', __version__)
             he = html_escape  # abbreviate
@@ -382,7 +381,6 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
                    start_datetime, datetime.timedelta(seconds=uptime),
                    int(status_code), status_code.phrase,)
             )
-            esc_args = he(' '.join(sys_args))
             esc_reload_datetime = he(reload_datetime.isoformat())
 
             def obj_to_html(obj, sort_keys=False):
@@ -406,10 +404,9 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
                 s_ += he('\n}')
                 return s_
 
-            esc_reload_info =\
-                '(process signal %d (%s)' % (SIGNAL_RELOAD, SIGNAL_RELOAD) \
-                + (' or path "%s")' % reload_path_ if reload_path_ else ')')
-            esc_reload_info = he(esc_reload_info)
+            esc_reload_info = he(
+                ' (process signal %d (%s))' % (SIGNAL_RELOAD, SIGNAL_RELOAD)
+            )
             esc_redirects_counter = obj_to_html(redirect_counter)
             esc_redirects = redirects_to_html(redirects)
             esc_files = obj_to_html(Redirect_Files_List)
@@ -419,65 +416,78 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
 <html lang="en">
   <head>
   <meta charset="utf-8"/>
-  <title>{0}</title>
+  <title>{esc_title}</title>
   </head>
   <body>
     <div>
         <h3>Process Information:</h3>
         <pre>
-{1}
-        </pre>
-    </div>
-    <div>
-        <h4>Command-line Arguments:</h4>
-        <pre>
-{2}
+{esc_overall}
         </pre>
     </div>
     <div>
         <h3>Redirects Counter:</h3>
         Counting of successful redirect responses:
         <pre>
-{3}
+{esc_redirects_counter}
         </pre>
         <h3>Currently Loaded Redirects:</h3>
-        Last Reload Time {4}
+        Last Reload Time {esc_reload_datetime}
         <pre>
-{5}
+{esc_redirects}
         </pre>
     </div>
     <div>
-        <h3>Redirect Files Searched During an Reload{6}:</h3>
+        <h3>Redirect Files Searched During an Reload{esc_reload_info}:</h3>
         <pre>
-{7}
+{esc_files}
         </pre>
     </div>
   </body>
 </html>
 """\
-                .format(esc_title,
-                        esc_overall, esc_args,
-                        esc_redirects_counter, esc_reload_datetime,
-                        esc_redirects,
-                        esc_reload_info,
-                        esc_files)
-            html_docb = bytes(html_doc, encoding='utf-8',
-                             errors='xmlcharrefreplace')
+                .format(esc_title=esc_title,
+                        esc_overall=esc_overall,
+                        esc_redirects_counter=esc_redirects_counter,
+                        esc_reload_datetime=esc_reload_datetime,
+                        esc_redirects=esc_redirects,
+                        esc_reload_info=esc_reload_info,
+                        esc_files=esc_files)
+            html_docb = bytes(html_doc,
+                              encoding='utf-8',
+                              errors='xmlcharrefreplace')
             self.send_header('Content-Length', str(len(html_docb)))
             self.end_headers()
             self.wfile.write(html_docb)
 
-        def do_GET_reload(self, path_: str):
-            # XXX: Could this be a security or stability risk?
-            self.log_message('%s reload requested, returning %s (%s)',
-                             path_,
-                             int(http.HTTPStatus.NO_CONTENT),
-                             http.HTTPStatus.NO_CONTENT.phrase,
+        def do_GET_reload(self):
+            http_sc = http.HTTPStatus.ACCEPTED  # HTTP Status Code
+            self.log_message('reload requested, returning %s (%s)',
+                             int(http_sc), http_sc.phrase,
                              loglevel=logging.INFO)
-            self.send_response(http.HTTPStatus.NO_CONTENT)
+            esc_datetime = html_escape(datetime.datetime.now().isoformat())
+            self.send_response(http_sc)
             self.send_header('Redirect-Server-Host', HOSTNAME)
             self.send_header('Redirect-Server-Version', __version__)
             self.end_headers()
+            esc_title = html_escape('%s reload' % PROGRAM_NAME)
+            html_doc = """\
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  <meta charset="utf-8"/>
+  <title>{esc_title}</title>
+  </head>
+  <body>
+    Reload request accepted at {esc_datetime}.
+  </body>
+</html>
+"""\
+            .format(esc_title=esc_title, esc_datetime=esc_datetime)
+            html_docb = bytes(html_doc,
+                              encoding='utf-8',
+                              errors='xmlcharrefreplace')
+            self.wfile.write(html_docb)
             global reload
             reload = True
 
@@ -550,7 +560,7 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
                 self.do_GET_status(parseresult.path)
                 return
             elif parseresult.path == reload_path_:
-                self.do_GET_reload(parseresult.path)
+                self.do_GET_reload()
                 return
 
             self.do_GET_redirect(parseresult, redirects)
