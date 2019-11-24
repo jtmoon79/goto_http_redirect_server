@@ -25,7 +25,6 @@ import copy
 import json
 import pprint
 import logging
-import string
 import re
 from urllib import parse
 from collections import defaultdict
