@@ -8,7 +8,7 @@
 # CircleCI image list
 # https://circleci.com/docs/2.0/circleci-images/ (http://archive.fo/z2SyE)
 #
-# XXX: images circleci/...  requires `sudo` for package updates
+# XXX: images circleci/…  require `sudo` for package updates
 ---
 version: 2.1
 jobs:
