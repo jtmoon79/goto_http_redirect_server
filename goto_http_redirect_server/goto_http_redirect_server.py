@@ -73,8 +73,13 @@ log = logging.getLogger(PROGRAM_NAME)
 sys_args = []  # type: typing.List[str]
 
 #
+# This Python code attempts to be very type-explicit.
+#
+
+#
 # Redirect Entry types
 #
+
 Re_From = typing.NewType('Re_From', str)  # Redirect From URI Path
 Re_To = typing.NewType('Re_To', str)  # Redirect To URL Location
 Re_User = typing.NewType('Re_User', str)  # User that created the Redirect (records-keeping thing, does not affect behavior)
@@ -87,14 +92,17 @@ Re_Entry_Dict = typing.NewType('Re_Entry_Dict',
 #
 # other helpful types
 #
+
 Path_List = typing.List[pathlib.Path]
 FromTo_List = typing.List[typing.Tuple[str, str]]
 Redirect_Counter = typing.DefaultDict[str, int]
 str_None = typing.Union[str, None]
 Path_None = typing.Union[pathlib.Path, None]
+
 #
-# volatile global instances
+# "volatile" global instances
 #
+
 # global list of --from-to passed redirects
 Redirect_FromTo_List = []  # type: FromTo_List
 # global list of --redirects files
@@ -448,6 +456,10 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
         def do_GET_redirect(self,
                             parseresult: parse.ParseResult,
                             redirects_: Re_Entry_Dict):
+            """
+            handle the HTTP Redirect Request (the entire purpose of this
+            script)
+            """
 
             if parseresult.path not in redirects_.keys():
                 self.log_message('no redirect found for (%s), returning %s (%s)',
