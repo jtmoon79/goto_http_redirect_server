@@ -723,7 +723,7 @@ class RedirectServer(socketserver.TCPServer):
               function or class instance
         """
 
-        print_debug('.', end='')
+        #print_debug('.', end='')
         super(RedirectServer, self).service_actions()
 
         global reload
