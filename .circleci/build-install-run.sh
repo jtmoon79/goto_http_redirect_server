@@ -9,7 +9,6 @@ set -e
 set -u
 set -o pipefail
 
-# initial $PWD is at project root directory
 readonly PACKAGE_NAME='goto_http_redirect_server'
 readonly PROGRAM_NAME='goto_http_redirect_server'
 
@@ -46,6 +45,9 @@ usersite=$(python -B -c 'import site; print(site.USER_SITE);')
 userbase=$(python -B -c 'import site; print(site.USER_BASE);')
 userbasebin=${userbase}/bin  # --user install location on Ubuntu
 export PATH="${PATH}:${usersite}:${userbase}:${userbasebin}"
+
+# $PWD is most likely at project root directory, but be certain
+cd "$(dirname -- "${0}")/.."
 # build
 version=$(python -B -c 'from goto_http_redirect_server import goto_http_redirect_server as gh;print(gh.__version__)')
 python setup.py -v bdist_wheel
@@ -55,9 +57,8 @@ cd ..  # move out of project directory so pip install behaves correctly
 # install
 python -m pip install --user --verbose "${cv_whl}"
 # run
-PORT=55923  # hopefully not in-use!
 "${PROGRAM_NAME}" --version
-# does it run and listen on the socket?
-"${PROGRAM_NAME}" --debug --shutdown 2 --port ${PORT} --from-to '/a' 'http://foo.com'
+# server test
+./goto_http_redirect_server/tools/server-test.sh
 # uninstall
 python -m pip uninstall --yes --verbose "${PACKAGE_NAME}"
