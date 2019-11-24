@@ -567,7 +567,10 @@ def load_redirects_files(redirects_files: Path_List,
                     try:
                         log.debug('File Line (%s:%s):%s',
                                   rfilen, csvr.line_num, row)
-                        if not row:  # quietly skip empty rows
+                        if not row:  # skip empty row
+                            continue
+                        if row[0].startswith('#'):
+                            # skip row starting with '#'
                             continue
                         from_path = row[0]
                         to_url = row[1]
