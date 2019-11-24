@@ -19,8 +19,9 @@ jobs:
           command: |
             set -ex
             # force +x
-            chmod -v +x -- ./tools/install.sh ./.circleci/build-install-run.sh
-            ./tools/install.sh curl  # for server-test.sh
+            chmod -v +x -- ./tools/pkg-update.sh ./tools/pkg-install.sh ./.circleci/build-install-run.sh
+            ./tools/pkg-update.sh
+            ./tools/pkg-install.sh curl  # for server-test.sh
             ./.circleci/build-install-run.sh
   build_install_run__circleci_python_3_6:
     docker:
@@ -32,8 +33,9 @@ jobs:
           command: |
             set -ex
             # force +x
-            chmod -v +x -- ./tools/install.sh ./.circleci/build-install-run.sh
-            ./tools/install.sh curl  # for server-test.sh
+            chmod -v +x -- ./tools/pkg-update.sh ./tools/pkg-install.sh ./.circleci/build-install-run.sh
+            ./tools/pkg-update.sh
+            ./tools/pkg-install.sh curl  # for server-test.sh
             ./.circleci/build-install-run.sh
   build_install_run__circleci_python_3_7:
     docker:
@@ -45,8 +47,9 @@ jobs:
           command: |
             set -ex
             # force +x
-            chmod -v +x -- ./tools/install.sh ./.circleci/build-install-run.sh
-            ./tools/install.sh curl  # for server-test.sh
+            chmod -v +x -- ./tools/pkg-update.sh ./tools/pkg-install.sh ./.circleci/build-install-run.sh
+            ./tools/pkg-update.sh
+            ./tools/pkg-install.sh curl  # for server-test.sh
             ./.circleci/build-install-run.sh
   build_install_run__python_3_7_windowsservercore:
     docker:
@@ -58,8 +61,9 @@ jobs:
           command: |
             set -ex
             # force +x
-            chmod -v +x -- ./tools/install.sh ./.circleci/build-install-run.sh
-            ./tools/install.sh curl  # for server-test.sh
+            chmod -v +x -- ./tools/pkg-update.sh ./tools/pkg-install.sh ./.circleci/build-install-run.sh
+            ./tools/pkg-update.sh
+            ./tools/pkg-install.sh curl  # for server-test.sh
             ./.circleci/build-install-run.sh
   build_install_run__python_3_6_slim_stretch:
     docker:
@@ -71,8 +75,9 @@ jobs:
           command: |
             set -ex
             # force +x
-            chmod -v +x -- ./tools/install.sh ./.circleci/build-install-run.sh
-            ./tools/install.sh curl  # for server-test.sh
+            chmod -v +x -- ./tools/pkg-update.sh ./tools/pkg-install.sh ./.circleci/build-install-run.sh
+            ./tools/pkg-update.sh
+            ./tools/pkg-install.sh curl  # for server-test.sh
             ./.circleci/build-install-run.sh
   build_install_run__python_3_6_slim_buster:
     docker:
@@ -84,8 +89,9 @@ jobs:
           command: |
             set -ex
             # force +x
-            chmod -v +x -- ./tools/install.sh ./.circleci/build-install-run.sh
-            ./tools/install.sh curl  # for server-test.sh
+            chmod -v +x -- ./tools/pkg-update.sh ./tools/pkg-install.sh ./.circleci/build-install-run.sh
+            ./tools/pkg-update.sh
+            ./tools/pkg-install.sh curl  # for server-test.sh
             ./.circleci/build-install-run.sh
   build_install_run__python_3_6_alpine:
     docker:
@@ -99,11 +105,12 @@ jobs:
             # some pip build processes complain if this is not in the $PATH
             export PATH=${PATH}:/root/.local/bin
             # force +x
-            chmod -v +x -- ./tools/install.sh ./.circleci/build-install-run.sh
-            ./tools/install.sh bash  # for build-install-run.sh
-            ./tools/install.sh curl  # for server-test.sh
+            chmod -v +x -- ./tools/pkg-update.sh ./tools/pkg-install.sh ./.circleci/build-install-run.sh
+            ./tools/pkg-update.sh
+            ./tools/pkg-install.sh bash  # for build-install-run.sh
+            ./tools/pkg-install.sh curl  # for server-test.sh
             # for pip install of 'twine' (builds many libraries)
-            ./tools/install.sh gcc python3-dev musl-dev libffi-dev openssl-dev
+            ./tools/pkg-install.sh gcc python3-dev musl-dev libffi-dev openssl-dev
             ./.circleci/build-install-run.sh
 workflows:
   version: 2

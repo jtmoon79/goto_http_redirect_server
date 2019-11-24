@@ -59,7 +59,7 @@ python -m pip install --user --verbose "${cv_whl}"
 # run
 "${PROGRAM_NAME}" --version
 # server test
-chmod -v +x "${SERVER_TEST}"
+chmod -v +x -- "${SERVER_TEST}"
 "${SERVER_TEST}"
 # uninstall
 python -m pip uninstall --yes --verbose "${PACKAGE_NAME}"
