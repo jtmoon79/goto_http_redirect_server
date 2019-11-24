@@ -64,9 +64,9 @@ cd ..  # move out of project directory so pip install behaves correctly
 # install
 python -m pip install --user --verbose "${cv_whl}"
 # run
-PORT=55923  # hopefully not in-use!
 "${PROGRAM_NAME}" --version
 # server test
+chmod -v +x "${SERVER_TEST}"
 "${SERVER_TEST}"
 # uninstall
 python -m pip uninstall --yes --verbose "${PACKAGE_NAME}"
