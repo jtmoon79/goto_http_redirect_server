@@ -48,6 +48,7 @@ export PATH="${PATH}:${usersite}:${userbase}:${userbasebin}"
 
 # $PWD is most likely at project root directory, but be certain
 cd "$(dirname -- "${0}")/.."
+SERVER_TEST=$(readlink_ "./tools/server-test.sh")
 # build
 version=$(python -B -c 'from goto_http_redirect_server import goto_http_redirect_server as gh;print(gh.__version__)')
 python setup.py -v bdist_wheel
@@ -59,6 +60,6 @@ python -m pip install --user --verbose "${cv_whl}"
 # run
 "${PROGRAM_NAME}" --version
 # server test
-./goto_http_redirect_server/tools/server-test.sh
+"${SERVER_TEST}"
 # uninstall
 python -m pip uninstall --yes --verbose "${PACKAGE_NAME}"
