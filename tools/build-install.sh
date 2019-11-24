@@ -125,7 +125,7 @@ function on_exit(){
 }
 trap on_exit EXIT
 
-SERVER_TEST=$(readlink -f -- "./tools/server-test.sh")
+SERVER_TEST=$(readlink -f -- "./tools/ci/server-test.sh")
 (
     set -x
     # does it run?
