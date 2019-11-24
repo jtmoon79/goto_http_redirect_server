@@ -15,6 +15,8 @@
 #   Python 3.6.5 on OpenSUSE 15 Leap Linux on WLS
 #   Python 3.5 on Debian 9 Stretch Linux on Raspberry Pi
 #
+# XXX: very similar to .circleci/build-install-run.sh
+# XXX: very similar to .azure-pipelines/build-install-run.sh
 
 set -e
 set -u

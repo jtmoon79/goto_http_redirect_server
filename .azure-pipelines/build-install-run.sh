@@ -1,15 +1,18 @@
 #!/usr/bin/env bash
+#
 # for Azure Pipelines job where
 #     vmImage: 'ubuntu-16.04'
 # or
 #     vmImage: 'macOS-10.14'
+#
+# XXX: nearly identical to .circleci/build-install-run.sh
+# XXX: very similar to tools/build-install.sh
 
 set -e
 set -u
 set -o pipefail
 
 # initial $PWD is at project root directory
-readonly BUILD_INSTALL='./tools/build-install.sh'
 readonly PACKAGE_NAME='goto_http_redirect_server'
 readonly PROGRAM_NAME='goto_http_redirect_server'
 
@@ -52,7 +55,7 @@ version=$(python -B -c 'from goto_http_redirect_server import goto_http_redirect
 python setup.py -v bdist_wheel
 cv_whl=$(readlink_ "./dist/${PACKAGE_NAME}-${version}-py3-none-any.whl")
 python -m twine check "${cv_whl}"
-cd ..  # move out of project directory
+cd ..  # move out of project directory so pip install behaves correctly
 # install
 python -m pip install --user --verbose "${cv_whl}"
 # run
