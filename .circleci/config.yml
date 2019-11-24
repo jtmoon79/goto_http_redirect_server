@@ -53,6 +53,20 @@ jobs:
             sudo -- ./tools/ci/pkg-update.sh
             sudo -- ./tools/ci/pkg-install.sh curl  # for server-test.sh
             ./.circleci/build-install-run.sh
+  build_install_run__circleci_python_3_8:
+    docker:
+      - image: circleci/python:3.8
+    steps:
+      - checkout
+      - run:
+          name: build, install, and run in Python 3.8
+          command: |
+            set -ex
+            # force +x
+            chmod -v +x -- ./tools/ci/pkg-update.sh ./tools/ci/pkg-install.sh ./.circleci/build-install-run.sh
+            sudo -- ./tools/ci/pkg-update.sh
+            sudo -- ./tools/ci/pkg-install.sh curl  # for server-test.sh
+            ./.circleci/build-install-run.sh
   build_install_run__python_3_7_windowsservercore:
     docker:
       - image: python:3.7-windowsservercore
@@ -125,6 +139,7 @@ workflows:
       - build_install_run__circleci_python_3_5
       - build_install_run__circleci_python_3_6
       - build_install_run__circleci_python_3_7
+      - build_install_run__circleci_python_3_8
       - build_install_run__python_3_6_alpine
       #- build_install_run__python_3_7_windowsservercore
       - build_install_run__python_3_6_slim_stretch
