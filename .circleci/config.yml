@@ -84,7 +84,12 @@ jobs:
           name: build, install, and run in Python 3 on Alpine Linux
           command: |
             set -ex
+            # some pip build processes complain if this is not in the $PATH
+            export PATH=${PATH}:/root/.local/bin
             apk add bash
+            # the following Alpine packages are needed for later pip install of
+            # 'twine' (the pip install must build many libraries)
+            apk add gcc python3-dev musl-dev libffi-dev openssl-dev
             chmod +x ./.circleci/build-install-run.sh  # force +x
             ./.circleci/build-install-run.sh
 workflows:
