@@ -156,9 +156,9 @@ def html_escape(s_: str) -> str:
         .replace('  ', r'&nbsp; ')
 
 
-def html_a(s_: str) -> str:
+def html_a(href: str) -> str:
     """create HTML <a> from s_"""
-    return '<a href="' + s_ + '">' + s_ + '</a>'
+    return '<a href="' + href + '">' + html_escape(href) + '</a>'
 
 
 def combine_parseresult(pr1: parse.ParseResult, pr2: parse.ParseResult) -> str:
