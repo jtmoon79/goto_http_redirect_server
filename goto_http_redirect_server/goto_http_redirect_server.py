@@ -25,6 +25,7 @@ import copy
 import json
 import pprint
 import logging
+import string
 from urllib import parse
 from collections import defaultdict
 
@@ -160,44 +161,55 @@ def combine_parseresult(pr1: parse.ParseResult, pr2: parse.ParseResult) -> str:
        parse.urlparse('http://host.com/path1;parmA=a,parmB=b?a=A&b=%20B&cc=CCC#FRAG')
     returns
         ParseResult(scheme='http', netloc='host.com', path='/path1',
-                    params='parm2', query='a=A&b=%20B&cc=CCC', fragment='FRAG')
+                    params='parm2', query='a=A&b=%20B&ccc=CCC', fragment='FRAG')
 
     pr1 is assumed to represent a Re_To supplied at startup-time
     pr2 is assumed to be an incoming request
 
     From pr1 use .scheme, .netloc, .path
-
+    From pr2 use .fragment
     Combine .params, .query
 
-    .query is combined such that a shorter redirect may be typed.
-    For example, given RedirectEntry
-       /b	http://bugzilla.corp.local/bug.cgi?id=	bob	
-    User can GET URL (assuming running at host 'goto')
+    The RedirectEntry 'To' can use shell-like syntax to replace with URI
+    parts from pr1 (uses Python string.Template syntax).
+    For example, given RedirectEntry supplied at start-time (pr1)
+       /b	http://bugzilla.corp.local/search/bug.cgi?id=${query}	bob	
+    A user incoming GET request for URL (pr2)
        'http://goto/b?123
-    Which will become URL
-       'http://bugzilla.corp.local/bug.cgi?id=123'
-
-    From pr2 use .fragment
+    processed by `combine_parseresult` would become URL
+       'http://bugzilla.corp.local/search/bug.cgi?id=123'
 
     Return a URL suitable for HTTP Header 'To'.
     """
-    pr = pr1._asdict()
+
+    # substitute strings
+    subs = pr1._asdict()
+
+    def ssub(in_):
+        """safe substitute"""
+        return string.Template(in_).safe_substitute(subs)
+
+    # starting with a copy of pr1 with safe_substitutes
+    pr = dict()
+    for k_, v_ in pr1._asdict().items():
+        pr[k_] = ssub(v_)
+
+    # selectively combine URI parts from pr2
+    # safe_substitute where appropriate
     pr['fragment'] = pr2.fragment
     if pr2.params:
         if pr1.params:
             # XXX: how are URI Object Parameters combined?
             #      see https://tools.ietf.org/html/rfc1808.html#section-2.1
-            pr['params'] = pr1.params + ';' + pr2.params
+            pr['params'] = ssub(pr1.params) + ';' + pr2.params
         else:
             pr['params'] = pr2.params
     if pr2.query:
         if pr1.query:
-            if pr1.query.endswith('='):
-                pr['query'] = pr1.query + pr2.query
-            else:
-                pr['query'] = pr1.query + '&' + pr2.query
+            pr['query'] = ssub(pr1.query) + '&' + pr2.query
         else:
             pr['query'] = pr2.query
+
     url = parse.urlunparse(parse.ParseResult(**pr))
     return url
 
@@ -449,11 +461,11 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
                 return
 
             key = Re_EntryKey(Re_From(parseresult.path))
-            parseresult_to = parse.urlparse(redirects_[key][0])
+            # merge RedirectEntry URI parts with incoming requested URI parts
+            to_parsed = parse.urlparse(redirects_[key][0])
+            to = combine_parseresult(to_parsed, parseresult)
             user = redirects_[key][1]
             dt = redirects_[key][2]
-            # merge RedirectEntry URI parts with incoming requested URI parts
-            to = combine_parseresult(parseresult_to, parseresult)
 
             self.log_message('redirect found (%s) → (%s), returning %s (%s)',
                              key, to,
@@ -853,21 +865,27 @@ About Redirect Entries:
 
     http://bug-tracker.mycorp.local/view.cgi?id=123
 
-  Additionally, a special case for a redirect entry with trailing character '='
-  in the query string will append URI query parameters directly.
+  Additionally, special substrings with Python string.Template syntax may be set
+  in the redirect entry. The substrings are from the URI parts that form a
+  urllib.urlparse ParseResult class:
+    ParseResult(scheme='http', netloc='host.com', path='/path1',
+                params='parm2', query='a=A&b=BB', fragment='FRAG1')
+
   For example, given redirect entry:
 
-    /b	http://bug-tracker.mycorp.local/view.cgi?id=	bob	2019-09-07 12:00:00
+    /b	http://bug-tracker.mycorp.local/view.cgi?id=${query}	bob	2019-09-07 12:00:00
 
-  And incoming request:
+  and the incoming request:
 
     http://goto/b?123
 
-  will result in a redirect URL:
+  Subtring '123' is the 'query' part of the ParseResult. The resultant redirect
+  URL would become:
 
     http://bug-tracker.mycorp.local/view.cgi?id=123
 
-  See function 'combine_parseresult'.
+  The string replacement follows rules of Python built-in function
+  string.Template.safe_substitute. See function `combine_parseresult`.
 
 About Paths:
 
@@ -896,6 +914,7 @@ About Reloads:
         str(uuid.uuid4()),
         SIGNAL_RELOAD_UNIX, SIGNAL_RELOAD_WINDOWS,
         str(SIGNAL_RELOAD), int(SIGNAL_RELOAD),
+        query='{query}'
        )
 
     args = parser.parse_args()
