@@ -157,7 +157,7 @@ def html_escape(s_: str) -> str:
 
 
 def html_a(href: str) -> str:
-    """create HTML <a> from s_"""
+    """create HTML <a> from href URL"""
     return '<a href="' + href + '">' + html_escape(href) + '</a>'
 
 
