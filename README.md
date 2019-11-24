@@ -23,18 +23,44 @@ Trivial to run and reload.  Only uses Python built-in modules.  Super handy 😄
        /hr	http://human-resources.mycorp.local/login	bob	2018-07-11 22:15:10
        /aws	https://us-west-2.console.aws.amazon.com/console/home?region=us-west-2#	carl	2019-01-05 12:35:10
 
-2. (optional) Install
+2. Install (pick one)
 
-    - Install manually
+    - pip install official release from pypi.org
       ```
+      pip install goto-http-redirect-server
+      ```
+
+    - pip install latest code from github
+      ```
+      pip install https://github.com/jtmoon79/goto_http_redirect_server/archive/master.zip
+      ```
+
+    - Download from github and run
+      ```
+      curl 'https://raw.githubusercontent.com/jtmoon79/goto_http_redirect_server/master/goto_http_redirect_server/goto_http_redirect_server.py'
+      python goto_http_redirect_server.py --help
+      ```
+
+    - Run latest from github using [`tools/eazy-run.sh`](./tools/eazy-run.sh).
+      Pass command-line options to `eazy-run.sh` as if running `goto_http_redirect_server.py`.
+      ```
+      curl 'https://raw.githubusercontent.com/jtmoon79/goto_http_redirect_server/master/tools/eazy-run.sh'
+      ./eazy-run.sh --help
+      ```
+
+    - Build and install using helper scripts [`tools/build-install.sh`](./tools/build-install.sh) or [`tools/build-install.ps1`](./tools/build-install.ps1)
+      ```
+      git clone https://github.com/jtmoon79/goto_http_redirect_server.git
+      goto_http_redirect_server/tools/build-install.sh
+      ```
+
+    - Build and install
+      ```
+      git clone https://github.com/jtmoon79/goto_http_redirect_server.git
+      cd goto_http_redirect_server
       python setup.py bdist_wheel
       python -m pip install --user ./dist/goto_http_redirect_server-*-py3-none-any.whl
       ```
-
-    - Or, try helper scripts [`tools/build-install.sh`](./tools/build-install.sh) or [`tools/build-install.ps1`](./tools/build-install.ps1)
-
-    - Or, try [`tools/eazy-run.sh`](./tools/eazy-run.sh) and pass command-line options as if
-      running `goto_http_redirect_server.py`.
 
 3.  start the _Go To HTTP Redirect Server_
 
