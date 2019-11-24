@@ -1,5 +1,6 @@
 # CircleCI 2.0 configuration file
-# source: https://circleci.com/gh/jtmoon79/goto_http_redirect_server/tree/master
+# project: https://circleci.com/gh/jtmoon79/goto_http_redirect_server/tree/master
+# source: https://github.com/jtmoon79/goto_http_redirect_server/tree/master/.circleci/
 #
 # YAML Schema from
 # https://circleci.com/docs/2.0/configuration-reference/

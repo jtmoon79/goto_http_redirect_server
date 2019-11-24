@@ -1,6 +1,6 @@
 # Azure Pipelines configuration file
-# source: https://circleci.com/gh/jtmoon79/goto_http_redirect_server/tree/master
 # project: https://dev.azure.com/jtmmoon/goto_http_redirect_server/_build
+# source: https://github.com/jtmoon79/goto_http_redirect_server/blob/master/.azure-pipelines/
 #
 # YAML Schema from
 # https://docs.microsoft.com/en-us/azure/devops/pipelines/yaml-schema?view=azure-devops&tabs=schema
