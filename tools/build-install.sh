@@ -125,13 +125,12 @@ function on_exit(){
 }
 trap on_exit EXIT
 
-PORT=55923  # hopefully not in-use!
+SERVER_TEST=$(readlink -f -- "./tools/server-test.sh")
 (
     set -x
     # does it run?
     "${PACKAGE_NAME}" --version
-    # does it run and listen on the socket?
-    "${PACKAGE_NAME}" --debug --shutdown 2 --port ${PORT} --from-to '/a' 'http://foo.com'
+    "${SERVER_TEST}"
 )
 
 #
