@@ -48,7 +48,7 @@ jobs:
             set -ex
             # force +x
             chmod -v +x -- ./tools/pkg-update.sh ./tools/pkg-install.sh ./.circleci/build-install-run.sh
-            ./tools/pkg-update.sh
+            sudo -- ./tools/pkg-update.sh
             ./tools/pkg-install.sh curl  # for server-test.sh
             ./.circleci/build-install-run.sh
   build_install_run__python_3_7_windowsservercore:
