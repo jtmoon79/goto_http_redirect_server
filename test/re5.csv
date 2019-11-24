@@ -1,3 +1,6 @@
 # comment
 # comment	with	three	tabs
 /h	http://h.hh/search/bug=${query}	bob	2000-01-01 00:00:00
+/i	http://i.hh/search/bug=${query}&filter=123	bob	2000-01-01 00:00:00
+/j	http://j.hh/search/bug=${fragment}&filter=123	bob	2000-01-01 00:00:00
+/k	http://k.k/search/bug=${q}&filter=123	bob	2000-01-01 00:00:00

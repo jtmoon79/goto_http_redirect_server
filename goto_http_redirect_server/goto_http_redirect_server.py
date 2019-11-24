@@ -26,6 +26,7 @@ import json
 import pprint
 import logging
 import string
+import re
 from urllib import parse
 from collections import defaultdict
 
@@ -175,48 +176,76 @@ def combine_parseresult(pr1: parse.ParseResult, pr2: parse.ParseResult) -> str:
     pr2 is assumed to be an incoming request
 
     From pr1 use .scheme, .netloc, .path
-    From pr2 use .fragment
+    Prefer .fragment from pr2, then pr1
     Combine .params, .query
 
-    The RedirectEntry 'To' can use shell-like syntax to replace with URI
-    parts from pr1 (uses Python string.Template syntax).
-    For example, given RedirectEntry supplied at start-time (pr1)
+    The RedirectEntry 'To' can use string.Template syntax to replace with URI
+    parts from pr1
+    For example, given RedirectEntry supplied at start-time `pr1`
        /b	http://bugzilla.corp.local/search/bug.cgi?id=${query}	bob	
-    A user incoming GET request for URL (pr2)
+    A user incoming GET request for URL `pr2`
        'http://goto/b?123
     processed by `combine_parseresult` would become URL
        'http://bugzilla.corp.local/search/bug.cgi?id=123'
 
     Return a URL suitable for HTTP Header 'To'.
+
+    XXX: this function is called for every request. It should be implemented
+         more efficiently.
     """
 
-    # substitute strings
-    subs = pr1._asdict()
+    # work from a OrderDict(pr2) instance, used to track what replacements
+    # from pr2 have occurred
+    pr2d = pr2._asdict()
 
-    def ssub(in_):
-        """safe substitute"""
-        return string.Template(in_).safe_substitute(subs)
+    def ssub(val: str) -> str:
+        """safe substitute val, if successful replacement then pop pr2d[key]"""
+        # shortcut empty string case
+        if not val:
+            return val
+        # shortcut when no Template syntax present
+        if not re.search(r'\${(path|params|query|fragment)}', val):
+            return val
+        # there are replacements
+        for key in ('path', 'params', 'query', 'fragment'):
+            repl = pr2d[key] if key in pr2d else key
+            val_old = val
+            val = re.sub(r'\${%s}' % key, repl, val)
+            if val != val_old:
+                pr2d.pop(key)
+            log.debug('    "%s": "%s" -> "%s"  POP? %s', key, val_old, val, val != val_old)
+        return val
+
+    log.debug('  pr1: %s', pr1)
+    log.debug('  pr2: %s', pr2)
 
     # starting with a copy of pr1 with safe_substitutes
     pr = dict()
     for k_, v_ in pr1._asdict().items():
         pr[k_] = ssub(v_)
+        log.debug('    "%s": "%s"', k_, pr[k_])
 
-    # selectively combine URI parts from pr2
+    # selectively combine URI parts from pr2d
     # safe_substitute where appropriate
-    pr['fragment'] = pr2.fragment
-    if pr2.params:
+    if 'fragment' in pr2d and pr2d['fragment']:
+        pr['fragment'] = pr2d['fragment']
+        log.debug('    Add fragment "%s"', pr['fragment'])
+    if 'params' in pr2d and pr2d['params']:
         if pr1.params:
             # XXX: how are URI Object Parameters combined?
             #      see https://tools.ietf.org/html/rfc1808.html#section-2.1
-            pr['params'] = ssub(pr1.params) + ';' + pr2.params
+            pr['params'] = ssub(pr1.params) + ';' + pr2d['params']
+            log.debug('    Add1 "%s": "%s"', 'params', pr['params'])
         else:
-            pr['params'] = pr2.params
-    if pr2.query:
+            pr['params'] = pr2d['params']
+            log.debug('    Add2 "%s": "%s"', 'params', pr['params'])
+    if 'query' in pr2d and pr2d['query']:
         if pr1.query:
-            pr['query'] = ssub(pr1.query) + '&' + pr2.query
+            pr['query'] = ssub(pr1.query) + '&' + pr2d['query']
+            log.debug('    Add1 "%s": "%s"', 'query', pr['query'])
         else:
-            pr['query'] = pr2.query
+            pr['query'] = pr2d['query']
+            log.debug('    Add2 "%s": "%s"', 'query', pr['query'])
 
     url = parse.urlunparse(parse.ParseResult(**pr))
     return url
@@ -899,8 +928,7 @@ About Redirect Entries:
 
     http://bug-tracker.mycorp.local/view.cgi?id=123
 
-  The string replacement follows rules of Python built-in function
-  string.Template.safe_substitute. See function `combine_parseresult`.
+  The string replacement behavior is similar to Python string.Template behavior.
 
 About Paths:
 

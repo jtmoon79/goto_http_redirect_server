@@ -171,7 +171,7 @@ No service downtime!
       --log LOG             Log to file at path LOG. Default logging is to
                             sys.stderr.
       --debug               Set logging level to DEBUG. Default is INFO.
-      --version             Print "goto_http_redirect_server 0.6.0" and exit.
+      --version             Print "goto_http_redirect_server 0.6.1" and exit.
       -?, -h, --help        Print this help message and exit.
 
     About Redirect Entries:
@@ -229,15 +229,14 @@ No service downtime!
 
         http://bug-tracker.mycorp.local/view.cgi?id=123
 
-      The string replacement follows rules of Python built-in function
-      string.Template.safe_substitute. See function `combine_parseresult`.
+      The string replacement behavior is similar to Python string.Template behavior.
 
     About Paths:
 
       Options --status-path and --reload-path may be passed paths to obscure access
       from unauthorized users. e.g.
 
-          --status-path '/28927ac0-38c6-4c59-a65e-cec33ff86619'
+          --status-path '/106d28ef-8ad5-4d55-8d56-172f3f863c1a'
 
     About Reloads:
 
