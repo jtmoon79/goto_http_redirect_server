@@ -3,30 +3,30 @@
 # -*- pyversion: >=3.5.2 -*-
 
 
-import sys
-import os
-import typing
 import argparse
-import getpass
+from collections import defaultdict
+import copy
+import csv
 import datetime
-import time
-import signal
-import threading
-import socket
-import socketserver
-import uuid
+import getpass
+import html
 import http
 from http import server
-import html
-import csv
-import pathlib
-import copy
 import json
-import pprint
 import logging
+import os
+import pathlib
+import pprint
 import re
+import signal
+import socket
+import socketserver
+import sys
+import threading
+import time
+import typing
 from urllib import parse
-from collections import defaultdict
+import uuid
 
 
 # canonical module informations used by setup.py
