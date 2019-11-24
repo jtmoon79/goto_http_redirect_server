@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- encoding: utf-8 -*-
 # -*- pyversion: >=3.5.2 -*-
-# TODO: BUG: status page reveals reload path and command line args.
 
 
 import sys
