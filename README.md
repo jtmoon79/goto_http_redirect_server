@@ -171,7 +171,7 @@ No service downtime!
       --log LOG             Log to file at path LOG. Default logging is to
                             sys.stderr.
       --debug               Set logging level to DEBUG. Default is INFO.
-      --version             Print "goto_http_redirect_server 0.5.1" and exit.
+      --version             Print "goto_http_redirect_server 0.6.0" and exit.
       -?, -h, --help        Print this help message and exit.
 
     About Redirect Entries:
@@ -210,28 +210,34 @@ No service downtime!
 
         http://bug-tracker.mycorp.local/view.cgi?id=123
 
-      Additionally, a special case for a redirect entry with trailing character '='
-      in the query string will append URI query parameters directly.
+      Additionally, special substrings with Python string.Template syntax may be set
+      in the redirect entry. The substrings are from the URI parts that form a
+      urllib.urlparse ParseResult class:
+        ParseResult(scheme='http', netloc='host.com', path='/path1',
+                    params='parm2', query='a=A&b=BB', fragment='FRAG1')
+
       For example, given redirect entry:
 
-        /b  http://bug-tracker.mycorp.local/view.cgi?id=    bob     2019-09-07 12:00:00
+        /b  http://bug-tracker.mycorp.local/view.cgi?id=${query}    bob     2019-09-07 12:00:00
 
-      And incoming request:
+      and the incoming request:
 
         http://goto/b?123
 
-      will result in a redirect URL:
+      Subtring '123' is the 'query' part of the ParseResult. The resultant redirect
+      URL would become:
 
         http://bug-tracker.mycorp.local/view.cgi?id=123
 
-      See function 'combine_parseresult'.
+      The string replacement follows rules of Python built-in function
+      string.Template.safe_substitute. See function `combine_parseresult`.
 
     About Paths:
 
       Options --status-path and --reload-path may be passed paths to obscure access
       from unauthorized users. e.g.
 
-          --status-path '/77498db2-ef41-410b-9860-234ec2f537fe'
+          --status-path '/28927ac0-38c6-4c59-a65e-cec33ff86619'
 
     About Reloads:
 
