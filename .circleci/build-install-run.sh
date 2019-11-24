@@ -26,11 +26,14 @@ python --version
 pip --version
 pip list -vvv
 
-# install ahead of time
+# install and upgrade necessary packages
 python -m pip install --quiet --user --upgrade pip
 python -m pip install --quiet --user --upgrade setuptools
 python -m pip install --quiet --user twine
 python -m pip install --quiet --user mypy
+python -m pip --version
+python -m twine --version
+python -m mypy --version
 
 function readlink_(){
     # portable readlink

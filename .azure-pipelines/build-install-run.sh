@@ -34,8 +34,10 @@ python -m pip list -vvv
 python -m pip install --quiet --upgrade pip
 python -m pip install --quiet --upgrade setuptools
 python -m pip install --quiet --user twine
+python -m pip install --quiet --user mypy
 python -m pip --version
 python -m twine --version
+python -m mypy --version
 
 function readlink_(){
     # portable readlink
