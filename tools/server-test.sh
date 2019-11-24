@@ -20,6 +20,7 @@ readonly PORT=55923  # hopefully not in-use!
 readonly URL="http://localhost:${PORT}"
 
 set -x
+curl --version  # note curl, fail sooner if not installed
 "${PROGRAM_NAME}" --debug \
     --shutdown 8 \
     --port ${PORT} \
