@@ -53,6 +53,7 @@ userbasebin=${userbase}/bin  # --user install location on Ubuntu
 export PATH="${PATH}:${usersite}:${userbase}:${userbasebin}"
 
 SERVER_TEST=$(readlink_ "./tools/server-test.sh")
+python -m mypy 'goto_http_redirect_server/goto_http_redirect_server.py'
 # build
 version=$(python -B -c 'from goto_http_redirect_server import goto_http_redirect_server as gh;print(gh.__version__)')
 python setup.py -v bdist_wheel
