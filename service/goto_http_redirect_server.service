@@ -1,0 +1,28 @@
+# systemd service file goto_http_redirect_server.service
+#
+# Following systemd guide at
+# https://www.digitalocean.com/community/tutorials/understanding-systemd-units-and-unit-files
+# (http://archive.ph/TUaJL)
+# Tested against Debian 9
+
+[Unit]
+Description=The "Go To" HTTP Redirect Server
+Wants=network-online.target
+After=network-online.target
+
+[Install]
+Alias=goto-http-redirect-server
+
+[Service]
+Type=simple
+Requires=network-online.target
+
+[Service]
+ExecStart=/usr/local/bin/goto_http_redirect_server.sh -a -u nobody
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=process
+Restart=on-failure
+RestartSec=10s
+
+[Install]
+WantedBy=multi-user.target

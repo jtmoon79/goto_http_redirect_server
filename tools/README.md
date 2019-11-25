@@ -1,1 +1,1 @@
-Project scripts for various tasks.
+Project scripts for miscellaneous tasks.
