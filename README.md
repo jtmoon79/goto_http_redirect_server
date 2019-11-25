@@ -120,6 +120,8 @@ No service downtime!
 
 ### Pro Tips
 
+- See  [`service/`](./service) directory for systemd service files.
+
 - Add a DNS addressable host on your network named `goto`. Run
   `goto_http_redirect_server` on the host.<br />
   Network users can type in their browser address bar `goto/…⏎` to easily use

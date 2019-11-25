@@ -3,6 +3,7 @@
 # systemd wrapper
 #
 # XXX: makes presumptions! needs work to be more portable!
+# XXX: only tested on Debian 9
 
 set -u
 set -e
@@ -49,7 +50,6 @@ done
 IP_ADDR='0.0.0.0'
 LOG="${TMP:-/var/tmp/}$(basename -- "${0}").log"
 SCRIPT='/usr/local/bin/goto_http_redirect_server'
-#SCRIPT=/bin/echo
 REDIRECTS_FILE='/usr/local/share/goto_http_redirect_server.csv'
 PATH_STATUS='/'
 PATH_RELOAD='/reload'
