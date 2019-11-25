@@ -13,6 +13,23 @@ on your network.
 
 Trivial to run and reload.  Only uses Python built-in modules.  Super handy 😄 ‼
 
+<!-- python -m md_toc README.md  github -->
+
+----
+
+- [Go To HTTP Redirect Server](#go-to-http-redirect-server)
+  - [Setup and run](#setup-and-run)
+  - [Use](#use)
+    - [Gotchas](#gotchas)
+  - [Live Reload](#live-reload)
+    - [Reload via Signals](#reload-via-signals)
+    - [Reload via browser](#reload-via-browser)
+  - [systemd Service](#systemd-service)
+  - [Pro Tips](#pro-tips)
+  - [`--help` message](#--help-message)
+
+----
+
 ## Setup and run
 
 1. create a tab-separated values file (`'\t'`) with a list of HTTP redirects.<br />
@@ -66,13 +83,11 @@ Trivial to run and reload.  Only uses Python built-in modules.  Super handy 😄
 
         goto_http_redirect_server --redirects ./redirects1.csv
 
-    or, if Install step was skipped,
-
-        python goto_http_redirect_server.py --redirects ./redirects1.csv
-
     Requires at least Python version 3.5.2.
 
-### Use
+_Or_, see the [systemd Service](#systemd-service) section.
+
+## Use
 
 From your browser, browse to a redirect path!  For example, given a network host
 `goto` running `goto_http_redirect_server` on port `80`, and given the
@@ -80,7 +95,7 @@ example redirects file `./redirects1.csv` above, then<br />
 in your browser, type **`goto/hr⏎`**. Your browser will end up at
 **`http://human-resources.mycorp.local/login`** 😝‼
 
-#### Gotchas
+### Gotchas
 
 <small>
 
@@ -97,12 +112,12 @@ in your browser, type **`goto/hr⏎`**. Your browser will end up at
 
 </small>
 
-### Live Reload
+## Live Reload
 
 When the tab-separated values files are modified, this program can reload them.
 No service downtime!
 
-#### Reload via Signals
+### Reload via Signals
 
  1. Note during startup the Process ID (or query the host System).
  
@@ -112,15 +127,17 @@ No service downtime!
     The running `goto_http_redirect_server` will re-read all files passed via
     `--redirects`.
 
-#### Reload via browser
+### Reload via browser
 
 1. Pass `--reload-path /reload` as a program command-line options.
 
 2. Browse to `http://host/reload`.
 
-### Pro Tips
+## systemd Service
 
 - See  [`service/`](./service) directory for systemd service files.
+
+## Pro Tips
 
 - Add a DNS addressable host on your network named `goto`. Run
   `goto_http_redirect_server` on the host.<br />
