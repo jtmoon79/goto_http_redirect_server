@@ -9,10 +9,12 @@ set -u
 set -e
 set -o pipefail
 
+
 authbind=
 sudoas=
 debug=
 port=
+
 while getopts "au:p:dh?" opt; do
     case ${opt} in
         a)
@@ -33,8 +35,8 @@ while getopts "au:p:dh?" opt; do
             (
                 echo "Usage: ${0} [-a] [-u USER] [-p PORT] [-d]"
                 echo
-                echo "       -a  lower privilege using 'authbind --deep'"
-                echo "       -u  run process using 'sudo -u USER'"
+                echo "       -a  lower privilege using 'authbind --deep' (requires authbind)"
+                echo "       -u  run process using 'sudo -u USER'  (requires sudo)"
                 echo "       -p  pass '--port PORT' option"
                 echo "       -d  pass '--debug' option"
                 echo
