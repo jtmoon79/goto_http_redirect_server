@@ -107,7 +107,7 @@ Redirect_FromTo_List = []  # type: FromTo_List
 # global list of --redirects files
 Redirect_Files_List = []  # type: Path_List
 reload = False
-reload_datetime = datetime.datetime.now()  # initial set for mypy, will be set again
+reload_datetime = datetime.datetime.now()  # set for mypy, will be set again
 redirect_counter = defaultdict(int)  # type: typing.DefaultDict[str, int]
 status_path = None
 reload_path = None
@@ -122,7 +122,7 @@ REDIRECT_PATHS_NOT_ALLOWED = (PATH_FAVICON,)
 #
 
 
-class str_delay(object):
+class StrDelay(object):
     """
     Delayed evaluation of object.__str__.
     Intended for logging messages that may not need to execute a passed function
@@ -132,7 +132,7 @@ class str_delay(object):
     The call to complex_function(foo) may not be necessary because logging.level
     might be logging.INFO. So skip the call to complex_function(foo) if it is
     not necessary, e.g.
-       logging.debug('%s', str_delay(complex_function, foo))
+       logging.debug('%s', StrDelay(complex_function, foo))
 
     XXX: There are probably more succinct implementations. Good enough.
     """
@@ -192,6 +192,11 @@ def combine_parseresult(pr1: parse.ParseResult, pr2: parse.ParseResult) -> str:
 
     XXX: this function is called for every request. It should be implemented
          more efficiently.
+    XXX: this function, the second most important of this entire program, really
+         needs some pytests to help sort out what it is trying to achieve.
+         As of now, it'll work fine for 98% of cases, but can get wonky with
+         complicated pr1, pr2, and multiple repeating string.Template
+         replacements.
     """
 
     # work from a OrderDict(pr2) instance, used to track what replacements
@@ -272,7 +277,7 @@ def logging_init(debug: bool, filename: Path_None) -> None:
 
 def print_debug(message: str, end: str = '\n', file=sys.stderr) -> None:
     """
-    Helper for printing (preferrably to stderr) and checking logging.DEBUG.
+    Helper for printing (preferably to stderr) and checking logging.DEBUG.
     Sometimes a full logging message is too much.
     """
     if log.level <= logging.DEBUG:
@@ -332,7 +337,7 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
 
     log.debug('using redirect dictionary (0x%08x) with %s entries:\n%s',
               id(redirects), len(redirects.keys()),
-              str_delay(pprint.pformat, redirects, indent=2)
+              StrDelay(pprint.pformat, redirects, indent=2)
     )
 
     class RedirectHandler(server.SimpleHTTPRequestHandler):
@@ -505,7 +510,8 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
 
             if parseresult.path not in redirects_.keys():
                 self.log_message('no redirect found for (%s), returning %s (%s)',
-                                 parseresult.path, int(http.HTTPStatus.NOT_FOUND),
+                                 parseresult.path,
+                                 int(http.HTTPStatus.NOT_FOUND),
                                  http.HTTPStatus.NOT_FOUND.phrase,
                                  loglevel=logging.INFO)
                 self.send_response(http.HTTPStatus.NOT_FOUND)
@@ -647,8 +653,10 @@ def clean_redirects(entrys_files: Re_Entry_Dict) -> Re_Entry_Dict:
     for path in REDIRECT_PATHS_NOT_ALLOWED:
         re_key = Re_EntryKey(Re_From(path))
         if re_key in entrys_files.keys():
-            log.warning('Removing reserved From value "%s" from redirect entries.',
-                        path)
+            log.warning(
+                'Removing reserved From value "%s" from redirect entries.',
+                path
+            )
             entrys_files.pop(re_key)
 
     # check for To "Location" Header values that will fail to encode
@@ -661,8 +669,10 @@ def clean_redirects(entrys_files: Re_Entry_Dict) -> Re_Entry_Dict:
             # method BaseServer.send_header
             to.encode('latin-1', 'strict')
         except UnicodeEncodeError:
-            log.warning('Removing To "Location" value "%s"; it fails encoding to "latin-1"',
-                        to)
+            log.warning(
+                'Removing To "Location" value "%s"; it fails encoding to "latin-1"',
+                to
+            )
             remove.append(re_key)
     for re_key in remove:
         entrys_files.pop(re_key)
@@ -743,7 +753,8 @@ class RedirectServer(socketserver.TCPServer):
         global status_path
         global reload_datetime
         global reload_path
-        reload_datetime = datetime.datetime.now().replace(microsecond=0)  # distracting to read microsecond  
+        # distracting to read microsecond, set to 0
+        reload_datetime = datetime.datetime.now().replace(microsecond=0)
         redirect_handler = redirect_handler_factory(entrys,
                                                     Redirect_Code,
                                                     status_path,
@@ -1038,7 +1049,8 @@ def main() -> None:
                                 Redirect_Files_List,
                                 field_delimiter_)
     global reload_datetime
-    reload_datetime = datetime.datetime.now().replace(microsecond=0)  # distracting to read microsecond
+    # distracting to read microsecond, set to 0
+    reload_datetime = datetime.datetime.now().replace(microsecond=0)
 
     if len(entry_list) < 1:
         log.warning('There are no redirect entries')
