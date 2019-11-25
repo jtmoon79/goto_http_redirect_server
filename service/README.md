@@ -21,3 +21,5 @@ As `root` user,
 #### check service
 
     systemctl status goto_http_redirect_server.service
+
+_Tested on Debian 9. MMV._
