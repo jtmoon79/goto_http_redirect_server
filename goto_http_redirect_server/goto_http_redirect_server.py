@@ -156,9 +156,11 @@ def html_escape(s_: str) -> str:
         .replace('  ', r'&nbsp; ')
 
 
-def html_a(href: str) -> str:
+def html_a(href: str, text: str = '') -> str:
     """create HTML <a> from href URL"""
-    return '<a href="' + href + '">' + html_escape(href) + '</a>'
+    if not text:
+        text = href
+    return '<a href="' + href + '">' + html_escape(text) + '</a>'
 
 
 def combine_parseresult(pr1: parse.ParseResult, pr2: parse.ParseResult) -> str:
@@ -369,13 +371,16 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
             start_datetime = datetime.datetime.\
                 fromtimestamp(program_start_time).replace(microsecond=0)
             uptime = time.time() - program_start_time
-            esc_overall = he(
-                'Program %s version %s and Project Page (%s)\n'
+            esc_overall = \
+                'Program {}'.format(
+                    html_a(__url__, PROGRAM_NAME)
+                )
+            esc_overall += he(' version {}.\n'.format(__version__))
+            esc_overall += he(
                 'Process ID %s listening on %s:%s on host %s\n'
                 'Process start datetime %s (up time %s)\n'
                 'Successful Redirect Status Code is %s (%s)'
-                % (PROGRAM_NAME, __version__, __url__,
-                   os.getpid(), self.server.server_address[0],
+                % (os.getpid(), self.server.server_address[0],
                    self.server.server_address[1], HOSTNAME,
                    start_datetime, datetime.timedelta(seconds=uptime),
                    int(status_code), status_code.phrase,)
