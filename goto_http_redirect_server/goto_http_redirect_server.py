@@ -221,36 +221,27 @@ def combine_parseresult(pr1: parse.ParseResult, pr2: parse.ParseResult) -> str:
             log.debug('    "%s": "%s" -> "%s"  POP? %s', key, val_old, val, val != val_old)
         return val
 
-    log.debug('  pr1: %s', pr1)
-    log.debug('  pr2: %s', pr2)
-
     # starting with a copy of pr1 with safe_substitutes
     pr = dict()
     for k_, v_ in pr1._asdict().items():
         pr[k_] = ssub(v_)
-        log.debug('    "%s": "%s"', k_, pr[k_])
 
     # selectively combine URI parts from pr2d
     # safe_substitute where appropriate
     if 'fragment' in pr2d and pr2d['fragment']:
         pr['fragment'] = pr2d['fragment']
-        log.debug('    Add fragment "%s"', pr['fragment'])
     if 'params' in pr2d and pr2d['params']:
         if pr1.params:
             # XXX: how are URI Object Parameters combined?
             #      see https://tools.ietf.org/html/rfc1808.html#section-2.1
             pr['params'] = ssub(pr1.params) + ';' + pr2d['params']
-            log.debug('    Add1 "%s": "%s"', 'params', pr['params'])
         else:
             pr['params'] = pr2d['params']
-            log.debug('    Add2 "%s": "%s"', 'params', pr['params'])
     if 'query' in pr2d and pr2d['query']:
         if pr1.query:
             pr['query'] = ssub(pr1.query) + '&' + pr2d['query']
-            log.debug('    Add1 "%s": "%s"', 'query', pr['query'])
         else:
             pr['query'] = pr2d['query']
-            log.debug('    Add2 "%s": "%s"', 'query', pr['query'])
 
     url = parse.urlunparse(parse.ParseResult(**pr))
     return url
