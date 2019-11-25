@@ -50,7 +50,7 @@ while getopts "au:p:dh?" opt; do
 done
 
 IP_ADDR='0.0.0.0'
-LOG="${TMP:-/var/tmp/}$(basename -- "${0}").log"
+LOG="${TMP:-/var/log/}goto_http_redirect_server.log"
 SCRIPT='/usr/local/bin/goto_http_redirect_server'
 REDIRECTS_FILE='/usr/local/share/goto_http_redirect_server.csv'
 PATH_STATUS='/'
