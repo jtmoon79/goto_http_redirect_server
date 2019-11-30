@@ -11,7 +11,7 @@ path `/usr/local/share/goto_http_redirect_server.csv`
 
     touch /usr/local/share/goto_http_redirect_server.csv
 
-This file is described in the top-level [README.md](../../README.md).
+This file is described in the top-level [README.md](./../README.md).
 
 ### Install Files
 
@@ -32,7 +32,7 @@ This file is described in the top-level [README.md](../../README.md).
 
 - `goto_http_redirect_server`
 
-  See top-level [README.md](../../README.md).
+  See top-level [README.md](./../README.md).
 
 ### Enable and Start systemd Service
 
