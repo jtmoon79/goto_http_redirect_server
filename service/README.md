@@ -1,6 +1,6 @@
 Files for adding the _"Go To" HTTP Redirect Server_ as a Linux systemd service.
 
-_Tested on Debian 9. MMV._
+_Tested on Debian Linux 9. MMV._
 
 ## Install Instructions
 
