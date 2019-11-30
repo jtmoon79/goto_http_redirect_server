@@ -30,7 +30,7 @@ import uuid
 
 
 # canonical module informations used by setup.py
-__version__ = '0.6.7'
+__version__ = '0.6.8'
 __author__ = 'jtmoon79'
 __url__ = 'https://github.com/jtmoon79/goto_http_redirect_server'
 __url_issues__ = 'https://github.com/jtmoon79/goto_http_redirect_server/issues'
