@@ -2,6 +2,19 @@ Files for adding the _"Go To" HTTP Redirect Server_ as a Linux systemd service.
 
 _Tested on Debian Linux 9. MMV._
 
+----
+
+<!-- python -m md_toc README.md github -->
+
+- [Install Instructions](#install-instructions)
+  - [Create HTTP Redirects File](#create-http-redirects-file)
+  - [Install Files](#install-files)
+  - [Enable and Start systemd Service](#enable-and-start-systemd-service)
+  - [Check systemd Service](#check-systemd-service)
+  - [(optional) Harden the Process with authbind and Low Privilege User](#optional-harden-the-process-with-authbind-and-low-privilege-user)
+
+----
+
 ## Install Instructions
 
 As `root` user,
@@ -44,3 +57,21 @@ This file is described in the top-level [README.md](./../README.md).
 ### Check systemd Service
 
     systemctl status goto_http_redirect_server.service
+
+### (optional) Harden the Process with authbind and Low Privilege User
+
+The wrapper-script `goto_http_redirect_server.sh` accepts options to run
+`goto_http_redirect_server` with lower privileges.
+
+Using a package manager, install `authbind`.
+
+Setup the low privilege port for user `nobody`:
+
+     touch /etc/authbind/byport/80
+     chmod 0500 /etc/authbind/byport/80
+     chgrp nogroup /etc/authbind/byport/80
+     chown nobody /etc/authbind/byport/80
+
+In systemd service script `/etc/systemd/user/goto_http_redirect_server.service`
+adjust declaration `ExecStart` and then restart the service.  User `nobody` may
+be any other user.
