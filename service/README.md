@@ -17,7 +17,11 @@ This file is described in the top-level [README.md](./../README.md).
 
 ### Install Files
 
-- `goto_http_redirect_server.sh`
+- `/usr/local/bin/goto_http_redirect_server`
+
+  See top-level [README.md](./../README.md).
+
+- `/usr/local/bin/goto_http_redirect_server.sh`
   ```
   curl -o /usr/local/bin/goto_http_redirect_server.sh https://raw.githubusercontent.com/jtmoon79/goto_http_redirect_server/master/service/goto_http_redirect_server.sh
   chmod +x /usr/local/bin/goto_http_redirect_server.sh
@@ -26,15 +30,11 @@ This file is described in the top-level [README.md](./../README.md).
   `/usr/local/bin/goto_http_redirect_server`.  The wrapper-script has options
   for environment variable overrides.
 
-- `goto_http_redirect_server.service`
+- `/etc/systemd/user/goto_http_redirect_server.service`
   ```
   curl -o /etc/systemd/user/goto_http_redirect_server.service https://raw.githubusercontent.com/jtmoon79/goto_http_redirect_server/master/service/goto_http_redirect_server.service
   chmod +x /etc/systemd/user/goto_http_redirect_server.service
   ```
-
-- `goto_http_redirect_server`
-
-  See top-level [README.md](./../README.md).
 
 ### Enable and Start systemd Service
 
