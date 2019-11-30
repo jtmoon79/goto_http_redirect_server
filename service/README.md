@@ -24,7 +24,7 @@ This file is described in the top-level [README.md](./../README.md).
 - `/usr/local/bin/goto_http_redirect_server.sh`
   ```
   curl -o /usr/local/bin/goto_http_redirect_server.sh https://raw.githubusercontent.com/jtmoon79/goto_http_redirect_server/master/service/goto_http_redirect_server.sh
-  chmod +x /usr/local/bin/goto_http_redirect_server.sh
+  chmod 0555 /usr/local/bin/goto_http_redirect_server.sh
   ```
   The wrapper-script expects the Python package to install to
   `/usr/local/bin/goto_http_redirect_server`.  The wrapper-script has options
@@ -33,7 +33,7 @@ This file is described in the top-level [README.md](./../README.md).
 - `/etc/systemd/user/goto_http_redirect_server.service`
   ```
   curl -o /etc/systemd/user/goto_http_redirect_server.service https://raw.githubusercontent.com/jtmoon79/goto_http_redirect_server/master/service/goto_http_redirect_server.service
-  chmod +x /etc/systemd/user/goto_http_redirect_server.service
+  chmod 0444 /etc/systemd/user/goto_http_redirect_server.service
   ```
 
 ### Enable and Start systemd Service
