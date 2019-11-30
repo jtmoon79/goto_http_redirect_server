@@ -349,12 +349,12 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
             except Exception as ex:
                 print('Error during log_message\n%s' % str(ex), file=sys.stderr)
 
-        def do_GET_status(self, path_: str):
+        def do_GET_status(self):
             """dump status information about this server instance"""
 
             http_sc = http.HTTPStatus.OK  # HTTP Status Code
-            self.log_message('%s requested, returning %s (%s)',
-                             path_, int(http_sc), http_sc.phrase,
+            self.log_message('status requested, returning %s (%s)',
+                             int(http_sc), http_sc.phrase,
                              loglevel=logging.INFO)
             self.send_response(http_sc)
             self.send_header('Redirect-Server-Host', HOSTNAME)
@@ -469,7 +469,6 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
             self.send_response(http_sc)
             self.send_header('Redirect-Server-Host', HOSTNAME)
             self.send_header('Redirect-Server-Version', __version__)
-            self.end_headers()
             esc_title = html_escape('%s reload' % PROGRAM_NAME)
             html_doc = """\
 <!DOCTYPE html>
@@ -487,6 +486,8 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
             html_docb = bytes(html_doc,
                               encoding='utf-8',
                               errors='xmlcharrefreplace')
+            self.send_header('Content-Length', str(len(html_docb)))
+            self.end_headers()
             self.wfile.write(html_docb)
             global reload
             reload = True
@@ -558,7 +559,7 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
 
             parseresult = parse.urlparse(self.path)
             if parseresult.path == status_path_:
-                self.do_GET_status(parseresult.path)
+                self.do_GET_status()
                 return
             elif parseresult.path == reload_path_:
                 self.do_GET_reload()
