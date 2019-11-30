@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 #
-# systemd wrapper
+# systemd wrapper for goto_http_redirect_server
+# accepts some command-line options for adjusting process ownership and access-levels
+# various parameters may be overridden by environment variables
 #
 # XXX: makes presumptions! needs work to be more portable!
 # XXX: only tested on Debian 9
@@ -8,7 +10,6 @@
 set -u
 set -e
 set -o pipefail
-
 
 authbind=
 sudoas=
@@ -49,22 +50,33 @@ while getopts "au:p:dh?" opt; do
     esac
 done
 
-IP_ADDR='0.0.0.0'
-LOG="${TMP:-/var/log/}goto_http_redirect_server.log"
-SCRIPT='/usr/local/bin/goto_http_redirect_server'
-REDIRECTS_FILE='/usr/local/share/goto_http_redirect_server.csv'
-PATH_STATUS='/'
-PATH_RELOAD='/reload'
+GOTO_IP_ADDR=${GOTO_IP_ADDR:-'0.0.0.0'}
+GOTO_LOG="${LOGDIR:-/var/log/}goto_http_redirect_server.log"
+GOTO_SCRIPT=${GOTO_SCRIPT:-'/usr/local/bin/goto_http_redirect_server'}
+GOTO_REDIRECTS_FILE=${GOTO_REDIRECTS_FILE:-'/usr/local/share/goto_http_redirect_server.csv'}
+GOTO_PATH_STATUS=${GOTO_PATH_STATUS-'/'}
+GOTO_PATH_RELOAD=${GOTO_PATH_RELOAD-'/reload'}
+
+declare -a GOTO_PATH_STATUS_PARAMS=()
+if [[ "${GOTO_PATH_STATUS}" ]]; then
+     GOTO_PATH_STATUS_PARAMS[0]='--status-path'
+     GOTO_PATH_STATUS_PARAMS[1]=${GOTO_PATH_STATUS}
+fi
+declare -a GOTO_PATH_RELOAD_PARAMS=()
+if [[ "${GOTO_PATH_RELOAD}" ]]; then
+     GOTO_PATH_RELOAD_PARAMS[0]='--reload-path'
+     GOTO_PATH_RELOAD_PARAMS[1]=${GOTO_PATH_RELOAD}
+fi
 
 set -x
 exec \
     ${sudoas} \
         ${authbind} \
-            ${SCRIPT} \
-                --redirects "${REDIRECTS_FILE}" \
-                --ip "${IP_ADDR}" \
+            ${GOTO_SCRIPT} \
+                --redirects "${GOTO_REDIRECTS_FILE}" \
+                --ip "${GOTO_IP_ADDR}" \
                 ${port} \
-                --status-path "${PATH_STATUS}" \
-                --reload-path "${PATH_RELOAD}" \
-                --log "${LOG}" \
+                "${GOTO_PATH_STATUS_PARAMS[@]}" \
+                "${GOTO_PATH_RELOAD_PARAMS[@]}" \
+                --log "${GOTO_LOG}" \
                 ${debug}

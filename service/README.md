@@ -4,6 +4,11 @@ Files for adding the _"Go To" HTTP Redirect Server_ as a Linux systemd service.
 
 As `root` user,
 
+#### HTTP redirects file
+
+1. create a tab-separated values file (`'\t'`) with a list of HTTP redirects at
+   path `/usr/local/share/goto_http_redirect_server.csv`
+
 #### install files
 
     cp goto_http_redirect_server.sh /usr/local/bin/
@@ -12,6 +17,11 @@ As `root` user,
     chmod +x /etc/systemd/user/goto_http_redirect_server.service
     touch /usr/local/share/goto_http_redirect_server.csv
     pip install goto-http-redirect-server
+
+systemd wrapper-script `goto_http_redirect_server.sh` expects pip to install to
+`/usr/local/bin/goto_http_redirect_server`. See
+[`goto_http_redirect_server.sh`](./goto_http_redirect_server.sh) for override
+options.
 
 #### enable and start systemd service
 

@@ -13,24 +13,25 @@ on your network.
 
 Trivial to run and reload.  Only uses Python built-in modules.  Super handy 😄 ‼
 
-<!-- python -m md_toc README.md  github -->
-
 ----
 
+<!-- python -m md_toc README.md github -->
+
 - [Go To HTTP Redirect Server](#go-to-http-redirect-server)
-  - [Setup and run](#setup-and-run)
-  - [Use](#use)
-    - [Gotchas](#gotchas)
+  - [Install Manually](#install-manually)
+  - [Install systemd Service](#install-systemd-service)
+- [Use](#use)
+  - [Gotchas](#gotchas)
   - [Live Reload](#live-reload)
     - [Reload via Signals](#reload-via-signals)
     - [Reload via browser](#reload-via-browser)
   - [systemd Service](#systemd-service)
   - [Pro Tips](#pro-tips)
-  - [`--help` message](#--help-message)
+- [`--help` message](#--help-message)
 
 ----
 
-## Setup and run
+## Install Manually
 
 1. create a tab-separated values file (`'\t'`) with a list of HTTP redirects.<br />
    Fields are "_from path_", "_to URL_", "_added by user_", and "_added on datetime_".<br />
@@ -85,9 +86,11 @@ Trivial to run and reload.  Only uses Python built-in modules.  Super handy 😄
 
     Requires at least Python version 3.5.2.
 
-_Or_, see the [systemd Service](#systemd-service) section.
+## Install systemd Service
 
-## Use
+See [service/README.md](./service/README.md).
+
+# Use
 
 From your browser, browse to a redirect path!  For example, given a network host
 `goto` running `goto_http_redirect_server` on port `80`, and given the
@@ -95,7 +98,7 @@ example redirects file `./redirects1.csv` above, then<br />
 in your browser, type **`goto/hr⏎`**. Your browser will end up at
 **`http://human-resources.mycorp.local/login`** 😝‼
 
-### Gotchas
+## Gotchas
 
 <small>
 
@@ -160,7 +163,7 @@ No service downtime!
 
 ----
 
-## `--help` message
+# `--help` message
 
     usage: goto_http_redirect_server [--from-to from to]
                                      [--redirects REDIRECTS_FILES] [--ip IP]

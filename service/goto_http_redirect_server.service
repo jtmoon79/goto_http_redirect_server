@@ -3,7 +3,6 @@
 # Following systemd guide at
 # https://www.digitalocean.com/community/tutorials/understanding-systemd-units-and-unit-files
 # (http://archive.ph/TUaJL)
-# Tested against Debian 9
 
 [Unit]
 Description=The "Go To" HTTP Redirect Server
