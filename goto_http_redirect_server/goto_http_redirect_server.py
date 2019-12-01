@@ -117,6 +117,8 @@ STATUS_PAGE_PATH_DEFAULT = '/status'
 FIELD_DELMITER_DEFAULT = '\t'
 PATH_FAVICON = '/favicon.ico'
 REDIRECT_PATHS_NOT_ALLOWED = (PATH_FAVICON,)
+RE_URI_KEYWORDS = re.compile(r'\${(path|params|query|fragment)}')
+URI_KEYWORDS_REPL = ('path', 'params', 'query', 'fragment')
 
 #
 # functions, classes, code
@@ -167,14 +169,14 @@ def html_a(href: str, text: str = '') -> str:
 def combine_parseresult(pr1: parse.ParseResult, pr2: parse.ParseResult) -> str:
     """
     Combine parse.ParseResult parts.
-    A parse.ParseResults example is
+    A parse.ParseResult example is
        parse.urlparse('http://host.com/path1;parmA=a,parmB=b?a=A&b=%20B&cc=CCC#FRAG')
     returns
         ParseResult(scheme='http', netloc='host.com', path='/path1',
                     params='parm2', query='a=A&b=%20B&ccc=CCC', fragment='FRAG')
 
     pr1 is assumed to represent a Re_To supplied at startup-time
-    pr2 is assumed to be an incoming request
+    pr2 is assumed to be an incoming user request
 
     From pr1 use .scheme, .netloc, .path
     Prefer .fragment from pr2, then pr1
@@ -193,9 +195,7 @@ def combine_parseresult(pr1: parse.ParseResult, pr2: parse.ParseResult) -> str:
 
     XXX: this function is called for every request. It should be implemented
          more efficiently.
-    XXX: this function, the second most important of this entire program, really
-         needs some pytests to help sort out what it is trying to achieve.
-         As of now, it'll work fine for 98% of cases, but can get wonky with
+    XXX: This functions works fine for 98% of cases, but can get wonky with
          complicated pr1, pr2, and multiple repeating string.Template
          replacements.
     """
@@ -210,16 +210,22 @@ def combine_parseresult(pr1: parse.ParseResult, pr2: parse.ParseResult) -> str:
         if not val:
             return val
         # shortcut when no Template syntax present
-        if not re.search(r'\${(path|params|query|fragment)}', val):
+        if not RE_URI_KEYWORDS.search(val):
             return val
-        # there are replacements
-        for key in ('path', 'params', 'query', 'fragment'):
+        # there are replacements to do
+        remove = dict()
+        for key in URI_KEYWORDS_REPL:
             repl = pr2d[key] if key in pr2d else key
             val_old = val
             val = re.sub(r'\${%s}' % key, repl, val)
+            remove[key] = False
             if val != val_old:
+                remove[key] = True
+                #pr2d.pop(key)
+            #log.debug('    "%s": "%s" -> "%s"  POP? %s', key, val_old, val, popd)
+        for key, rm in remove.items():
+            if rm and key in pr2d:
                 pr2d.pop(key)
-            log.debug('    "%s": "%s" -> "%s"  POP? %s', key, val_old, val, val != val_old)
         return val
 
     # starting with a copy of pr1 with safe_substitutes
