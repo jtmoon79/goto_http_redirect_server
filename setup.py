@@ -65,7 +65,7 @@ setup(
         ],
     },
     project_urls={  # Optional
-        'Source': __url__,
+        'Source': __url_project__,
         'Bug Reports': __url_issues__,
     },
 )
