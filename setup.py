@@ -16,7 +16,8 @@ from setuptools import setup
 from goto_http_redirect_server.goto_http_redirect_server import \
     __version__, \
     __author__, \
-    __url__, \
+    __url_project__, \
+    __url_pypi__, \
     __url_issues__, \
     __doc__
 
@@ -29,7 +30,7 @@ setup(
     name='goto_http_redirect_server',
     version=__version__,
     author=__author__,
-    url=__url__,
+    url=__url_pypi__,
     description=__doc__.splitlines()[0],
     long_description_content_type='text/markdown',
     long_description=long_description,

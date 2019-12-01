@@ -32,7 +32,8 @@ import uuid
 # canonical module informations used by setup.py
 __version__ = '0.6.8'
 __author__ = 'jtmoon79'
-__url__ = 'https://github.com/jtmoon79/goto_http_redirect_server'
+__url_project__ = 'https://github.com/jtmoon79/goto_http_redirect_server'
+__url_pypi__ = 'https://pypi.org/project/goto-http-redirect-server/'
 __url_issues__ = 'https://github.com/jtmoon79/goto_http_redirect_server/issues'
 # first line of __doc__ is used in setup.py. Should match README.md and title at
 # github.com project site.
