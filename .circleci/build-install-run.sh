@@ -55,7 +55,8 @@ export PATH="${PATH}:${usersite}:${userbase}:${userbasebin}"
 SERVER_TEST=$(readlink_ "./tools/ci/server-test.sh")
 PY_TEST=$(readlink_ "./goto_http_redirect_server/test/pytest.sh")
 
-python -m pip install -e '.[development]'
+# install development requirements
+python -m pip install --user --verbose -e '.[development]'
 
 # mypy test
 python -m mypy 'goto_http_redirect_server/goto_http_redirect_server.py'
