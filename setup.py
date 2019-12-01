@@ -35,9 +35,15 @@ setup(
     long_description_content_type='text/markdown',
     long_description=long_description,
     license='Apache License 2.0 (Apache-2.0)',
-    install_requires=[
-    ],
+    install_requires=[],
     setup_requires=['wheel'],
+    extras_require={
+        'dev': [  # development requirements
+            'mypy',
+            'pytest',
+            'md_toc',
+        ]
+    },
     # see https://pypi.org/classifiers/
     classifiers=[
         'Development Status :: 4 - Beta',
