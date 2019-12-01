@@ -3,7 +3,6 @@
 
 
 __author__ = 'jtmoon79'
-__url__ = 'https://github.com/jtmoon79/goto_http_redirect_server'
 __doc__ = \
     """Test the goto_http_redirect_server project using pytest."""
 
@@ -12,7 +11,6 @@ from urllib.parse import ParseResult
 
 import pytest
 
-# custom imports
 from goto_http_redirect_server.goto_http_redirect_server import (
     combine_parseresult
 )

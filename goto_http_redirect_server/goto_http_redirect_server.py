@@ -376,7 +376,7 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
             uptime = time.time() - program_start_time
             esc_overall = \
                 'Program {}'.format(
-                    html_a(__url__, PROGRAM_NAME)
+                    html_a(__url_project__, PROGRAM_NAME)
                 )
             esc_overall += he(' version {}.\n'.format(__version__))
             esc_overall += he(
