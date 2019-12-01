@@ -9,6 +9,9 @@
 # https://circleci.com/docs/2.0/circleci-images/ (http://archive.fo/z2SyE)
 #
 # XXX: images circleci/…  require `sudo` for package updates
+#
+# TODO: break up "build, install, and run" jobs into pipeline dependencies
+#       of: 1. pytest 2. build, install 3. run test
 ---
 version: 2.1
 jobs:

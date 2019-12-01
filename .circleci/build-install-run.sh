@@ -4,6 +4,8 @@
 #
 # XXX: nearly identical to .azure-pipelines/build-install-run.sh
 # XXX: very similar to tools/build-install.sh
+#
+# TODO: break this up into jobs for Circle CI Pipeline
 
 set -e
 set -u
@@ -51,6 +53,8 @@ userbasebin=${userbase}/bin  # --user install location on Ubuntu
 export PATH="${PATH}:${usersite}:${userbase}:${userbasebin}"
 
 SERVER_TEST=$(readlink_ "./tools/ci/server-test.sh")
+PY_TEST=$(readlink_ "./goto_http_redirect_server/test/pytest.sh")
+# mypy test
 python -m mypy 'goto_http_redirect_server/goto_http_redirect_server.py'
 # build
 version=$(python -B -c 'from goto_http_redirect_server import goto_http_redirect_server as gh;print(gh.__version__)')
@@ -62,6 +66,9 @@ cd ..  # move out of project directory so pip install behaves correctly
 python -m pip install --user --verbose "${cv_whl}"
 # run
 "${PROGRAM_NAME}" --version
+# pytest test
+chmod -v +x -- "${PY_TEST}"
+"${PY_TEST}"
 # server test
 chmod -v +x -- "${SERVER_TEST}"
 "${SERVER_TEST}"
