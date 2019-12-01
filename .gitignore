@@ -1,8 +1,15 @@
+# IDE projects
 .idea/
+.vscode/
+
+# various Python artifacts
 .eggs/
-.mypy_cache/
 dist/
 build/
 goto_http_redirect_server.egg-info/
-goto_http_redirect_server/__pycache__/
+*__pycache__/
+.mypy_cache/
+.pytest_cache/
+
+# virtualenvs
 .venv*/
