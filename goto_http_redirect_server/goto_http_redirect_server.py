@@ -342,7 +342,7 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
 
         def log_message(self, format_, *args, **kwargs):
             """
-            override the RedirectHandler.log_message so RedirectHanlder
+            override the RedirectHandler.log_message so RedirectHandler
             instances use the module-level logging.Logger instance `log`
             """
             try:
