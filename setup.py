@@ -38,9 +38,11 @@ setup(
     install_requires=[],
     setup_requires=['wheel'],
     extras_require={
-        'dev': [  # development requirements
+        'development': [
             'mypy',
             'pytest',
+        ],
+        'readme': [
             'md_toc',
         ]
     },
