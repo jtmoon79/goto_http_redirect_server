@@ -66,7 +66,7 @@ done
 function exit_() {
     (
         set -x
-        # XXX: *most* of the time this is unnecssary and risky.
+        # XXX: *most* of the time this is unnecessary and risky.
         #      Once in a while, one child process continues running after
         #      Ctrl+C has exited the parent process.
         #kill "${PIDs[@]}"
