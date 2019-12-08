@@ -349,6 +349,9 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
 
     class RedirectHandler(server.SimpleHTTPRequestHandler):
 
+        Header_Server_Host = ('Redirect-Server-Host', HOSTNAME)
+        Header_Server_Version = ('Redirect-Server-Version', __version__)
+
         def log_message(self, format_, *args, **kwargs):
             """
             override the RedirectHandler.log_message so RedirectHandler
@@ -365,7 +368,25 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
             except Exception as ex:
                 print('Error during log_message\n%s' % str(ex), file=sys.stderr)
 
-        def do_GET_status(self):
+        def _write_html_doc(self, html_doc: str) -> None:
+            """
+            Write out the HTML document and required headers.
+            This calls end_headers!
+            """
+            # From https://tools.ietf.org/html/rfc2616#section-14.13
+            #      The Content-Length entity-header field indicates the size of
+            #      the entity-body, in decimal number of OCTETs
+            # XXX: does this follow *all* Message Length rules?
+            #      https://tools.ietf.org/html/rfc2616#section-4.4
+            html_docb = bytes(html_doc,
+                              encoding='utf-8',
+                              errors='xmlcharrefreplace')
+            self.send_header('Content-Length', str(len(html_docb)))
+            self.end_headers()
+            self.wfile.write(html_docb)
+            return
+
+        def do_GET_status(self) -> None:
             """dump status information about this server instance"""
 
             http_sc = http.HTTPStatus.OK  # HTTP Status Code
@@ -373,16 +394,16 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
                              int(http_sc), http_sc.phrase,
                              loglevel=logging.INFO)
             self.send_response(http_sc)
-            self.send_header('Redirect-Server-Host', HOSTNAME)
-            self.send_header('Redirect-Server-Version', __version__)
+            self.send_header(*self.Header_Server_Host)
+            self.send_header(*self.Header_Server_Version)
             he = html_escape  # abbreviate
 
             # create the html body
             esc_title = he(
                 '%s status' % PROGRAM_NAME)
             start_datetime = datetime.datetime.\
-                fromtimestamp(program_start_time).replace(microsecond=0)
-            uptime = time.time() - program_start_time
+                fromtimestamp(TIME_START).replace(microsecond=0)
+            uptime = time.time() - TIME_START
             esc_overall = \
                 'Program {}'.format(
                     html_a(__url_project__, PROGRAM_NAME)
@@ -468,22 +489,18 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
                         esc_redirects=esc_redirects,
                         esc_reload_info=esc_reload_info,
                         esc_files=esc_files)
-            html_docb = bytes(html_doc,
-                              encoding='utf-8',
-                              errors='xmlcharrefreplace')
-            self.send_header('Content-Length', str(len(html_docb)))
-            self.end_headers()
-            self.wfile.write(html_docb)
+            self._write_html_doc(html_doc)
+            return
 
-        def do_GET_reload(self):
+        def do_GET_reload(self) -> None:
             http_sc = http.HTTPStatus.ACCEPTED  # HTTP Status Code
             self.log_message('reload requested, returning %s (%s)',
                              int(http_sc), http_sc.phrase,
                              loglevel=logging.INFO)
             esc_datetime = html_escape(datetime.datetime.now().isoformat())
             self.send_response(http_sc)
-            self.send_header('Redirect-Server-Host', HOSTNAME)
-            self.send_header('Redirect-Server-Version', __version__)
+            self.send_header(*self.Header_Server_Host)
+            self.send_header(*self.Header_Server_Version)
             esc_title = html_escape('%s reload' % PROGRAM_NAME)
             html_doc = """\
 <!DOCTYPE html>
@@ -495,37 +512,29 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
   <body>
     Reload request accepted at {esc_datetime}.
   </body>
-</html>
+</html>\
 """\
             .format(esc_title=esc_title, esc_datetime=esc_datetime)
-            html_docb = bytes(html_doc,
-                              encoding='utf-8',
-                              errors='xmlcharrefreplace')
-            self.send_header('Content-Length', str(len(html_docb)))
-            self.end_headers()
-            self.wfile.write(html_docb)
+            self._write_html_doc(html_doc)
             global reload
             reload = True
 
         def do_GET_redirect(self,
                             parseresult: parse.ParseResult,
-                            redirects_: Re_Entry_Dict):
+                            redirects_: Re_Entry_Dict) -> None:
             """
             handle the HTTP Redirect Request (the entire purpose of this
             script)
             """
 
             if parseresult.path not in redirects_.keys():
-                self.log_message('no redirect found for (%s), returning %s (%s)',
-                                 parseresult.path,
-                                 int(http.HTTPStatus.NOT_FOUND),
-                                 http.HTTPStatus.NOT_FOUND.phrase,
-                                 loglevel=logging.INFO)
-                self.send_response(http.HTTPStatus.NOT_FOUND)
-                self.send_header('Redirect-Server-Host', HOSTNAME)
-                self.send_header('Redirect-Server-Version', __version__)
-                self.end_headers()
-                return
+                self.log_message(
+                    'no redirect found for (%s), returning %s (%s)',
+                    parseresult.path,
+                    int(http.HTTPStatus.NOT_FOUND),
+                    http.HTTPStatus.NOT_FOUND.phrase,
+                    loglevel=logging.INFO)
+                return self.do_GET_redirect_NOT_FOUND(parseresult.path)
 
             key = Re_EntryKey(Re_From(parseresult.path))
             # merge RedirectEntry URI parts with incoming requested URI parts
@@ -542,8 +551,8 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
             self.send_response(status_code)
             # The 'Location' Header is used by browsers for HTTP 30X Redirects
             # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Location
-            self.send_header('Redirect-Server-Host', HOSTNAME)
-            self.send_header('Redirect-Server-Version', __version__)
+            self.send_header(*self.Header_Server_Host)
+            self.send_header(*self.Header_Server_Version)
             # the most important statement in this program
             self.send_header('Location', to)
             try:
@@ -552,7 +561,12 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
                 log.exception('header "Redirect-Created-By" set to fallback')
                 self.send_header('Redirect-Created-By', 'Error Encoding User')
             self.send_header('Redirect-Created-Date', dt.isoformat())
+            # TODO: https://tools.ietf.org/html/rfc2616#section-10.3.2
+            #       the entity of the response SHOULD contain a short hypertext
+            #       note with a hyperlink to the new URI(s)
+            self.send_header('Content-Length', '0')
             self.end_headers()
+            # Do Not Write HTTP Content
             count_key = '(%s) → (%s)' % (parseresult.path, to)
             redirect_counter[count_key] += 1
             return
@@ -562,10 +576,10 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
             print_debug('')
             try:
                 self.log_message(
-                    'self: %s\nself.client_address: %s\n'
+                    'self: %s (0x%08X)\nself.client_address: %s\n'
                     'self.command: %s\nself.path: "%s"\n'
                     'self.headers:\n  %s',
-                    self, self.client_address,
+                    type(self), id(self), self.client_address,
                     self.command, self.path,
                     str(self.headers).strip('\n').replace('\n', '\n  '),
                 )
@@ -624,8 +638,8 @@ def load_redirects_files(redirects_files: Path_List,
                                   rfilen, csvr.line_num, row)
                         if not row:  # skip empty row
                             continue
-                        if row[0].startswith('#'):
-                            # skip row starting with '#'
+                        if row[0].startswith(REDIRECT_FILE_IGNORE_LINE):
+                            # skip rows starting with such
                             continue
                         from_path = row[0]
                         to_url = row[1]
