@@ -518,6 +518,32 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
             self._write_html_doc(html_doc)
             global reload
             reload = True
+            return
+
+        def do_GET_redirect_NOT_FOUND(self, path: str) -> None:
+            """a Redirect request was not found, return some HTML to the user"""
+
+            self.send_response(http.HTTPStatus.NOT_FOUND)
+            self.send_header(*self.Header_Server_Host)
+            self.send_header(*self.Header_Server_Version)
+            esc_title = html_escape("Not Found - '%s'" % path[:64])
+            esc_path = html_escape(path)
+            html_doc = """\
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  <meta charset="utf-8"/>
+  <title>{esc_title}</title>
+  </head>
+  <body>
+    Redirect Path not found: <code>{esc_path}</code>
+  </body>
+</html>\
+"""\
+            .format(esc_title=esc_title,
+                    esc_path=esc_path)
+            self._write_html_doc(html_doc)
+            return
 
         def do_GET_redirect(self,
                             parseresult: parse.ParseResult,
