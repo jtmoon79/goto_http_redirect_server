@@ -34,9 +34,10 @@ def pr(**kwargs):
 
 class Test_Functions(object):
 
-    @pytest.mark.parametrize('pr1,'
-                             'pr2,'
-                             'expected',
+    @pytest.mark.parametrize(
+        'pr1,'
+        'pr2,'
+        'expected',
         (
             # URI component parts
             # https://docs.python.org/3/library/urllib.parse.html#urllib.parse.urlparse
@@ -158,8 +159,9 @@ class Test_Functions(object):
             ),
         )
     )
-    def test_combine_parseresult(self, pr1: ParseResult,
-                                       pr2: ParseResult,
-                                       expected: str):
+    def test_combine_parseresult(self,
+                                 pr1: ParseResult,
+                                 pr2: ParseResult,
+                                 expected: str):
         actual = combine_parseresult(pr1, pr2)
         assert expected == actual
