@@ -13,16 +13,20 @@ set -o pipefail
 
 authbind=
 sudoas=
-debug=
+nice=
 port=
+debug=
 
-while getopts "au:p:dh?" opt; do
+while getopts "au:n:p:dh?" opt; do
     case ${opt} in
         a)
             authbind='authbind --deep'
             ;;
         u)
             sudoas="sudo -u ${OPTARG} --"
+            ;;
+        n)
+            nice="nice -n ${OPTARG}"
             ;;
         p)
             port="--port ${OPTARG}"
@@ -34,10 +38,11 @@ while getopts "au:p:dh?" opt; do
             ;&
         \?)
             (
-                echo "Usage: ${0} [-a] [-u USER] [-p PORT] [-d]"
+                echo "Usage: ${0} [-a] [-u USER] [-n NICE] [-p PORT] [-d]"
                 echo
                 echo "       -a  lower privilege using 'authbind --deep' (requires authbind)"
                 echo "       -u  run process using 'sudo -u USER'  (requires sudo)"
+                echo "       -n  run process with nice level NICE"
                 echo "       -p  pass '--port PORT' option"
                 echo "       -d  pass '--debug' option"
                 echo
@@ -51,11 +56,11 @@ while getopts "au:p:dh?" opt; do
 done
 
 GOTO_IP_ADDR=${GOTO_IP_ADDR:-'0.0.0.0'}
-GOTO_LOG="${LOGDIR:-/var/log/}goto_http_redirect_server.log"
-GOTO_SCRIPT=${GOTO_SCRIPT:-'/usr/local/bin/goto_http_redirect_server'}
-GOTO_REDIRECTS_FILE=${GOTO_REDIRECTS_FILE:-'/usr/local/share/goto_http_redirect_server.csv'}
-GOTO_PATH_STATUS=${GOTO_PATH_STATUS-'/'}
-GOTO_PATH_RELOAD=${GOTO_PATH_RELOAD-'/reload'}
+GOTO_LOG=${GOTO_LOG-/var/log/goto_http_redirect_server.log}
+GOTO_SCRIPT=${GOTO_SCRIPT:-/usr/local/bin/goto_http_redirect_server}
+GOTO_REDIRECTS_FILE=${GOTO_REDIRECTS_FILE:-/usr/local/share/goto_http_redirect_server.csv}
+GOTO_PATH_STATUS=${GOTO_PATH_STATUS-/}
+GOTO_PATH_RELOAD=${GOTO_PATH_RELOAD-/reload}
 
 declare -a GOTO_PATH_STATUS_PARAMS=()
 if [[ "${GOTO_PATH_STATUS}" ]]; then
@@ -72,11 +77,12 @@ set -x
 exec \
     ${sudoas} \
         ${authbind} \
-            ${GOTO_SCRIPT} \
-                --redirects "${GOTO_REDIRECTS_FILE}" \
-                --ip "${GOTO_IP_ADDR}" \
-                ${port} \
-                "${GOTO_PATH_STATUS_PARAMS[@]}" \
-                "${GOTO_PATH_RELOAD_PARAMS[@]}" \
-                --log "${GOTO_LOG}" \
-                ${debug}
+            ${nice} \
+                ${GOTO_SCRIPT} \
+                    --redirects "${GOTO_REDIRECTS_FILE}" \
+                    --ip "${GOTO_IP_ADDR}" \
+                    ${port} \
+                    "${GOTO_PATH_STATUS_PARAMS[@]}" \
+                    "${GOTO_PATH_RELOAD_PARAMS[@]}" \
+                    --log "${GOTO_LOG}" \
+                    ${debug}
