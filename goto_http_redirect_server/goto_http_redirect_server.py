@@ -52,10 +52,11 @@ PROGRAM_NAME = 'goto_http_redirect_server'
 IP_LOCALHOST = '127.0.0.1'
 HOSTNAME = socket.gethostname()
 
+# RedirectServer class things
+SOCKET_LISTEN_BACKLOG = 30  # eventually passed to socket.listen
 # HTTP Status Code used for redirects (among several possible redirect codes)
 REDIRECT_CODE_DEFAULT = http.HTTPStatus.PERMANENT_REDIRECT
 Redirect_Code = REDIRECT_CODE_DEFAULT
-
 SIGNAL_RELOAD_UNIX = 'SIGUSR1'
 SIGNAL_RELOAD_WINDOWS = 'SIGBREAK'
 # signal to cause --redirects file reload
@@ -700,11 +701,18 @@ def load_redirects(from_to: FromTo_List,
     return entrys_files
 
 
-class RedirectServer(socketserver.TCPServer):
+class RedirectServer(socketserver.ThreadingTCPServer):
     """
     Custom Server to allow reloading redirects while serve_forever.
     """
     field_delimiter = FIELD_DELMITER_DEFAULT
+
+    def __init__(self, *args):
+        """adjust parameters of the Parent class"""
+        super().__init__(*args)
+        self.block_on_close = False
+        self.request_queue_size = SOCKET_LISTEN_BACKLOG
+        self.timeout = 5
 
     def __enter__(self):
         """Python version <= 3.5 does not implement BaseServer.__enter__"""
