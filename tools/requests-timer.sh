@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+#
+# makes many requests. To aid in manual testing.
 
 set -e
 set -u
@@ -36,12 +38,14 @@ function time_ms() {
 
 declare -i reqs=${2:-5}  # requestors
 declare tspl=0.1  # time sleep per launch, per request
+# sleep long enough to allow printing PID messages
+sleep_start=$(python -c "print(${reqs} * ${tspl} + 2);")
 
 # create ${reqs} number of child process of loops of curl requests
 for i in $(seq 1 ${reqs}); do
    (
         set +e
-        sleep $(python -c "print(${reqs} * ${tspl} + 2);")
+        sleep ${sleep_start}
         declare mesg=
         while sleep ${tspl}; do
             start=$(time_ms)
@@ -62,6 +66,9 @@ done
 function exit_() {
     (
         set -x
+        # XXX: *most* of the time this is unnecssary and risky.
+        #      Once in a while, one child process continues running after
+        #      Ctrl+C has exited the parent process.
         #kill "${PIDs[@]}"
     )
 }
@@ -69,5 +76,5 @@ trap exit_ EXIT
 
 echo "Script PID is $$" >&2
 echo "Child PIDs is ${PIDs[*]}" >&2
-echo "exit via Ctrl+c" >&2
+echo "exit via Ctrl+C" >&2
 wait
