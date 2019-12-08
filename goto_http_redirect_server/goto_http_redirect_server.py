@@ -873,21 +873,20 @@ signaling the process or HTTP requesting the RELOAD_PATH.
     pgroup = parser.add_argument_group(title='Redirects',
                                        description='One or more required.'
                                        ' May be passed multiple times.')
+    pgroup.add_argument('--redirects', dest='redirects_files', action='append',
+                        help='File of redirects. Within a file,'
+                        ' is one redirect entry per line. A redirect entry is '
+                        ' four fields:'
+                        ' "from path", "to URL", "added by user", and'
+                        ' "added on datetime"'
+                        ' separated by the FIELD_DELIMITER character.',
+                        default=list())
     pgroup.add_argument('--from-to',
                         nargs=2, metavar=('from', 'to'),
                         action='append',
-                        help='A single redirection of "from path" and'
+                        help='A single redirect entry of "from path" and'
                              ' "to URL" fields. For example,'
                              ' --from-to "/hr" "http://human-resources.mycorp.local/login"',
-                        default=list())
-    pgroup.add_argument('--redirects', dest='redirects_files', action='append',
-                        help='File of redirection information. Within a file,'
-                        ' is one redirection entry per line. An entry is four'
-                        ' fields using tab character for field separator. The'
-                        ' four entry fields are:'
-                        ' "from path", "to URL", "added by user", and'
-                        ' "added on datetime"'
-                        ' separated by a tab character.',
                         default=list())
 
     pgroup = parser.add_argument_group(title='Network Options')
@@ -928,9 +927,15 @@ signaling the process or HTTP requesting the RELOAD_PATH.
                              ' %(default)s (' + rcd.phrase + ').')
     pgroup.add_argument('--field-delimiter', action='store',
                         default=FIELD_DELMITER_DEFAULT,
-                        help='Field delimiter string for --redirects files.'
-                             ' Default is "%(default)s" (tab character)'
-                             ' between fields.')
+                        help=(
+                             'Field delimiter string for --redirects files'
+                             ' per-line redirect entries.'
+                             ' Default is "' + FIELD_DELMITER_DEFAULT_ESCAPED +
+                             '" (tab character, ordinal ' +
+                             str(ord(FIELD_DELMITER_DEFAULT[0])) + ').'
+                             ))
+    assert len(FIELD_DELMITER_DEFAULT) == 1,\
+        '--help is wrong about default FIELD_DELIMITER'
     pgroup.add_argument('--shutdown', action='store', type=int,
                         default=0,
                         help='Shutdown the server after passed seconds.'
