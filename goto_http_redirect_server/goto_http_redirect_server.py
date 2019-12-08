@@ -38,7 +38,8 @@ __url_issues__ = 'https://github.com/jtmoon79/goto_http_redirect_server/issues'
 # first line of __doc__ is used in setup.py. Should match README.md and title at
 # github.com project site.
 __doc__ = """\
-The "Go To" HTTP Redirect Server for sharing custom shortened HTTP URLs on your network.
+The "Go To" HTTP Redirect Server for sharing custom shortened HTTP URLs on your\
+ network.
 
 Modules used are available within the standard CPython distribution.
 Written for Python 3.7 but hacked to run with at least Python 3.5.
@@ -51,12 +52,20 @@ Written for Python 3.7 but hacked to run with at least Python 3.5.
 PROGRAM_NAME = 'goto_http_redirect_server'
 IP_LOCALHOST = '127.0.0.1'
 HOSTNAME = socket.gethostname()
+TIME_START = time.time()
 
 # RedirectServer class things
 SOCKET_LISTEN_BACKLOG = 30  # eventually passed to socket.listen
+STATUS_PAGE_PATH_DEFAULT = '/status'
+PATH_FAVICON = '/favicon.ico'
+REDIRECT_PATHS_NOT_ALLOWED = (PATH_FAVICON,)
 # HTTP Status Code used for redirects (among several possible redirect codes)
 REDIRECT_CODE_DEFAULT = http.HTTPStatus.PERMANENT_REDIRECT
 Redirect_Code = REDIRECT_CODE_DEFAULT
+# urlparse-related things
+RE_URI_KEYWORDS = re.compile(r'\${(path|params|query|fragment)}')
+URI_KEYWORDS_REPL = ('path', 'params', 'query', 'fragment')
+# signals
 SIGNAL_RELOAD_UNIX = 'SIGUSR1'
 SIGNAL_RELOAD_WINDOWS = 'SIGBREAK'
 # signal to cause --redirects file reload
@@ -64,14 +73,19 @@ try:
     SIGNAL_RELOAD = signal.SIGUSR1  # Unix (not defined on Windows)
 except AttributeError:
     SIGNAL_RELOAD = signal.SIGBREAK  # Windows (not defined on some Unix)
-
-# ready logging module initializations (call logging_init to complete)
+# redirect file things
+FIELD_DELMITER_DEFAULT = '\t'
+FIELD_DELMITER_DEFAULT_ESCAPED = FIELD_DELMITER_DEFAULT.\
+    encode('unicode_escape').decode('utf-8')
+REDIRECT_FILE_IGNORE_LINE = '#'
+# logging module initializations (call logging_init to complete)
 LOGGING_FORMAT_DATETIME = '%Y-%m-%d %H:%M:%S'
 LOGGING_FORMAT = '%(asctime)s %(name)s %(levelname)s: %(message)s'
 # importers can override 'log'
 log = logging.getLogger(PROGRAM_NAME)
 # write-once copy of sys.argv
 sys_args = []  # type: typing.List[str]
+
 
 #
 # This Python code attempts to be very type-explicit.
@@ -81,7 +95,7 @@ sys_args = []  # type: typing.List[str]
 # Redirect Entry types
 #
 
-Re_From = typing.NewType('Re_From', str)  # Redirect From URI Path
+Re_From = typing.NewType('Re_From', str)  # Redirect From URL Path
 Re_To = typing.NewType('Re_To', str)  # Redirect To URL Location
 Re_User = typing.NewType('Re_User', str)  # User that created the Redirect (records-keeping thing, does not affect behavior)
 Re_Date = typing.NewType('Re_Date', datetime.datetime)  # Datetime Redirect was created (records-keeping thing, does not affect behavior)
@@ -113,13 +127,7 @@ reload_datetime = datetime.datetime.now()  # set for mypy, will be set again
 redirect_counter = defaultdict(int)  # type: typing.DefaultDict[str, int]
 status_path = None
 reload_path = None
-program_start_time = time.time()
-STATUS_PAGE_PATH_DEFAULT = '/status'
-FIELD_DELMITER_DEFAULT = '\t'
-PATH_FAVICON = '/favicon.ico'
-REDIRECT_PATHS_NOT_ALLOWED = (PATH_FAVICON,)
-RE_URI_KEYWORDS = re.compile(r'\${(path|params|query|fragment)}')
-URI_KEYWORDS_REPL = ('path', 'params', 'query', 'fragment')
+
 
 #
 # functions, classes, code
@@ -391,7 +399,7 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
             )
             esc_reload_datetime = he(reload_datetime.isoformat())
 
-            def obj_to_html(obj, sort_keys=False):
+            def obj_to_html(obj, sort_keys=False) -> str:
                 """Convert an object to html"""
                 return he(
                     json.dumps(obj, indent=2, ensure_ascii=False,
@@ -399,7 +407,7 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
                     # pprint.pformat(obj)
                 )
 
-            def redirects_to_html(rd: Re_Entry_Dict):
+            def redirects_to_html(rd: Re_Entry_Dict) -> str:
                 """Convert Re_Entry_Dict linkable html"""
                 s_ = he('{\n')
                 for key in sorted(rd.keys()):
@@ -420,7 +428,6 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
             esc_files = obj_to_html(Redirect_Files_List)
             html_doc = """\
 <!DOCTYPE html>
-
 <html lang="en">
   <head>
   <meta charset="utf-8"/>
@@ -452,7 +459,7 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
         </pre>
     </div>
   </body>
-</html>
+</html>\
 """\
                 .format(esc_title=esc_title,
                         esc_overall=esc_overall,
@@ -812,12 +819,11 @@ def process_options() -> typing.Tuple[str,
 
     parser = argparse.ArgumentParser(
         description="""\
-The "Go To" HTTP Redirect Server! For sharing custom shortened HTTP URLs on your
-network.
+The "Go To" HTTP Redirect Server! For sharing custom shortened HTTP URLs on your network.
 
 HTTP %s %s reply server. Load this server with redirects of "from path" and
 "to URL" and let it run indefinitely. Reload the running server by
-signaling the process.
+signaling the process or HTTP requesting the RELOAD_PATH.
 """
                     % (int(rcd), rcd.phrase),
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -855,15 +861,13 @@ signaling the process.
     pgroup = parser.add_argument_group(title='Miscellaneous Options')
     pgroup.add_argument('--status-path', action='store',
                         default=STATUS_PAGE_PATH_DEFAULT, type=str,
-                        help='Override status page path. This is the page that'
+                        help=' The status path'
                              ' dumps information about the process and loaded'
                              ' redirects.'
-                             ' This can be the default landing page'
-                             ' e.g. --status-path "/" .'
                              ' Default status page path is "%(default)s".')
     pgroup.add_argument('--reload-path', action='store',
                         default=None, type=str,
-                        help='Allow reloads by HTTP GET Request to passed URI'
+                        help='Allow reloads by HTTP GET Request to passed URL'
                              ' Path. e.g. --reload-path "/reload".'
                              ' May be a potential security or stability issue.'
                              ' The program will always allow reload by'
@@ -872,7 +876,7 @@ signaling the process.
     rc_302 = http.HTTPStatus.TEMPORARY_REDIRECT
     pgroup.add_argument('--redirect-code', action='store',
                         default=int(rcd), type=int,
-                        help='Override default HTTP Redirect Status Code as an'
+                        help='Set HTTP Redirect Status Code as an'
                              ' integer. Most often the desired override will'
                              ' be ' + str(int(rc_302)) + ' (' + rc_302.phrase +
                              '). Any HTTP Status Code could be used but odd'
@@ -896,7 +900,7 @@ signaling the process.
                              ' Default logging is to sys.stderr.')
     pgroup.add_argument('--debug', action='store_true', default=False,
                         help='Set logging level to DEBUG.'
-                             ' Default is INFO.')
+                             ' Default logging level is INFO.')
     pgroup.add_argument('--version', action='version',
                         help='Print "%s %s" and exit.' %
                              (PROGRAM_NAME, __version__),
@@ -914,18 +918,19 @@ About Redirect Entries:
   The "to URL" field corresponds to HTTP Header "Location" in the server
   Redirect reply.
 
-  A redirects file entry has four fields separated by a tab character "\\t";
-  "from path", "to URL", "added by user", "added on datetime".  For example,
+  A redirects file entry has four fields separated by FIELD_DELIMITER character,
+  (default \"""" + FIELD_DELMITER_DEFAULT_ESCAPED + """\");
+  "from path", "to URL", "added by user", "added on datetime".
+  For example,
 
     /hr	http://human-resources.mycorp.local/login	bob	2019-09-07 12:00:00
 
   The last two fields, "added by user" and "added on datetime", are intended
   for record-keeping within an organization.
 
-  A passed redirect (either via --from-to or --redirects file) should have a
-  leading "/" as this is the URI path given for processing.
-  For example, the URL "http://host/hr" is processed by {0}
-  as URI path "/hr".
+  A passed redirect should have a leading "/" as this is the URI path given for
+  processing.
+  For example, the URL "http://host/hr" is processed as URI path "/hr".
 
   A redirect will combine the various incoming URI parts.
   For example, given redirect entry:
@@ -941,8 +946,12 @@ About Redirect Entries:
     http://bug-tracker.mycorp.local/view.cgi?id=123
 
   Additionally, special substrings with Python string.Template syntax may be set
-  in the redirect entry. The substrings are from the URI parts that form a
-  urllib.urlparse ParseResult class:
+  in the redirect entry. Given URL
+
+     http://host.com/path1;parm2?a=A&b=BB#FRAG1
+
+  the URI parts that form a urllib.urlparse ParseResult class would be:
+
     ParseResult(scheme='http', netloc='host.com', path='/path1',
                 params='parm2', query='a=A&b=BB', fragment='FRAG1')
 
@@ -954,47 +963,47 @@ About Redirect Entries:
 
     http://goto/b?123
 
-  Subtring '123' is the 'query' part of the ParseResult. The resultant redirect
+  Substring '123' is the 'query' part of the ParseResult. The resultant redirect
   URL would become:
 
     http://bug-tracker.mycorp.local/view.cgi?id=123
 
-  The string replacement behavior is similar to Python string.Template behavior.
+About Redirect Files:
 
-About Paths:
-
-  Options --status-path and --reload-path may be passed paths to obscure access
-  from unauthorized users. e.g.
-
-      --status-path '/{1}'
+   A line with a leading "{ignore}" will be ignored.
 
 About Reloads:
 
   Sending a process signal to the running process will cause
   a reload of any files passed via --redirects.  This allows live updating of
   redirect information without disrupting the running server process.
-  On Unix, the signal is {2}.  On Windows, the signal is {3}.
-  On this system, the signal is {4} ({5:d}).
+  On Unix, the signal is {sig_unix}.  On Windows, the signal is {sig_win}.
+  On this system, the signal is {sig_here} ({sig_hered:d}).
   On Unix, use program `kill`.  On Windows, use program `windows-kill.exe`.
 
-  A reload of redirection files may also be requested via passed URI path
-  --reload-path '/path'.
+  A reload of redirect files may also be requested via passed URL path
+  RELOAD_PATH.
 
-  If security and stability are a concern then only allow reloads via process
-  signals.
+About Paths:
+
+  Options --status-path and --reload-path may be passed paths to obscure access
+  from unauthorized users. e.g.
+
+      --status-path '/{rand1}'
 
 """.format(
-        PROGRAM_NAME,
-        str(uuid.uuid4()),
-        SIGNAL_RELOAD_UNIX, SIGNAL_RELOAD_WINDOWS,
-        str(SIGNAL_RELOAD), int(SIGNAL_RELOAD),
+        rand1=str(uuid.uuid4()),
+        sig_unix=SIGNAL_RELOAD_UNIX, sig_win=SIGNAL_RELOAD_WINDOWS,
+        sig_here=str(SIGNAL_RELOAD), sig_hered=int(SIGNAL_RELOAD),
+        ignore=REDIRECT_FILE_IGNORE_LINE,
         query='{query}'
        )
 
     args = parser.parse_args()
 
-    if not (args.from_to or args.redirects_files):
-        print('ERROR: No redirect information was passed (--from-to or --redirects)',
+    if not (args.redirects_files or args.from_to):
+        print('ERROR: No redirect information was passed (--redirects or '
+              '--from-to)',
               file=sys.stderr)
         parser.print_usage()
         sys.exit(1)
