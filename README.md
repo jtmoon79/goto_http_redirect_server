@@ -113,6 +113,8 @@ in your browser, type **`goto/hr⏎`**. Your browser will end up at
   including `.local`. In that case, the user must specify the domain, e.g.
   instead of typing `goto/hr⏎`, the user must type `goto.local/hr⏎`.\*\*
 
+\*\* _Mileage May Vary_ 😔
+
 </small>
 
 ## Live Reload
@@ -159,41 +161,36 @@ No service downtime!
 
 <br />
 
-\*\* _Mileage May Vary_ 😔
-
 ----
 
 # `--help` message
 
-    usage: goto_http_redirect_server [--from-to from to]
-                                     [--redirects REDIRECTS_FILES] [--ip IP]
-                                     [--port PORT] [--status-path STATUS_PATH]
+    usage: goto_http_redirect_server [--redirects REDIRECTS_FILES]
+                                     [--from-to from to] [--ip IP] [--port PORT]
+                                     [--status-path STATUS_PATH]
                                      [--reload-path RELOAD_PATH]
                                      [--redirect-code REDIRECT_CODE]
                                      [--field-delimiter FIELD_DELIMITER]
                                      [--shutdown SHUTDOWN] [--log LOG] [--debug]
                                      [--version] [-?]
 
-    The "Go To" HTTP Redirect Server! For sharing custom shortened HTTP URLs on your
-    network.
+    The "Go To" HTTP Redirect Server! For sharing custom shortened HTTP URLs on your network.
 
     HTTP 308 Permanent Redirect reply server. Load this server with redirects of "from path" and
     "to URL" and let it run indefinitely. Reload the running server by
-    signaling the process.
+    signaling the process or HTTP requesting the RELOAD_PATH.
 
     Redirects:
       One or more required. May be passed multiple times.
 
-      --from-to from to     A single redirection of "from path" and "to URL"
+      --redirects REDIRECTS_FILES
+                            File of redirects. Within a file, is one redirect
+                            entry per line. A redirect entry is four fields: "from
+                            path", "to URL", "added by user", and "added on
+                            datetime" separated by the FIELD_DELIMITER character.
+      --from-to from to     A single redirect entry of "from path" and "to URL"
                             fields. For example, --from-to "/hr" "http://human-
                             resources.mycorp.local/login"
-      --redirects REDIRECTS_FILES
-                            File of redirection information. Within a file, is one
-                            redirection entry per line. An entry is four fields
-                            using tab character for field separator. The four
-                            entry fields are: "from path", "to URL", "added by
-                            user", and "added on datetime" separated by a tab
-                            character.
 
     Network Options:
       --ip IP, -i IP        IP interface to listen on. Default is 127.0.0.1 .
@@ -201,33 +198,34 @@ No service downtime!
 
     Miscellaneous Options:
       --status-path STATUS_PATH
-                            Override status page path. This is the page that dumps
-                            information about the process and loaded redirects.
-                            This can be the default landing page e.g. --status-
-                            path "/" . Default status page path is "/status".
+                            The status path dumps information about the process
+                            and loaded redirects. Default status page path is
+                            "/status".
       --reload-path RELOAD_PATH
-                            Allow reloads by HTTP GET Request to passed URI Path.
+                            Allow reloads by HTTP GET Request to passed URL Path.
                             e.g. --reload-path "/reload". May be a potential
                             security or stability issue. The program will always
                             allow reload by process signal. Default is off.
       --redirect-code REDIRECT_CODE
-                            Override default HTTP Redirect Status Code as an
-                            integer. Most often the desired override will be 307
-                            (Temporary Redirect). Any HTTP Status Code could be
-                            used but odd things will happen if a value like 500 is
-                            returned. This Status Code is only returned when a
-                            loaded redirect entry is found and returned. Default
+                            Set HTTP Redirect Status Code as an integer. Most
+                            often the desired override will be 307 (Temporary
+                            Redirect). Any HTTP Status Code could be used but odd
+                            things will happen if a value like 500 is returned.
+                            This Status Code is only returned when a loaded
+                            redirect entry is found and returned. Default
                             successful redirect Status Code is 308 (Permanent
                             Redirect).
       --field-delimiter FIELD_DELIMITER
-                            Field delimiter string for --redirects files. Default
-                            is " " (tab character) between fields.
+                            Field delimiter string for --redirects files per-line
+                            redirect entries. Default is "\t" (tab character,
+                            ordinal 9).
       --shutdown SHUTDOWN   Shutdown the server after passed seconds. Intended for
                             testing.
       --log LOG             Log to file at path LOG. Default logging is to
                             sys.stderr.
-      --debug               Set logging level to DEBUG. Default is INFO.
-      --version             Print "goto_http_redirect_server 0.6.1" and exit.
+      --debug               Set logging level to DEBUG. Default logging level is
+                            INFO.
+      --version             Print "goto_http_redirect_server 0.7.0" and exit.
       -?, -h, --help        Print this help message and exit.
 
     About Redirect Entries:
@@ -240,18 +238,19 @@ No service downtime!
       The "to URL" field corresponds to HTTP Header "Location" in the server
       Redirect reply.
 
-      A redirects file entry has four fields separated by a tab character "\t";
-      "from path", "to URL", "added by user", "added on datetime".  For example,
+      A redirects file entry has four fields separated by FIELD_DELIMITER character,
+      (default "\t");
+      "from path", "to URL", "added by user", "added on datetime".
+      For example,
 
         /hr http://human-resources.mycorp.local/login       bob     2019-09-07 12:00:00
 
       The last two fields, "added by user" and "added on datetime", are intended
       for record-keeping within an organization.
 
-      A passed redirect (either via --from-to or --redirects file) should have a
-      leading "/" as this is the URI path given for processing.
-      For example, the URL "http://host/hr" is processed by goto_http_redirect_server
-      as URI path "/hr".
+      A passed redirect should have a leading "/" as this is the URI path given for
+      processing.
+      For example, the URL "http://host/hr" is processed as URI path "/hr".
 
       A redirect will combine the various incoming URI parts.
       For example, given redirect entry:
@@ -267,8 +266,12 @@ No service downtime!
         http://bug-tracker.mycorp.local/view.cgi?id=123
 
       Additionally, special substrings with Python string.Template syntax may be set
-      in the redirect entry. The substrings are from the URI parts that form a
-      urllib.urlparse ParseResult class:
+      in the redirect entry. Given URL
+
+         http://host.com/path1;parm2?a=A&b=BB#FRAG1
+
+      the URI parts that form a urllib.urlparse ParseResult class would be:
+
         ParseResult(scheme='http', netloc='host.com', path='/path1',
                     params='parm2', query='a=A&b=BB', fragment='FRAG1')
 
@@ -280,19 +283,14 @@ No service downtime!
 
         http://goto/b?123
 
-      Subtring '123' is the 'query' part of the ParseResult. The resultant redirect
+      Substring '123' is the 'query' part of the ParseResult. The resultant redirect
       URL would become:
 
         http://bug-tracker.mycorp.local/view.cgi?id=123
 
-      The string replacement behavior is similar to Python string.Template behavior.
+    About Redirect Files:
 
-    About Paths:
-
-      Options --status-path and --reload-path may be passed paths to obscure access
-      from unauthorized users. e.g.
-
-          --status-path '/106d28ef-8ad5-4d55-8d56-172f3f863c1a'
+       A line with a leading "#" will be ignored.
 
     About Reloads:
 
@@ -303,12 +301,15 @@ No service downtime!
       On this system, the signal is Signals.SIGBREAK (21).
       On Unix, use program `kill`.  On Windows, use program `windows-kill.exe`.
 
-      A reload of redirection files may also be requested via passed URI path
-      --reload-path '/path'.
+      A reload of redirect files may also be requested via passed URL path
+      RELOAD_PATH.
 
-      If security and stability are a concern then only allow reloads via process
-      signals.
+    About Paths:
 
+      Options --status-path and --reload-path may be passed paths to obscure access
+      from unauthorized users. e.g.
+
+          --status-path '/35d61ac7-746f-41cb-aeae-23c1726c14c6'
 ----
 
 <a href="https://stackexchange.com/users/216253/jamesthomasmoon1979"><img src="https://stackexchange.com/users/flair/216253.png" width="208" height="58" alt="profile for JamesThomasMoon1979 on Stack Exchange, a network of free, community-driven Q&amp;A sites" title="profile for JamesThomasMoon1979 on Stack Exchange, a network of free, community-driven Q&amp;A sites" /></a>
