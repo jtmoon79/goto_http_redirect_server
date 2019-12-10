@@ -45,6 +45,34 @@ Modules used are available within the standard CPython distribution.
 Written for Python 3.7 but hacked to run with at least Python 3.5.2.
 """
 
+
+#
+# Types
+#
+
+# Redirect Entry types
+
+Re_From = typing.NewType('Re_From', str)  # Redirect From URL Path
+Re_To = typing.NewType('Re_To', str)  # Redirect To URL Location
+Re_User = typing.NewType('Re_User', str)  # User that created the Redirect (records-keeping thing, does not affect behavior)
+Re_Date = typing.NewType('Re_Date', datetime.datetime)  # Datetime Redirect was created (records-keeping thing, does not affect behavior)
+Re_EntryKey = typing.NewType('Re_EntryKey', Re_From)
+Re_EntryValue = typing.NewType('Re_EntryValue',
+                               typing.Tuple[Re_To, Re_User, Re_Date])
+Re_Entry_Dict = typing.NewType('Re_Entry_Dict',
+                               typing.OrderedDict[Re_EntryKey, Re_EntryValue])
+Re_Field_Delimiter = typing.NewType('Re_Field_Delimiter', str)
+
+# other helpful types
+
+Path_List = typing.List[pathlib.Path]
+FromTo_List = typing.List[typing.Tuple[str, str]]
+Redirect_Counter = typing.DefaultDict[str, int]
+Redirect_Code_Value = typing.NewType('Redirect_Code_Value', int)
+str_None = typing.Union[str, None]
+Path_None = typing.Union[pathlib.Path, None]
+
+
 #
 # globals and constants initialization
 #
@@ -86,33 +114,6 @@ log = logging.getLogger(PROGRAM_NAME)
 # write-once copy of sys.argv
 sys_args = []  # type: typing.List[str]
 
-
-#
-# This Python code attempts to be very type-explicit.
-#
-
-#
-# Redirect Entry types
-#
-
-Re_From = typing.NewType('Re_From', str)  # Redirect From URL Path
-Re_To = typing.NewType('Re_To', str)  # Redirect To URL Location
-Re_User = typing.NewType('Re_User', str)  # User that created the Redirect (records-keeping thing, does not affect behavior)
-Re_Date = typing.NewType('Re_Date', datetime.datetime)  # Datetime Redirect was created (records-keeping thing, does not affect behavior)
-Re_EntryKey = typing.NewType('Re_EntryKey', Re_From)
-Re_EntryValue = typing.NewType('Re_EntryValue',
-                               typing.Tuple[Re_To, Re_User, Re_Date])
-Re_Entry_Dict = typing.NewType('Re_Entry_Dict',
-                               typing.Dict[Re_EntryKey, Re_EntryValue])
-#
-# other helpful types
-#
-
-Path_List = typing.List[pathlib.Path]
-FromTo_List = typing.List[typing.Tuple[str, str]]
-Redirect_Counter = typing.DefaultDict[str, int]
-str_None = typing.Union[str, None]
-Path_None = typing.Union[pathlib.Path, None]
 
 #
 # "volatile" global instances
@@ -642,7 +643,7 @@ def load_redirects_fromto(from_to: FromTo_List) -> Re_Entry_Dict:
 
 
 def load_redirects_files(redirects_files: Path_List,
-                         field_delimiter: str) \
+                         field_delimiter: Re_Field_Delimiter) \
         -> Re_Entry_Dict:
     """
     :param redirects_files: list of file paths to process for Re_Entry
@@ -729,7 +730,7 @@ def clean_redirects(entrys_files: Re_Entry_Dict) -> Re_Entry_Dict:
 
 def load_redirects(from_to: FromTo_List,
                    redirects_files: Path_List,
-                   field_delimiter: str) \
+                   field_delimiter: Re_Field_Delimiter) \
         -> Re_Entry_Dict:
     """
     load (or reload) all redirect information, process into Re_EntryList
@@ -752,7 +753,7 @@ class RedirectServer(socketserver.ThreadingTCPServer):
     """
     Custom Server to allow reloading redirects while serve_forever.
     """
-    field_delimiter = FIELD_DELMITER_DEFAULT
+    field_delimiter = FIELD_DELIMITER_DEFAULT
 
     def __init__(self, *args):
         """adjust parameters of the Parent class"""
@@ -843,12 +844,12 @@ def reload_signal_handler(signum, _) -> None:
 def process_options() -> typing.Tuple[str,
                                       int,
                                       bool,
-                                      typing.Union[pathlib.Path, None],
+                                      Path_None,
                                       str,
                                       str,
+                                      Redirect_Code_Value,
                                       int,
-                                      int,
-                                      str,
+                                      Re_Field_Delimiter,
                                       FromTo_List,
                                       typing.List[str]]:
     """Process script command-line options."""
@@ -927,15 +928,15 @@ process or HTTP requesting the RELOAD_PATH.
                              ' Default successful redirect Status Code is'
                              ' %(default)s (' + rcd.phrase + ').')
     pgroup.add_argument('--field-delimiter', action='store',
-                        default=FIELD_DELMITER_DEFAULT,
+                        default=FIELD_DELIMITER_DEFAULT,
                         help=(
                              'Field delimiter string for --redirects files'
                              ' per-line redirect entries.'
-                             ' Default is "' + FIELD_DELMITER_DEFAULT_ESCAPED +
-                             '" (tab character, ordinal ' +
-                             str(ord(FIELD_DELMITER_DEFAULT[0])) + ').'
+                             ' Default is "' + FIELD_DELIMITER_DEFAULT_ESCAPED +
+                             '" (ordinal ' +
+                             str(ord(FIELD_DELIMITER_DEFAULT[0])) + ').'
                              ))
-    assert len(FIELD_DELMITER_DEFAULT) == 1,\
+    assert len(FIELD_DELIMITER_DEFAULT) == 1,\
         '--help is wrong about default FIELD_DELIMITER'
     pgroup.add_argument('--shutdown', action='store', type=int,
                         default=0,
@@ -1072,9 +1073,9 @@ About Paths:
         log_filename, \
         str(args.status_path), \
         str(args.reload_path), \
-        int(args.redirect_code), \
+        Redirect_Code_Value(args.redirect_code), \
         int(args.shutdown),\
-        str(args.field_delimiter), \
+        Re_Field_Delimiter(args.field_delimiter), \
         args.from_to, \
         redirects_files
 
@@ -1086,9 +1087,9 @@ def main() -> None:
         log_filename, \
         status_path_, \
         reload_path_, \
-        redirect_code, \
+        redirect_code_, \
         shutdown, \
-        field_delimiter_, \
+        field_delimiter, \
         from_to, \
         redirects_files \
         = process_options()
@@ -1098,7 +1099,7 @@ def main() -> None:
               PROGRAM_NAME, __version__, sys.executable, ' '.join(sys.argv))
 
     # setup field delimiter
-    RedirectServer.field_delimiter = field_delimiter_  # set once
+    RedirectServer.field_delimiter = field_delimiter  # set once
 
     # process the passed redirects
     global Redirect_FromTo_List
@@ -1109,7 +1110,7 @@ def main() -> None:
     # load the redirect entries from various sources
     entry_list = load_redirects(Redirect_FromTo_List,
                                 Redirect_Files_List,
-                                field_delimiter_)
+                                field_delimiter)
     global reload_datetime
     # distracting to read microsecond, set to 0
     reload_datetime = datetime.datetime.now().replace(microsecond=0)
@@ -1125,7 +1126,7 @@ def main() -> None:
     reload_path = reload_path_
     log.debug('reload_path %s', reload_path)
 
-    redirect_code = http.HTTPStatus(redirect_code)
+    redirect_code = http.HTTPStatus(int(redirect_code_))
     global Redirect_Code
     Redirect_Code = redirect_code
     log.debug('Successful Redirect Status Code is %s (%s)', int(redirect_code),
