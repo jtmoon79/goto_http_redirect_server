@@ -64,6 +64,7 @@ Re_Entry_Dict = typing.NewType('Re_Entry_Dict',
 Re_Field_Delimiter = typing.NewType('Re_Field_Delimiter', str)
 
 # other helpful types
+# XXX: some get very pedantic because they are for learning's sake.
 
 Path_List = typing.List[pathlib.Path]
 FromTo_List = typing.List[typing.Tuple[str, str]]
@@ -71,6 +72,8 @@ Redirect_Counter = typing.DefaultDict[str, int]
 Redirect_Code_Value = typing.NewType('Redirect_Code_Value', int)
 str_None = typing.Union[str, None]
 Path_None = typing.Union[pathlib.Path, None]
+htmls = typing.NewType('htmls', str)  # HTML String
+htmls_str = typing.Union[htmls, str]
 
 
 #
@@ -165,17 +168,19 @@ class StrDelay(object):
         return out
 
 
-def html_escape(s_: str) -> str:
-    return html.escape(s_)\
-        .replace('\n', '<br />\n')\
-        .replace('  ', r'&nbsp; ')
+def html_escape(s_: htmls_str) -> htmls:
+    return htmls(
+        html.escape(s_)
+            .replace('\n', '<br />\n')
+            .replace('  ', r'&nbsp; ')
+    )
 
 
-def html_a(href: str, text: str = '') -> str:
+def html_a(href: str, text: str = '') -> htmls:
     """create HTML <a> from href URL"""
     if not text:
         text = href
-    return '<a href="' + href + '">' + html_escape(text) + '</a>'
+    return htmls('<a href="' + href + '">' + html_escape(text) + '</a>')
 
 
 def combine_parseresult(pr1: parse.ParseResult, pr2: parse.ParseResult) -> str:
@@ -372,7 +377,7 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
             except Exception as ex:
                 print('Error during log_message\n%s' % str(ex), file=sys.stderr)
 
-        def _write_html_doc(self, html_doc: str) -> None:
+        def _write_html_doc(self, html_doc: htmls) -> None:
             """
             Write out the HTML document and required headers.
             This calls end_headers!
@@ -424,7 +429,7 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
             )
             esc_reload_datetime = he(reload_datetime.isoformat())
 
-            def obj_to_html(obj, sort_keys=False) -> str:
+            def obj_to_html(obj, sort_keys=False) -> htmls:
                 """Convert an object to html"""
                 return he(
                     json.dumps(obj, indent=2, ensure_ascii=False,
@@ -432,17 +437,17 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
                     # pprint.pformat(obj)
                 )
 
-            def redirects_to_html(rd: Re_Entry_Dict) -> str:
+            def redirects_to_html(rd: Re_Entry_Dict) -> htmls:
                 """Convert Re_Entry_Dict linkable html"""
                 s_ = he('{\n')
                 for key in rd.keys():
                     val = rd[key]
-                    s_ += he('  "') + html_a(key) + he('": [\n')
-                    s_ += he('    "') + html_a(val[0]) + he('",\n')
-                    s_ += he('    "%s",\n' % val[1])
-                    s_ += he('    "%s"\n' % val[2])
-                    s_ += he('  ]\n')
-                s_ += he('\n}')
+                    s_ += he('  "') + html_a(key) + he('": [\n')  # type: ignore
+                    s_ += he('    "') + html_a(val[0]) + he('",\n')  # type: ignore
+                    s_ += he('    "%s",\n' % val[1]) # type: ignore
+                    s_ += he('    "%s"\n' % val[2])  # type: ignore
+                    s_ += he('  ]\n')  # type: ignore
+                s_ += he('\n}')  # type: ignore
                 return s_
 
             esc_reload_info = he(
@@ -451,7 +456,7 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
             esc_redirects_counter = obj_to_html(redirect_counter)
             esc_redirects = redirects_to_html(redirects)
             esc_files = obj_to_html(Redirect_Files_List)
-            html_doc = """\
+            html_doc = htmls("""\
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -506,7 +511,7 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
             self.send_header(*self.Header_Server_Host)
             self.send_header(*self.Header_Server_Version)
             esc_title = html_escape('%s reload' % PROGRAM_NAME)
-            html_doc = """\
+            html_doc = htmls("""\
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -517,8 +522,9 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
     Reload request accepted at {esc_datetime}.
   </body>
 </html>\
-"""\
-            .format(esc_title=esc_title, esc_datetime=esc_datetime)
+"""
+                .format(esc_title=esc_title, esc_datetime=esc_datetime)
+            )
             self._write_html_doc(html_doc)
             global reload
             reload = True
@@ -532,7 +538,7 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
             self.send_header(*self.Header_Server_Version)
             esc_title = html_escape("Not Found - '%s'" % path[:64])
             esc_path = html_escape(path)
-            html_doc = """\
+            html_doc = htmls("""\
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -543,9 +549,10 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
     Redirect Path not found: <code>{esc_path}</code>
   </body>
 </html>\
-"""\
+"""
             .format(esc_title=esc_title,
                     esc_path=esc_path)
+            )
             self._write_html_doc(html_doc)
             return
 
