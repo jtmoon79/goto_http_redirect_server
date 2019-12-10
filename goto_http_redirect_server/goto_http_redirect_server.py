@@ -133,6 +133,7 @@ reload_datetime = datetime.datetime.now()  # set for mypy, will be set again
 redirect_counter = defaultdict(int)  # type: typing.DefaultDict[str, int]
 status_path = None
 reload_path = None
+note_admin = htmls('')
 
 
 #
@@ -341,12 +342,14 @@ def fromisoformat(dts: str) -> datetime.datetime:
 def redirect_handler_factory(redirects: Re_Entry_Dict,
                              status_code: http.HTTPStatus,
                              status_path_: str,
-                             reload_path_: str_None):
+                             reload_path_: str_None,
+                             note_: htmls):
     """
     :param redirects: dictionary of from-to redirects for the server
     :param status_code: HTTPStatus instance to use for successful redirects
     :param status_path_: server status page path
     :param reload_path_: reload request path
+    :param note_: status page note HTML
     :return: RedirectHandler type: request handler class type for
              RedirectServer.RequestHandlerClass
     """
@@ -395,7 +398,7 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
             self.wfile.write(html_docb)
             return
 
-        def do_GET_status(self) -> None:
+        def do_GET_status(self, note: htmls) -> None:
             """dump status information about this server instance"""
 
             http_sc = http.HTTPStatus.OK  # HTTP Status Code
@@ -456,6 +459,8 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
             esc_redirects_counter = obj_to_html(redirect_counter)
             esc_redirects = redirects_to_html(redirects)
             esc_files = obj_to_html(Redirect_Files_List)
+            if note:
+                note = htmls('\n    <div>\n') + note + htmls('\n    </div>\n')  # type: ignore
             html_doc = htmls("""\
 <!DOCTYPE html>
 <html lang="en">
@@ -464,6 +469,7 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
   <title>{esc_title}</title>
   </head>
   <body>
+<!-- begin status-page-file note -->{note}<!-- end status-page-file note -->
     <div>
         <h3>Process Information:</h3>
         <pre>
@@ -493,11 +499,13 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
 """\
                 .format(esc_title=esc_title,
                         esc_overall=esc_overall,
+                        note=note,
                         esc_redirects_counter=esc_redirects_counter,
                         esc_reload_datetime=esc_reload_datetime,
                         esc_redirects=esc_redirects,
                         esc_reload_info=esc_reload_info,
                         esc_files=esc_files)
+            )
             self._write_html_doc(html_doc)
             return
 
@@ -625,7 +633,7 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
 
             parseresult = parse.urlparse(self.path)
             if parseresult.path == status_path_:
-                self.do_GET_status()
+                self.do_GET_status(note_)
                 return
             elif parseresult.path == reload_path_:
                 self.do_GET_reload()
@@ -818,12 +826,14 @@ class RedirectServer(socketserver.ThreadingTCPServer):
         global status_path
         global reload_datetime
         global reload_path
+        global note_admin
         # distracting to read microsecond, set to 0
         reload_datetime = datetime.datetime.now().replace(microsecond=0)
         redirect_handler = redirect_handler_factory(entrys,
                                                     Redirect_Code,
                                                     status_path,
-                                                    reload_path)
+                                                    reload_path,
+                                                    note_admin)
         pid = os.getpid()
         log.debug(
             "reload %s (0x%08x)\n"
@@ -860,6 +870,7 @@ def process_options() -> typing.Tuple[str,
                                       Redirect_Code_Value,
                                       int,
                                       Re_Field_Delimiter,
+                                      Path_None,
                                       FromTo_List,
                                       typing.List[str]]:
     """Process script command-line options."""
@@ -948,6 +959,10 @@ process or HTTP requesting the RELOAD_PATH.
                              ))
     assert len(FIELD_DELIMITER_DEFAULT) == 1,\
         '--help is wrong about default FIELD_DELIMITER'
+    pgroup.add_argument('--status-note-file', action='store', type=str,
+                        help='Status page note: Filesystem path to a file with'
+                             ' HTML that will be embedded within a <div>'
+                             ' element in the status page.')
     pgroup.add_argument('--shutdown', action='store', type=int,
                         default=0,
                         help='Shutdown the server after passed seconds.'
@@ -1080,6 +1095,10 @@ About Paths:
     if args.log:
         log_filename = pathlib.Path(args.log)
 
+    status_note_file = None
+    if args.status_note_file:
+        status_note_file = pathlib.Path(args.status_note_file)
+
     redirects_files = args.redirects_files  # type: typing.List[str]
     return \
         str(args.ip), \
@@ -1091,6 +1110,7 @@ About Paths:
         Redirect_Code_Value(args.redirect_code), \
         int(args.shutdown),\
         Re_Field_Delimiter(args.field_delimiter), \
+        status_note_file, \
         args.from_to, \
         redirects_files
 
@@ -1105,6 +1125,7 @@ def main() -> None:
         redirect_code_, \
         shutdown, \
         field_delimiter, \
+        status_note_file, \
         from_to, \
         redirects_files \
         = process_options()
@@ -1147,6 +1168,13 @@ def main() -> None:
     log.debug('Successful Redirect Status Code is %s (%s)', int(redirect_code),
               redirect_code.phrase)
 
+    global note_admin
+    if status_note_file:
+        log.debug('reading --status-note-file (%s)', status_note_file)
+        note_s = open(str(status_note_file)).read()
+        note_admin = htmls(note_s)
+        log.debug('read %d characters from --status-note-file', len(note_admin))
+
     # register the signal handler function
     log.debug('Register handler for signal %d (%s)',
               SIGNAL_RELOAD, SIGNAL_RELOAD)
@@ -1168,7 +1196,8 @@ def main() -> None:
 
     # create the first instance of the Redirect Handler
     redirect_handler = redirect_handler_factory(entry_list, redirect_code,
-                                                status_path_, reload_path_)
+                                                status_path_, reload_path_,
+                                                note_admin)
     with RedirectServer((ip, port), redirect_handler) as redirect_server:
         serve_time = 'forever'
         if shutdown:
