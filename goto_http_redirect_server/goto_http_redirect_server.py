@@ -81,6 +81,7 @@ PROGRAM_NAME = 'goto_http_redirect_server'
 IP_LISTEN = '0.0.0.0'
 HOSTNAME = socket.gethostname()
 TIME_START = time.time()
+DATETIME_START = datetime.datetime.fromtimestamp(TIME_START)
 
 # RedirectServer class things
 SOCKET_LISTEN_BACKLOG = 30  # eventually passed to socket.listen
@@ -325,8 +326,9 @@ def fromisoformat(dts: str) -> datetime.datetime:
     try:
         dt = _fromisoformat(dts)
     except ValueError:
-        log.error('bad datetime input (%s), fallback to current datetime', dts)
-        dt = datetime.datetime.now()
+        log.error('bad datetime input (%s), fallback to program start datetime',
+                  dts)
+        dt = DATETIME_START
     return dt
 
 
