@@ -38,11 +38,11 @@ __url_issues__ = 'https://github.com/jtmoon79/goto_http_redirect_server/issues'
 # first line of __doc__ is used in setup.py. Should match README.md and title at
 # github.com project site.
 __doc__ = """\
-The "Go To" HTTP Redirect Server for sharing custom shortened HTTP URLs on your\
- network.
+The "Go To" HTTP Redirect Server for sharing custom shortened HTTP URLs on \
+your network.
 
 Modules used are available within the standard CPython distribution.
-Written for Python 3.7 but hacked to run with at least Python 3.5.
+Written for Python 3.7 but hacked to run with at least Python 3.5.2.
 """
 
 #
@@ -859,11 +859,12 @@ def process_options() -> typing.Tuple[str,
 
     parser = argparse.ArgumentParser(
         description="""\
-The "Go To" HTTP Redirect Server! For sharing custom shortened HTTP URLs on your network.
+The "Go To" HTTP Redirect Server! For sharing custom shortened HTTP URLs on \
+your network.
 
 HTTP %s %s reply server. Load this server with redirects of "from path" and
-"to URL" and let it run indefinitely. Reload the running server by
-signaling the process or HTTP requesting the RELOAD_PATH.
+"to URL" and let it run indefinitely. Reload the running server by signaling the
+process or HTTP requesting the RELOAD_PATH.
 """
                     % (int(rcd), rcd.phrase),
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -897,7 +898,7 @@ signaling the process or HTTP requesting the RELOAD_PATH.
                         help='IP port to listen on.'
                              ' Default is %(default)s .')
 
-    pgroup = parser.add_argument_group(title='Miscellaneous Options')
+    pgroup = parser.add_argument_group(title='Server Options')
     pgroup.add_argument('--status-path', action='store',
                         default=STATUS_PAGE_PATH_DEFAULT, type=str,
                         help=' The status path'
@@ -952,6 +953,7 @@ signaling the process or HTTP requesting the RELOAD_PATH.
                         version='%(prog)s ' + __version__)
     pgroup.add_argument('-?', '-h', '--help', action='help',  # add last
                         help='Print this help message and exit.')
+
     parser.epilog = """
 About Redirect Entries:
 
@@ -963,8 +965,7 @@ About Redirect Entries:
   The "to URL" field corresponds to HTTP Header "Location" in the server
   Redirect reply.
 
-  A redirects file entry has four fields separated by FIELD_DELIMITER character,
-  (default \"""" + FIELD_DELMITER_DEFAULT_ESCAPED + """\");
+  A redirects file entry has four fields separated by FIELD_DELIMITER character:
   "from path", "to URL", "added by user", "added on datetime".
   For example,
 
