@@ -78,7 +78,7 @@ Path_None = typing.Union[pathlib.Path, None]
 #
 
 PROGRAM_NAME = 'goto_http_redirect_server'
-IP_LOCALHOST = '127.0.0.1'
+IP_LISTEN = '0.0.0.0'
 HOSTNAME = socket.gethostname()
 TIME_START = time.time()
 
@@ -892,7 +892,7 @@ process or HTTP requesting the RELOAD_PATH.
                         default=list())
 
     pgroup = parser.add_argument_group(title='Network Options')
-    pgroup.add_argument('--ip', '-i', action='store', default=IP_LOCALHOST,
+    pgroup.add_argument('--ip', '-i', action='store', default=IP_LISTEN,
                         help='IP interface to listen on.'
                              ' Default is %(default)s .')
     pgroup.add_argument('--port', '-p', action='store', type=int, default=80,
