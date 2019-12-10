@@ -1,3 +1,5 @@
+# azure-pipelines.yml
+#
 # Azure Pipelines configuration file
 # project: https://dev.azure.com/jtmmoon/goto_http_redirect_server/_build
 # source: https://github.com/jtmoon79/goto_http_redirect_server/blob/master/.azure-pipelines/
