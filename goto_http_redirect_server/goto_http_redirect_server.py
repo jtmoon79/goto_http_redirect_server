@@ -103,8 +103,9 @@ try:
 except AttributeError:
     SIGNAL_RELOAD = signal.SIGBREAK  # Windows (not defined on some Unix)
 # redirect file things
-FIELD_DELMITER_DEFAULT = '\t'
-FIELD_DELMITER_DEFAULT_ESCAPED = FIELD_DELMITER_DEFAULT.\
+FIELD_DELIMITER_DEFAULT = Re_Field_Delimiter('\t')
+FIELD_DELIMITER_DEFAULT_NAME = 'tab'
+FIELD_DELIMITER_DEFAULT_ESCAPED = FIELD_DELIMITER_DEFAULT.\
     encode('unicode_escape').decode('utf-8')
 REDIRECT_FILE_IGNORE_LINE = '#'
 # logging module initializations (call logging_init to complete)
@@ -972,7 +973,7 @@ About Redirect Entries:
   "from path", "to URL", "added by user", "added on datetime".
   For example,
 
-    /hr	http://human-resources.mycorp.local/login	bob	2019-09-07 12:00:00
+    /hr{fd}http://human-resources.mycorp.local/login{fd}bob{fd}2019-09-07 12:00:00
 
   The last two fields, "added by user" and "added on datetime", are intended
   for record-keeping within an organization.
@@ -984,7 +985,7 @@ About Redirect Entries:
   A redirect will combine the various incoming URI parts.
   For example, given redirect entry:
 
-    /b	http://bug-tracker.mycorp.local/view.cgi	bob	2019-09-07 12:00:00
+    /b{fd}http://bug-tracker.mycorp.local/view.cgi{fd}bob{fd}2019-09-07 12:00:00
 
   And incoming request:
 
@@ -994,19 +995,23 @@ About Redirect Entries:
 
     http://bug-tracker.mycorp.local/view.cgi?id=123
 
-  Additionally, special substrings with Python string.Template syntax may be set
-  in the redirect entry. Given URL
+Redirect Entry Template Syntax:
 
-     http://host.com/path1;parm2?a=A&b=BB#FRAG1
+  Special substrings with Python string.Template syntax may be set in the
+  redirect entry "To" field.
+
+  First, given the URL
+
+     http://host.com/path;parm?a=A&b=B#frag
 
   the URI parts that form a urllib.urlparse ParseResult class would be:
 
-    ParseResult(scheme='http', netloc='host.com', path='/path1',
-                params='parm2', query='a=A&b=BB', fragment='FRAG1')
+    ParseResult(scheme='http', netloc='host.com', path='/path',
+                params='parm', query='a=A&b=B', fragment='frag')
 
-  For example, given redirect entry:
+  So then given redirect entry:
 
-    /b	http://bug-tracker.mycorp.local/view.cgi?id=${query}	bob	2019-09-07 12:00:00
+    /b{fd}http://bug-tracker.mycorp.local/view.cgi?id=${query}{fd}bob{fd}2019-09-07 12:00:00
 
   and the incoming request:
 
@@ -1041,11 +1046,12 @@ About Paths:
       --status-path '/{rand1}'
 
 """.format(
-        rand1=str(uuid.uuid4()),
+        fd=FIELD_DELIMITER_DEFAULT,
         sig_unix=SIGNAL_RELOAD_UNIX, sig_win=SIGNAL_RELOAD_WINDOWS,
         sig_here=str(SIGNAL_RELOAD), sig_hered=int(SIGNAL_RELOAD),
         ignore=REDIRECT_FILE_IGNORE_LINE,
-        query='{query}'
+        query='{query}',
+        rand1=str(uuid.uuid4()),
        )
 
     args = parser.parse_args()
