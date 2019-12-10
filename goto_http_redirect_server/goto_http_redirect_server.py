@@ -4,7 +4,7 @@
 
 
 import argparse
-from collections import defaultdict, OrderedDict
+from collections import defaultdict
 import copy
 import csv
 import datetime
@@ -60,7 +60,7 @@ Re_EntryKey = typing.NewType('Re_EntryKey', Re_From)
 Re_EntryValue = typing.NewType('Re_EntryValue',
                                typing.Tuple[Re_To, Re_User, Re_Date])
 Re_Entry_Dict = typing.NewType('Re_Entry_Dict',
-                               typing.OrderedDict[Re_EntryKey, Re_EntryValue])
+                               typing.Dict[Re_EntryKey, Re_EntryValue])
 Re_Field_Delimiter = typing.NewType('Re_Field_Delimiter', str)
 
 # other helpful types
