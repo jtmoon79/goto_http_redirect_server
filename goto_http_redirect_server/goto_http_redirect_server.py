@@ -496,7 +496,7 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
     </div>
   </body>
 </html>\
-"""\
+"""
                 .format(esc_title=esc_title,
                         esc_overall=esc_overall,
                         note=note,
@@ -564,12 +564,28 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
             self._write_html_doc(html_doc)
             return
 
-        def do_GET_redirect(self,
-                            parseresult: parse.ParseResult,
-                            redirects_: Re_Entry_Dict) -> None:
+        def do_HEAD_redirect_NOT_FOUND(self) -> None:
+            self.send_response(http.HTTPStatus.NOT_FOUND)
+            self.send_header(*self.Header_Server_Host)
+            self.send_header(*self.Header_Server_Version)
+            self.end_headers()
+            return
+
+        def do_HEAD_nothing(self) -> None:
+            self.send_response(http.HTTPStatus.FOUND)
+            self.send_header(*self.Header_Server_Host)
+            self.send_header(*self.Header_Server_Version)
+            self.end_headers()
+            return
+
+        def do_VERB_redirect(self,
+                             parseresult: parse.ParseResult,
+                             redirects_: Re_Entry_Dict) -> None:
             """
             handle the HTTP Redirect Request (the entire purpose of this
-            script)
+            script).  Used for GET and HEAD requests.
+            HEAD requests must not have a body (among many other differences
+            in HEAD and GET behavior).
             """
 
             if parseresult.path not in redirects_.keys():
@@ -579,7 +595,14 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
                     int(http.HTTPStatus.NOT_FOUND),
                     http.HTTPStatus.NOT_FOUND.phrase,
                     loglevel=logging.INFO)
-                return self.do_GET_redirect_NOT_FOUND(parseresult.path)
+                cmd = self.command.upper()
+                if cmd == 'GET':
+                    return self.do_GET_redirect_NOT_FOUND(parseresult.path)
+                elif cmd == 'HEAD':
+                    return self.do_HEAD_redirect_NOT_FOUND()
+                else:
+                    log.error('Unhandled command "%s"', cmd)
+                    return
 
             key = Re_EntryKey(Re_From(parseresult.path))
             # merge RedirectEntry URI parts with incoming requested URI parts
@@ -609,15 +632,14 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
             # TODO: https://tools.ietf.org/html/rfc2616#section-10.3.2
             #       the entity of the response SHOULD contain a short hypertext
             #       note with a hyperlink to the new URI(s)
-            self.send_header('Content-Length', '0')
             self.end_headers()
             # Do Not Write HTTP Content
             count_key = '(%s) → (%s)' % (parseresult.path, to)
             redirect_counter[count_key] += 1
             return
 
-        def do_GET(self) -> None:
-            """invoked per HTTP GET Request"""
+        def _do_VERB_log(self):
+            """simple helper"""
             print_debug('')
             try:
                 self.log_message(
@@ -629,7 +651,11 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
                     str(self.headers).strip('\n').replace('\n', '\n  '),
                 )
             except:
-                log.exception('Failed to log GET request')
+                log.exception('Failed to log request')
+
+        def do_GET(self) -> None:
+            """invoked per HTTP GET Request"""
+            self._do_VERB_log()
 
             parseresult = parse.urlparse(self.path)
             if parseresult.path == status_path_:
@@ -639,7 +665,22 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
                 self.do_GET_reload()
                 return
 
-            self.do_GET_redirect(parseresult, redirects)
+            self.do_VERB_redirect(parseresult, redirects)
+            return
+
+        def do_HEAD(self) -> None:
+            """invoked per HTTP HEAD Request"""
+            self._do_VERB_log()
+
+            parseresult = parse.urlparse(self.path)
+            if parseresult.path == status_path_:
+                self.do_HEAD_nothing()
+                return
+            elif parseresult.path == reload_path_:
+                self.do_HEAD_nothing()
+                return
+
+            self.do_VERB_redirect(parseresult, redirects)
             return
 
     return RedirectHandler
@@ -1009,7 +1050,7 @@ About Redirect Entries:
 
     /b{fd}http://bug-tracker.mycorp.local/view.cgi{fd}bob{fd}2019-09-07 12:00:00
 
-  And incoming request:
+  And incoming GET or HEAD request:
 
     http://goto/b?id=123
 
@@ -1035,7 +1076,7 @@ Redirect Entry Template Syntax:
 
     /b{fd}http://bug-tracker.mycorp.local/view.cgi?id=${query}{fd}bob{fd}2019-09-07 12:00:00
 
-  and the incoming request:
+  and the incoming GET or HEAD request:
 
     http://goto/b?123
 

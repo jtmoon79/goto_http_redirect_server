@@ -229,7 +229,7 @@ No service downtime!
                             sys.stderr.
       --debug               Set logging level to DEBUG. Default logging level is
                             INFO.
-      --version             Print "goto_http_redirect_server 0.7.1" and exit.
+      --version             Print "goto_http_redirect_server 0.7.2" and exit.
       -?, -h, --help        Print this help message and exit.
 
     About Redirect Entries:
@@ -260,7 +260,7 @@ No service downtime!
 
         /b  http://bug-tracker.mycorp.local/view.cgi        bob     2019-09-07 12:00:00
 
-      And incoming request:
+      And incoming GET or HEAD request:
 
         http://goto/b?id=123
 
@@ -286,7 +286,7 @@ No service downtime!
 
         /b  http://bug-tracker.mycorp.local/view.cgi?id=${query}    bob     2019-09-07 12:00:00
 
-      and the incoming request:
+      and the incoming GET or HEAD request:
 
         http://goto/b?123
 
@@ -316,7 +316,7 @@ No service downtime!
       Options --status-path and --reload-path may be passed paths to obscure access
       from unauthorized users. e.g.
 
-          --status-path '/db49e98a-abb8-4f04-83d0-6f45f6681e7c'
+          --status-path '/8927b6f0-dcef-4b9b-af89-b96d4b24c443'
 
 ----
 
