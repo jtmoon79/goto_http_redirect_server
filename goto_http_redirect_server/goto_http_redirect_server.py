@@ -4,7 +4,7 @@
 
 
 import argparse
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 import copy
 import csv
 import datetime
@@ -431,7 +431,7 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
             def redirects_to_html(rd: Re_Entry_Dict) -> str:
                 """Convert Re_Entry_Dict linkable html"""
                 s_ = he('{\n')
-                for key in sorted(rd.keys()):
+                for key in rd.keys():
                     val = rd[key]
                     s_ += he('  "') + html_a(key) + he('": [\n')
                     s_ += he('    "') + html_a(val[0]) + he('",\n')
