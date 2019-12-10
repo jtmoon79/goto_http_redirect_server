@@ -171,14 +171,15 @@ No service downtime!
                                      [--reload-path RELOAD_PATH]
                                      [--redirect-code REDIRECT_CODE]
                                      [--field-delimiter FIELD_DELIMITER]
+                                     [--status-note-file STATUS_NOTE_FILE]
                                      [--shutdown SHUTDOWN] [--log LOG] [--debug]
                                      [--version] [-?]
 
     The "Go To" HTTP Redirect Server! For sharing custom shortened HTTP URLs on your network.
 
     HTTP 308 Permanent Redirect reply server. Load this server with redirects of "from path" and
-    "to URL" and let it run indefinitely. Reload the running server by
-    signaling the process or HTTP requesting the RELOAD_PATH.
+    "to URL" and let it run indefinitely. Reload the running server by signaling the
+    process or HTTP requesting the RELOAD_PATH.
 
     Redirects:
       One or more required. May be passed multiple times.
@@ -193,10 +194,10 @@ No service downtime!
                             resources.mycorp.local/login"
 
     Network Options:
-      --ip IP, -i IP        IP interface to listen on. Default is 127.0.0.1 .
+      --ip IP, -i IP        IP interface to listen on. Default is 0.0.0.0 .
       --port PORT, -p PORT  IP port to listen on. Default is 80 .
 
-    Miscellaneous Options:
+    Server Options:
       --status-path STATUS_PATH
                             The status path dumps information about the process
                             and loaded redirects. Default status page path is
@@ -217,15 +218,18 @@ No service downtime!
                             Redirect).
       --field-delimiter FIELD_DELIMITER
                             Field delimiter string for --redirects files per-line
-                            redirect entries. Default is "\t" (tab character,
-                            ordinal 9).
+                            redirect entries. Default is "\t" (ordinal 9).
+      --status-note-file STATUS_NOTE_FILE
+                            Status page note: Filesystem path to a file with HTML
+                            that will be embedded within a <div> element in the
+                            status page.
       --shutdown SHUTDOWN   Shutdown the server after passed seconds. Intended for
                             testing.
       --log LOG             Log to file at path LOG. Default logging is to
                             sys.stderr.
       --debug               Set logging level to DEBUG. Default logging level is
                             INFO.
-      --version             Print "goto_http_redirect_server 0.7.0" and exit.
+      --version             Print "goto_http_redirect_server 0.7.1" and exit.
       -?, -h, --help        Print this help message and exit.
 
     About Redirect Entries:
@@ -238,8 +242,7 @@ No service downtime!
       The "to URL" field corresponds to HTTP Header "Location" in the server
       Redirect reply.
 
-      A redirects file entry has four fields separated by FIELD_DELIMITER character,
-      (default "\t");
+      A redirects file entry has four fields separated by FIELD_DELIMITER character:
       "from path", "to URL", "added by user", "added on datetime".
       For example,
 
@@ -265,17 +268,21 @@ No service downtime!
 
         http://bug-tracker.mycorp.local/view.cgi?id=123
 
-      Additionally, special substrings with Python string.Template syntax may be set
-      in the redirect entry. Given URL
+    Redirect Entry Template Syntax:
 
-         http://host.com/path1;parm2?a=A&b=BB#FRAG1
+      Special substrings with Python string.Template syntax may be set in the
+      redirect entry "To" field.
+
+      First, given the URL
+
+         http://host.com/path;parm?a=A&b=B#frag
 
       the URI parts that form a urllib.urlparse ParseResult class would be:
 
-        ParseResult(scheme='http', netloc='host.com', path='/path1',
-                    params='parm2', query='a=A&b=BB', fragment='FRAG1')
+        ParseResult(scheme='http', netloc='host.com', path='/path',
+                    params='parm', query='a=A&b=B', fragment='frag')
 
-      For example, given redirect entry:
+      So then given redirect entry:
 
         /b  http://bug-tracker.mycorp.local/view.cgi?id=${query}    bob     2019-09-07 12:00:00
 
@@ -309,7 +316,8 @@ No service downtime!
       Options --status-path and --reload-path may be passed paths to obscure access
       from unauthorized users. e.g.
 
-          --status-path '/35d61ac7-746f-41cb-aeae-23c1726c14c6'
+          --status-path '/db49e98a-abb8-4f04-83d0-6f45f6681e7c'
+
 ----
 
 <a href="https://stackexchange.com/users/216253/jamesthomasmoon1979"><img src="https://stackexchange.com/users/flair/216253.png" width="208" height="58" alt="profile for JamesThomasMoon1979 on Stack Exchange, a network of free, community-driven Q&amp;A sites" title="profile for JamesThomasMoon1979 on Stack Exchange, a network of free, community-driven Q&amp;A sites" /></a>
