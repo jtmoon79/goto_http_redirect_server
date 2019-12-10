@@ -11,7 +11,7 @@
 The **_"Go To" HTTP Redirect Server_** for sharing custom shortened HTTP URLs
 on your network.
 
-Trivial to run and reload.  Only uses Python built-in modules.  Super handy 😄 ‼
+Trivial to install and run.  Only uses Python built-in modules.  Super handy 😄 ‼
 
 ----
 
