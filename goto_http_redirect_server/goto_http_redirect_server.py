@@ -941,13 +941,15 @@ process or HTTP requesting the RELOAD_PATH.
                              ))
     assert len(FIELD_DELIMITER_DEFAULT) == 1,\
         '--help is wrong about default FIELD_DELIMITER'
+
+    pgroup = parser.add_argument_group(title='Process and Debugging Options')
+    pgroup.add_argument('--log', action='store', type=str, default=None,
+                        help='Log to file at path LOG.'
+                             ' Default logging is to sys.stderr.')
     pgroup.add_argument('--shutdown', action='store', type=int,
                         default=0,
                         help='Shutdown the server after passed seconds.'
                              ' Intended for testing.')
-    pgroup.add_argument('--log', action='store', type=str, default=None,
-                        help='Log to file at path LOG.'
-                             ' Default logging is to sys.stderr.')
     pgroup.add_argument('--debug', action='store_true', default=False,
                         help='Set logging level to DEBUG.'
                              ' Default logging level is INFO.')
