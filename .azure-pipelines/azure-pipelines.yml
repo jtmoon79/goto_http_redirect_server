@@ -4,80 +4,286 @@
 # project: https://dev.azure.com/jtmmoon/goto_http_redirect_server/_build
 # source: https://github.com/jtmoon79/goto_http_redirect_server/blob/master/.azure-pipelines/
 #
-# YAML Schema from
+# YAML Schema
 # https://docs.microsoft.com/en-us/azure/devops/pipelines/yaml-schema?view=azure-devops&tabs=schema
 # (http://archive.fo/TFpib)
+# Task Catalog
+# https://docs.microsoft.com/en-us/azure/devops/pipelines/tasks/index?view=azure-devops
+# (http://archive.ph/2q9aS)
+# vmImage list
+# https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/hosted?view=azure-devops
+# (http://archive.ph/Ed9H0)
 ---
-trigger:
+trigger:  # these are branches
   - master
   - azure-pipelines
-jobs:
-  - job: Pythons_Ubuntu
-    displayName: 'job: Ubuntu 16.04'
-    pool:
-      vmImage: 'ubuntu-16.04'
-    strategy:
-      matrix:
-        Python35:
-          python.version: '3.5'
-        Python36:
-          python.version: '3.6'
-        Python37:
-          python.version: '3.7'
-        Python38:
-          python.version: '3.8'
-    steps:
-      - task: UsePythonVersion@0
-        displayName: 'task: <UsePythonVersion@0> Python $(python.version)'
-        inputs:
-          versionSpec: '$(python.version)'
-      - task: Bash@3
-        displayName: 'task: <Bash@3> Bash .azure-pipelines/build-install-run.sh'
-        inputs:
-          filePath: '.azure-pipelines/build-install-run.sh'
-  - job: Pythons_Windows
-    displayName: 'job: Windows 2016'
-    pool:
-      vmImage: 'vs2017-win2016'
-    strategy:
-      matrix:
-        Python35:
-          python.version: '3.5'
-        Python36:
-          python.version: '3.6'
-        Python37:
-          python.version: '3.7'
-        Python38:
-          python.version: '3.8'
-    steps:
-      - task: UsePythonVersion@0
-        displayName: 'task: <UsePythonVersion@0> Python $(python.version)'
-        inputs:
-          versionSpec: '$(python.version)'
-      - task: PowerShell@2
-        displayName: 'task: <PowerShell@2> Powershell .azure-pipelines/build-install-run.ps1'
-        inputs:
-          filePath: '.azure-pipelines/build-install-run.ps1'
-  - job: Pythons_MacOSX
-    displayName: 'job: Mac OSX 10.14'
-    pool:
-      vmImage: 'macOS-10.14'
-    strategy:
-      matrix:
-        Python35:
-          python.version: '3.5'
-        Python36:
-          python.version: '3.6'
-        Python37:
-          python.version: '3.7'
-        Python38:
-          python.version: '3.8'
-    steps:
-      - task: UsePythonVersion@0
-        displayName: 'task: <UsePythonVersion@0> Python $(python.version)'
-        inputs:
-          versionSpec: '$(python.version)'
-      - task: Bash@3
-        displayName: 'task: <Bash@3> Bash .azure-pipelines/build-install-run.sh'
-        inputs:
-          filePath: '.azure-pipelines/build-install-run.sh'
+variables:
+  GOTO_PATH_PROGRAM_PY: $(Build.SourcesDirectory)/goto_http_redirect_server/goto_http_redirect_server.py
+  GOTO_PROGRAM: goto_http_redirect_server
+  GOTO_PACKAGE_NAME: goto_http_redirect_server
+  GOTO_PATH_TEST: $(Build.SourcesDirectory)/goto_http_redirect_server/test
+  GOTO_PATH_DIST: $(Build.SourcesDirectory)/dist
+  GOTO_PYTEST_REPORT: pytest-report.xml
+  GOTO_VM_IMAGE: 'ubuntu-18.04'  # default working VM
+  GOTO_PY_VERSION: '3.7'  # default working Python
+  GOTO_WHEEL_ARTIFACT_DEFAULT: artifact_wheel_$(GOTO_VM_IMAGE)  # default wheel package - one of the built wheel artifacts must have this name
+stages:
+  - stage: stage_env_dump
+    displayName: 'stage: env dump'
+    jobs:
+      - job: job_env_dump
+        displayName: 'job: env dump'
+        pool:
+          vmImage: $(GOTO_VM_IMAGE)
+        steps:
+          - task: Bash@3
+            displayName: 'task: <Bash@3>'
+            inputs:
+              targetType: inline
+              script: |
+                set -eux
+                pwd
+                whoami
+                hostname
+                cat /etc/os-release || true
+                env | sort
+                ls -la .
+                uname -a
+                docker info || true
+                python --version
+                python -m pip --version
+                python -m pip list -vvv
+  - stage: stage_mypy_pytest
+    displayName: 'stage: mypy pytest'
+    jobs:
+      - job: job_mypy
+        displayName: 'job: mypy'
+        pool:
+          vmImage: $(GOTO_VM_IMAGE)
+        steps:
+          - task: UsePythonVersion@0
+            displayName: 'task: <UsePythonVersion@0> Python $(GOTO_PY_VERSION)'
+            inputs:
+              versionSpec: $(GOTO_PY_VERSION)
+          - task: Bash@3
+            displayName: 'task: <Bash@3>'
+            inputs:
+              targetType: inline
+              script: |
+                set -eux
+                python -m pip install --quiet --user mypy
+                python -m mypy --version
+                python -m mypy "${GOTO_PATH_PROGRAM_PY}"
+      - job: job_pytest
+        displayName: 'job: pytest'
+        pool:
+          vmImage: $(GOTO_VM_IMAGE)
+        steps:
+          - task: UsePythonVersion@0
+            displayName: 'task: <UsePythonVersion@0> Python $(GOTO_PY_VERSION)'
+            inputs:
+              versionSpec: $(GOTO_PY_VERSION)
+          - task: Bash@3
+            displayName: 'task: <Bash@3>'
+            inputs:
+              targetType: inline
+              script: |
+                set -eux
+                python -m pip install --quiet --user pytest
+                python -m pytest --version
+                python -m pytest --verbose --junit-xml="${GOTO_PYTEST_REPORT}" "${GOTO_PATH_TEST}"
+                cat "${GOTO_PYTEST_REPORT}" | python -c "import sys;import xml.dom.minidom;s=sys.stdin.read();print(xml.dom.minidom.parseString(s).toprettyxml())"
+                cp -av -- "${GOTO_PYTEST_REPORT}" "${BUILD_ARTIFACTSTAGINGDIRECTORY}/"
+          - task: PublishBuildArtifacts@1
+            displayName: 'task: <PublishBuildArtifacts@1> $(GOTO_PYTEST_REPORT) "$(Build.ArtifactStagingDirectory)"'
+            inputs:
+              pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+              artifactName: artifact_pytest_report
+  - stage: stage_build
+    displayName: 'stage: build'
+    jobs:
+      - job: job_build
+        displayName: 'job: build'
+        strategy:
+          matrix:
+            Ubuntu1804:
+              vmImageName: 'ubuntu-18.04'
+            Win2016:
+              vmImageName: 'vs2017-win2016'
+        pool:
+          vmImage: $(vmImageName)
+        steps:
+          - task: UsePythonVersion@0
+            displayName: 'task: <UsePythonVersion@0> Python $(python.version)'
+            inputs:
+              versionSpec: $(GOTO_PY_VERSION)
+          - task: Bash@3
+            displayName: 'task: <Bash@3> vmImage $(vmImageName)'
+            condition: not(in(variables['vmImageName'], 'vs2017-win2016'))
+            inputs:
+              targetType: inline
+              script: |
+                # script settings
+                set -eux
+                # install build packages
+                # TODO: install wheel using setup.py
+                python -m pip install --quiet --user wheel twine
+                python -c 'import wheel; print(wheel.__version__);'
+                python -c 'import twine; print(twine.__version__);'
+                # do the build
+                python setup.py -v bdist_wheel
+                # check with twine
+                ls -l "${GOTO_PATH_DIST}"
+                python -m twine check "${GOTO_PATH_DIST}"/*.whl
+          - task: PowerShell@2
+            displayName: 'task: <PowerShell@2> vmImage $(vmImageName)'
+            condition: in(variables['vmImageName'], 'vs2017-win2016')
+            # condition: in(variables.vmImageName, 'vs2017-win2016')
+            inputs:
+              targetType: inline
+              script: |
+                # script settings
+                $PSVersionTable
+                $DebugPreference = "Continue"
+                $ErrorActionPreference = "Stop"
+                Set-PSDebug -Trace 1
+                # install build packages
+                & python -m pip install --quiet --user wheel twine
+                & python -c 'import wheel; print(wheel.__version__);'
+                & python -c 'import twine; print(twine.__version__);'
+                # do the build
+                & python setup.py -v bdist_wheel
+                # check with twine
+                & python -m twine check $env:GOTO_PATH_DIST\*.whl
+          - task: CopyFiles@2
+            displayName: 'task: <CopyFiles@2> wheel Package to Build Artifact Staging Directory "$(Build.ArtifactStagingDirectory)"'
+            inputs:
+              sourceFolder: '$(GOTO_PATH_DIST)'
+              contents: '*.whl'
+              TargetFolder: '$(Build.ArtifactStagingDirectory)'
+              preserveTimestamp: true
+          - task: PublishBuildArtifacts@1
+            displayName: 'task: <PublishBuildArtifacts@1> artifact_wheel_$(vmImageName)'
+            inputs:
+              pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+              artifactName: 'artifact_wheel_$(vmImageName)'
+  - stage: stage_run_test
+    displayName: 'stage: run_test'
+    jobs:
+      - job: job_run_test
+        displayName: 'job: run test'
+        strategy:
+          matrix:
+            Python35_Ubuntu1604:
+              python.version: '3.5'
+              vmImageName: 'ubuntu-16.04'
+            Python36_Ubuntu1604:
+              python.version: '3.6'
+              vmImageName: 'ubuntu-16.04'
+            Python37_Ubuntu1604:
+              python.version: '3.7'
+              vmImageName: 'ubuntu-16.04'
+            Python38_Ubuntu1604:
+              python.version: '3.8'
+              vmImageName: 'ubuntu-16.04'
+            Python35_Ubuntu1804:
+              python.version: '3.5'
+              vmImageName: 'ubuntu-18.04'
+            Python36_Ubuntu1804:
+              python.version: '3.6'
+              vmImageName: 'ubuntu-18.04'
+            Python37_Ubuntu1804:
+              python.version: '3.7'
+              vmImageName: 'ubuntu-18.04'
+            Python38_Ubuntu1804:
+              python.version: '3.8'
+              vmImageName: 'ubuntu-18.04'
+            Python38_MacOS1014:
+              python.version: '3.8'
+              vmImageName: 'macOS-10.14'
+            Python38_Win2016:
+              python.version: '3.8'
+              vmImageName: 'vs2017-win2016'
+        pool:
+          vmImage: $(vmImageName)
+        steps:
+          - task: UsePythonVersion@0
+            displayName: 'task: <UsePythonVersion@0> Python $(python.version)'
+            inputs:
+              versionSpec: '$(python.version)'
+          - task: DownloadPipelineArtifact@2
+            inputs:
+              artifact: $(GOTO_WHEEL_ARTIFACT_DEFAULT)
+              path: $(Build.BinariesDirectory)
+          - task: Bash@3
+            displayName: 'task: <Bash@3> vmImage $(vmImageName)'
+            condition: not(in(variables['vmImageName'], 'vs2017-win2016'))
+            inputs:
+              targetType: inline
+              script: |
+                # script settings
+                set -eux
+
+                # update packages
+                python -m pip install --quiet --upgrade pip setuptools
+                python -m pip --version
+                python -c 'import setuptools; print(setuptools.__version__)'
+
+                # update PATH with potential pip install locations
+                usersite=$(python -B -c 'import site; print(site.USER_SITE);')
+                userbase=$(python -B -c 'import site; print(site.USER_BASE);')
+                userbasebin=${userbase}/bin  # --user install location on Ubuntu
+                export PATH="${PATH}:${usersite}:${userbase}:${userbasebin}"
+
+                # install wheel package
+                cv_whl=$(readlink -f -- "$(find "${BUILD_BINARIESDIRECTORY}" -name '*.whl' -print -quit)")
+                ls -l "${cv_whl}"
+                cd /tmp
+                python -m pip install --user --verbose "${cv_whl}"
+
+                # check can run
+                "${GOTO_PROGRAM}" --version
+
+                # server test
+                cd -
+                SERVER_TEST=$(readlink -f -- "./tools/ci/server-test.sh")
+                chmod -v +x "${SERVER_TEST}"
+                "${SERVER_TEST}"
+
+                # uninstall
+                python -m pip uninstall --yes --verbose "${GOTO_PACKAGE_NAME}"
+          - task: PowerShell@2
+            displayName: 'task: <PowerShell@2> vmImage $(vmImageName)'
+            condition: in(variables['vmImageName'], 'vs2017-win2016')
+            inputs:
+              targetType: inline
+              script: |
+                # script settings
+                $PSVersionTable
+                $DebugPreference = "Continue"
+                $ErrorActionPreference = "Stop"
+                Set-PSDebug -Trace 1
+
+                # update packages
+                & python -m pip install --quiet --upgrade pip setuptools
+                & python -m pip --version
+                & python -c 'import setuptools; print(setuptools.__version__)'
+
+                # update PATH with potential pip install locations
+                $usersite = & python -B -c 'import site; print(site.USER_SITE);'
+                $userbase = & python -B -c 'import site; print(site.USER_BASE);'
+                $env:PATH += [IO.Path]::PathSeparator + $usersite + [IO.Path]::PathSeparator + $userbase
+
+                # install wheel package
+                $cv_whl = Get-ChildItem -Path "$env:BUILD_BINARIESDIRECTORY" -Filter '*whl' -File | Select-Object -First 1
+                Push-Location '..'
+                & python -m pip install --user --verbose $cv_whl.FullName
+
+                # run
+                & "$env:GOTO_PROGRAM" --version
+                # server test
+                Pop-Location
+                & bash "./tools/ci/server-test.sh"  # powershell to run bash! LOL!
+                # uninstall
+                python -m pip uninstall --yes --verbose "$env:GOTO_PACKAGE_NAME"
+...
