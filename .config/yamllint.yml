@@ -1,6 +1,7 @@
 # yamllint.yaml
 #
 # https://yamllint.readthedocs.io/en/stable/configuration.html
+# (http://archive.ph/Wv4FF)
 ---
 rules:
   comments:

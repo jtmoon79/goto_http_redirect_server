@@ -7,11 +7,11 @@ set -e
 set -u
 
 cd "$(dirname -- "${0}")/../.."
-YAMLCONFIG=./.config/yamllint.yaml
+YAMLCONFIG=./.config/yamllint.yml
 
 yamllint --version
 
-for yaml in $(find \( -name '*.yml' -or -name '*.yml' \)); do
+for yaml in $(find -maxdepth 3 \( -name '*.yaml' -or -name '*.yml' \)); do
     (
         set -x 
         yamllint --config-file "${YAMLCONFIG}" "${yaml}"
