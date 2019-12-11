@@ -23,6 +23,7 @@ variables:
   GOTO_PACKAGE_NAME: goto_http_redirect_server
   GOTO_PATH_TEST: $(Build.SourcesDirectory)/goto_http_redirect_server/test
   GOTO_PATH_DIST: $(Build.SourcesDirectory)/dist
+  GOTO_PATH_MYPY_INIT: $(Build.SourcesDirectory)/.config/mypy.ini
   GOTO_PYTEST_REPORT: pytest-report.xml
   GOTO_VM_IMAGE: 'ubuntu-18.04'  # default working VM
   GOTO_PY_VERSION: '3.7'  # default working Python
@@ -73,7 +74,7 @@ stages:
                 set -eux
                 python -m pip install --quiet --user mypy
                 python -m mypy --version
-                python -m mypy "${GOTO_PATH_PROGRAM_PY}"
+                python -m mypy --config-file "${GOTO_PATH_MYPY_INIT}" "${GOTO_PATH_PROGRAM_PY}"
       - job: job_pytest
         displayName: 'job: pytest'
         pool:

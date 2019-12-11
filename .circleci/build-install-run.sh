@@ -14,6 +14,7 @@ set -o pipefail
 # $PWD is presumed to be at project root directory
 readonly PACKAGE_NAME='goto_http_redirect_server'
 readonly PROGRAM_NAME='goto_http_redirect_server'
+readonly MYPY_INI='./config/mypy.ini'
 
 # dump much information about the CircleCI environment
 set -x
@@ -59,7 +60,7 @@ PY_TEST=$(readlink_ "./goto_http_redirect_server/test/pytest.sh")
 python -m pip install --user --verbose -e '.[development]'
 
 # mypy test
-python -m mypy 'goto_http_redirect_server/goto_http_redirect_server.py'
+python -m mypy --config-file "${MYPY_INI}" 'goto_http_redirect_server/goto_http_redirect_server.py'
 # build
 version=$(python -B -c 'from goto_http_redirect_server import goto_http_redirect_server as gh;print(gh.__version__)')
 python setup.py -v bdist_wheel
