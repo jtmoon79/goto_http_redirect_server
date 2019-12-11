@@ -24,6 +24,7 @@ variables:
   GOTO_PATH_TEST: $(Build.SourcesDirectory)/goto_http_redirect_server/test
   GOTO_PATH_DIST: $(Build.SourcesDirectory)/dist
   GOTO_PATH_MYPY_INIT: $(Build.SourcesDirectory)/.config/mypy.ini
+  GOTO_PATH_READLINK: $(Build.SourcesDirectory)/tools/ci/readlink.sh
   GOTO_PYTEST_REPORT: pytest-report.xml
   GOTO_VM_IMAGE: 'ubuntu-18.04'  # default working VM
   GOTO_PY_VERSION: '3.7'  # default working Python
@@ -54,6 +55,7 @@ stages:
                 python --version
                 python -m pip --version
                 python -m pip list -vvv
+                chmod -v +x "${GOTO_PATH_READLINK}"
   - stage: stage_mypy_pytest
     displayName: 'stage: mypy pytest'
     jobs:
@@ -224,6 +226,7 @@ stages:
               script: |
                 # script settings
                 set -eux
+                chmod -v +x "${GOTO_PATH_READLINK}"
 
                 # update packages
                 python -m pip install --quiet --upgrade pip setuptools
@@ -237,7 +240,7 @@ stages:
                 export PATH="${PATH}:${usersite}:${userbase}:${userbasebin}"
 
                 # install wheel package
-                cv_whl=$(readlink -f -- "$(find "${BUILD_BINARIESDIRECTORY}" -name '*.whl' -print -quit)")
+                cv_whl=$("${GOTO_PATH_READLINK}" "$(find "${BUILD_BINARIESDIRECTORY}" -name '*.whl' -print -quit)")
                 ls -l "${cv_whl}"
                 cd /tmp
                 python -m pip install --user --verbose "${cv_whl}"
@@ -247,7 +250,7 @@ stages:
 
                 # server test
                 cd -
-                SERVER_TEST=$(readlink -f -- "./tools/ci/server-test.sh")
+                SERVER_TEST=$("${GOTO_PATH_READLINK}" "./tools/ci/server-test.sh")
                 chmod -v +x "${SERVER_TEST}"
                 "${SERVER_TEST}"
 
