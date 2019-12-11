@@ -199,35 +199,35 @@ stages:
         displayName: 'job: «run test»'
         strategy:
           matrix:
-            Python35_Ubuntu1604:
+            Ubuntu1604_Python35:
               python.version: '3.5'
               vmImageName: 'ubuntu-16.04'
-            Python36_Ubuntu1604:
+            Ubuntu1604_Python36:
               python.version: '3.6'
               vmImageName: 'ubuntu-16.04'
-            Python37_Ubuntu1604:
+            Ubuntu1604_Python37:
               python.version: '3.7'
               vmImageName: 'ubuntu-16.04'
-            Python38_Ubuntu1604:
+            Ubuntu1604_Python38:
               python.version: '3.8'
               vmImageName: 'ubuntu-16.04'
-            Python35_Ubuntu1804:
+            Ubuntu1804_Python35:
               python.version: '3.5'
               vmImageName: 'ubuntu-18.04'
-            Python36_Ubuntu1804:
+            Ubuntu1804_Python36:
               python.version: '3.6'
               vmImageName: 'ubuntu-18.04'
-            Python37_Ubuntu1804:
+            Ubuntu1804_Python37:
               python.version: '3.7'
               vmImageName: 'ubuntu-18.04'
-            Python38_Ubuntu1804:
+            Ubuntu1804_Python38:
               python.version: '3.8'
               vmImageName: 'ubuntu-18.04'
-            Python38_MacOS1014:
-              python.version: '3.8'
+            MacOS1014:
+              python.version: $(GOTO_PY_VERSION)
               vmImageName: 'macOS-10.14'
-            Python38_Win2016:
-              python.version: '3.8'
+            Win2016:
+              python.version: $(GOTO_PY_VERSION)
               vmImageName: 'vs2017-win2016'
         pool:
           vmImage: $(vmImageName)
