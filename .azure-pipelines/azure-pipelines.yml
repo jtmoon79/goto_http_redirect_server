@@ -33,15 +33,15 @@ variables:
   GOTO_WHEEL_ARTIFACT_DEFAULT: artifact_wheel_$(GOTO_VM_IMAGE)  # default wheel package - one of the built wheel artifacts must have this name
 stages:
   - stage: stage_env_dump
-    displayName: 'stage: env dump'
+    displayName: 'stage: «env dump»'
     jobs:
       - job: job_env_dump
-        displayName: 'job: env dump'
+        displayName: 'job: «env dump»'
         pool:
           vmImage: $(GOTO_VM_IMAGE)
         steps:
           - task: Bash@3
-            displayName: 'task: <Bash@3>'
+            displayName: 'task: «Bash@3» vmImage "$(GOTO_VM_IMAGE)"'
             inputs:
               targetType: inline
               script: |
@@ -59,19 +59,19 @@ stages:
                 python -m pip list -vvv
                 chmod -v +x "${GOTO_PATH_READLINK}"  # test
   - stage: stage_yamllint_mypy_pytest
-    displayName: 'stage: yamllint mypy pytest'
+    displayName: 'stage: «yamllint mypy pytest»'
     jobs:
       - job: job_yamllint
-        displayName: 'job: yamllint'
+        displayName: 'job: «yamllint»'
         pool:
           vmImage: $(GOTO_VM_IMAGE)
         steps:
           - task: UsePythonVersion@0
-            displayName: 'task: <UsePythonVersion@0> Python $(GOTO_PY_VERSION)'
+            displayName: 'task: «UsePythonVersion@0» Python $(GOTO_PY_VERSION)'
             inputs:
               versionSpec: $(GOTO_PY_VERSION)
           - task: Bash@3
-            displayName: 'task: <Bash@3>'
+            displayName: 'task: «Bash@3»'
             inputs:
               targetType: inline
               script: |
@@ -82,16 +82,16 @@ stages:
                 chmod -v +x "${GOTO_PATH_YAMLLINT}"
                 "${GOTO_PATH_YAMLLINT}"
       - job: job_mypy
-        displayName: 'job: mypy'
+        displayName: 'job: «mypy»'
         pool:
           vmImage: $(GOTO_VM_IMAGE)
         steps:
           - task: UsePythonVersion@0
-            displayName: 'task: <UsePythonVersion@0> Python $(GOTO_PY_VERSION)'
+            displayName: 'task: «UsePythonVersion@0» Python $(GOTO_PY_VERSION)'
             inputs:
               versionSpec: $(GOTO_PY_VERSION)
           - task: Bash@3
-            displayName: 'task: <Bash@3>'
+            displayName: 'task: «Bash@3»'
             inputs:
               targetType: inline
               script: |
@@ -100,16 +100,16 @@ stages:
                 python -m mypy --version
                 python -m mypy --config-file "${GOTO_PATH_MYPY_INIT}" "${GOTO_PATH_PROGRAM_PY}"
       - job: job_pytest
-        displayName: 'job: pytest'
+        displayName: 'job: «pytest»'
         pool:
           vmImage: $(GOTO_VM_IMAGE)
         steps:
           - task: UsePythonVersion@0
-            displayName: 'task: <UsePythonVersion@0> Python $(GOTO_PY_VERSION)'
+            displayName: 'task: «UsePythonVersion@0» Python $(GOTO_PY_VERSION)'
             inputs:
               versionSpec: $(GOTO_PY_VERSION)
           - task: Bash@3
-            displayName: 'task: <Bash@3>'
+            displayName: 'task: «Bash@3»'
             inputs:
               targetType: inline
               script: |
@@ -120,15 +120,15 @@ stages:
                 cat "${GOTO_PYTEST_REPORT}" | python -c "import sys;import xml.dom.minidom;s=sys.stdin.read();print(xml.dom.minidom.parseString(s).toprettyxml())"
                 cp -av -- "${GOTO_PYTEST_REPORT}" "${BUILD_ARTIFACTSTAGINGDIRECTORY}/"
           - task: PublishBuildArtifacts@1
-            displayName: 'task: <PublishBuildArtifacts@1> $(GOTO_PYTEST_REPORT) "$(Build.ArtifactStagingDirectory)"'
+            displayName: 'task: «PublishBuildArtifacts@1» $(GOTO_PYTEST_REPORT) "$(Build.ArtifactStagingDirectory)"'
             inputs:
               pathtoPublish: '$(Build.ArtifactStagingDirectory)'
               artifactName: artifact_pytest_report
   - stage: stage_build
-    displayName: 'stage: build'
+    displayName: 'stage: «build»'
     jobs:
       - job: job_build
-        displayName: 'job: build'
+        displayName: 'job: «build»'
         strategy:
           matrix:
             Ubuntu1804:
@@ -139,11 +139,11 @@ stages:
           vmImage: $(vmImageName)
         steps:
           - task: UsePythonVersion@0
-            displayName: 'task: <UsePythonVersion@0> Python $(python.version)'
+            displayName: 'task: «UsePythonVersion@0» Python $(GOTO_PY_VERSION)'
             inputs:
               versionSpec: $(GOTO_PY_VERSION)
           - task: Bash@3
-            displayName: 'task: <Bash@3> vmImage $(vmImageName)'
+            displayName: 'task: «Bash@3» vmImage "$(vmImageName)"'
             condition: not(in(variables['vmImageName'], 'vs2017-win2016'))
             inputs:
               targetType: inline
@@ -161,7 +161,7 @@ stages:
                 ls -l "${GOTO_PATH_DIST}"
                 python -m twine check "${GOTO_PATH_DIST}"/*.whl
           - task: PowerShell@2
-            displayName: 'task: <PowerShell@2> vmImage $(vmImageName)'
+            displayName: 'task: «PowerShell@2» vmImage "$(vmImageName)"'
             condition: in(variables['vmImageName'], 'vs2017-win2016')
             # condition: in(variables.vmImageName, 'vs2017-win2016')
             inputs:
@@ -181,22 +181,22 @@ stages:
                 # check with twine
                 & python -m twine check $env:GOTO_PATH_DIST\*.whl
           - task: CopyFiles@2
-            displayName: 'task: <CopyFiles@2> wheel Package to Build Artifact Staging Directory "$(Build.ArtifactStagingDirectory)"'
+            displayName: 'task: «CopyFiles@2» wheel Package to Build Artifact Staging Directory "$(Build.ArtifactStagingDirectory)"'
             inputs:
               sourceFolder: '$(GOTO_PATH_DIST)'
               contents: '*.whl'
               TargetFolder: '$(Build.ArtifactStagingDirectory)'
               preserveTimestamp: true
           - task: PublishBuildArtifacts@1
-            displayName: 'task: <PublishBuildArtifacts@1> artifact_wheel_$(vmImageName)'
+            displayName: 'task: «PublishBuildArtifacts@1» artifact_wheel_$(vmImageName)'
             inputs:
               pathtoPublish: '$(Build.ArtifactStagingDirectory)'
               artifactName: 'artifact_wheel_$(vmImageName)'
-  - stage: stage_run_test
-    displayName: 'stage: run_test'
+  - stage: stage_run_tests
+    displayName: 'stage: «run_tests»'
     jobs:
       - job: job_run_test
-        displayName: 'job: run test'
+        displayName: 'job: «run test»'
         strategy:
           matrix:
             Python35_Ubuntu1604:
@@ -233,7 +233,7 @@ stages:
           vmImage: $(vmImageName)
         steps:
           - task: UsePythonVersion@0
-            displayName: 'task: <UsePythonVersion@0> Python $(python.version)'
+            displayName: 'task: «UsePythonVersion@0» Python $(python.version)'
             inputs:
               versionSpec: '$(python.version)'
           - task: DownloadPipelineArtifact@2
@@ -241,7 +241,7 @@ stages:
               artifact: $(GOTO_WHEEL_ARTIFACT_DEFAULT)
               path: $(Build.BinariesDirectory)
           - task: Bash@3
-            displayName: 'task: <Bash@3> vmImage $(vmImageName)'
+            displayName: 'task: «Bash@3» vmImage "$(vmImageName)" Python $(python.version)'
             condition: not(in(variables['vmImageName'], 'vs2017-win2016'))
             inputs:
               targetType: inline
@@ -277,7 +277,7 @@ stages:
                 # uninstall
                 python -m pip uninstall --yes --verbose "${GOTO_PACKAGE_NAME}"
           - task: PowerShell@2
-            displayName: 'task: <PowerShell@2> vmImage $(vmImageName)'
+            displayName: 'task: «PowerShell@2» vmImage "$(vmImageName)" Python $(python.version)'
             condition: in(variables['vmImageName'], 'vs2017-win2016')
             inputs:
               targetType: inline
