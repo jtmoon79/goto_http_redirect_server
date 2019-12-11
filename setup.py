@@ -41,6 +41,7 @@ setup(
         'development': [
             'mypy',
             'pytest',
+            'yamllint',
         ],
         'readme': [
             'md_toc',
