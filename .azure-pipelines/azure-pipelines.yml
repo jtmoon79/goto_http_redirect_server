@@ -24,7 +24,9 @@ variables:
   GOTO_PATH_TEST: $(Build.SourcesDirectory)/goto_http_redirect_server/test
   GOTO_PATH_DIST: $(Build.SourcesDirectory)/dist
   GOTO_PATH_MYPY_INIT: $(Build.SourcesDirectory)/.config/mypy.ini
+  GOTO_PATH_YAMLLINT: $(Build.SourcesDirectory)/tools/ci/yamllint.sh
   GOTO_PATH_READLINK: $(Build.SourcesDirectory)/tools/ci/readlink.sh
+  GOTO_PATH_ADD_PIP_SITE: $(Build.SourcesDirectory)/tools/ci/PATH-add-pip-site.sh
   GOTO_PYTEST_REPORT: pytest-report.xml
   GOTO_VM_IMAGE: 'ubuntu-18.04'  # default working VM
   GOTO_PY_VERSION: '3.7'  # default working Python
@@ -55,10 +57,30 @@ stages:
                 python --version
                 python -m pip --version
                 python -m pip list -vvv
-                chmod -v +x "${GOTO_PATH_READLINK}"
-  - stage: stage_mypy_pytest
-    displayName: 'stage: mypy pytest'
+                chmod -v +x "${GOTO_PATH_READLINK}"  # test
+  - stage: stage_yamllint_mypy_pytest
+    displayName: 'stage: yamllint mypy pytest'
     jobs:
+      - job: job_yamllint
+        displayName: 'job: yamllint'
+        pool:
+          vmImage: $(GOTO_VM_IMAGE)
+        steps:
+          - task: UsePythonVersion@0
+            displayName: 'task: <UsePythonVersion@0> Python $(GOTO_PY_VERSION)'
+            inputs:
+              versionSpec: $(GOTO_PY_VERSION)
+          - task: Bash@3
+            displayName: 'task: <Bash@3>'
+            inputs:
+              targetType: inline
+              script: |
+                set -eux
+                source "${GOTO_PATH_ADD_PIP_SITE}"
+                # TOOD: install yamllint using setup.py
+                python -m pip install --quiet --user yamllint
+                chmod -v +x "${GOTO_PATH_YAMLLINT}"
+                "${GOTO_PATH_YAMLLINT}"
       - job: job_mypy
         displayName: 'job: mypy'
         pool:
@@ -226,6 +248,7 @@ stages:
               script: |
                 # script settings
                 set -eux
+
                 chmod -v +x "${GOTO_PATH_READLINK}"
 
                 # update packages
@@ -234,10 +257,7 @@ stages:
                 python -c 'import setuptools; print(setuptools.__version__)'
 
                 # update PATH with potential pip install locations
-                usersite=$(python -B -c 'import site; print(site.USER_SITE);')
-                userbase=$(python -B -c 'import site; print(site.USER_BASE);')
-                userbasebin=${userbase}/bin  # --user install location on Ubuntu
-                export PATH="${PATH}:${usersite}:${userbase}:${userbasebin}"
+                source "${GOTO_PATH_ADD_PIP_SITE}"
 
                 # install wheel package
                 cv_whl=$("${GOTO_PATH_READLINK}" "$(find "${BUILD_BINARIESDIRECTORY}" -name '*.whl' -print -quit)")
