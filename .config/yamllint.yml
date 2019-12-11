@@ -1,0 +1,17 @@
+# yamllint.yaml
+#
+# https://yamllint.readthedocs.io/en/stable/configuration.html
+---
+rules:
+  comments:
+    level: warning
+  comments-indentation:
+    level: warning
+  document-end: enable
+  document-start:
+    level: warning
+  empty-lines:
+    level: warning
+  line-length:
+    level: warning
+...
