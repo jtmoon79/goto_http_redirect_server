@@ -14,7 +14,7 @@ set -o pipefail
 # $PWD is presumed to be at project root directory
 readonly PACKAGE_NAME='goto_http_redirect_server'
 readonly PROGRAM_NAME='goto_http_redirect_server'
-readonly MYPY_INI='./config/mypy.ini'
+readonly MYPY_INI='./.config/mypy.ini'
 
 # dump much information about the CircleCI environment
 set -x
