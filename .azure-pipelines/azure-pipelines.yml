@@ -56,7 +56,7 @@ stages:
                 docker info || true
                 python --version
                 python -m pip --version
-                python -m pip list -vvv
+                python -m pip list --disable-pip-version-check --no-index -vvv
                 chmod -v +x "${GOTO_PATH_READLINK}"  # test
   - stage: stage_yamllint_mypy_pytest
     displayName: 'stage: «yamllint mypy pytest»'
@@ -79,6 +79,7 @@ stages:
                 source "${GOTO_PATH_ADD_PIP_SITE}"
                 # TOOD: install yamllint using setup.py
                 python -m pip install --quiet --user yamllint
+                python -m pip list --disable-pip-version-check --no-index -vvv
                 chmod -v +x "${GOTO_PATH_YAMLLINT}"
                 "${GOTO_PATH_YAMLLINT}"
       - job: job_mypy
@@ -97,7 +98,7 @@ stages:
               script: |
                 set -eux
                 python -m pip install --quiet --user mypy
-                python -m mypy --version
+                python -m pip list --disable-pip-version-check --no-index -vvv
                 python -m mypy --config-file "${GOTO_PATH_MYPY_INIT}" "${GOTO_PATH_PROGRAM_PY}"
       - job: job_pytest
         displayName: 'job: «pytest»'
@@ -115,7 +116,7 @@ stages:
               script: |
                 set -eux
                 python -m pip install --quiet --user pytest
-                python -m pytest --version
+                python -m pip list --disable-pip-version-check --no-index -vvv
                 python -m pytest --verbose --junit-xml="${GOTO_PYTEST_REPORT}" "${GOTO_PATH_TEST}"
                 cat "${GOTO_PYTEST_REPORT}" | python -c "import sys;import xml.dom.minidom;s=sys.stdin.read();print(xml.dom.minidom.parseString(s).toprettyxml())"
                 cp -av -- "${GOTO_PYTEST_REPORT}" "${BUILD_ARTIFACTSTAGINGDIRECTORY}/"
@@ -153,8 +154,7 @@ stages:
                 # install build packages
                 # TODO: install wheel using setup.py
                 python -m pip install --quiet --user wheel twine
-                python -c 'import wheel; print(wheel.__version__);'
-                python -c 'import twine; print(twine.__version__);'
+                python -m pip list --disable-pip-version-check --no-index -vvv
                 # do the build
                 python setup.py -v bdist_wheel
                 # check with twine
@@ -174,8 +174,7 @@ stages:
                 Set-PSDebug -Trace 1
                 # install build packages
                 & python -m pip install --quiet --user wheel twine
-                & python -c 'import wheel; print(wheel.__version__);'
-                & python -c 'import twine; print(twine.__version__);'
+                & python -m pip list --disable-pip-version-check --no-index -vvv
                 # do the build
                 & python setup.py -v bdist_wheel
                 # check with twine
@@ -192,11 +191,11 @@ stages:
             inputs:
               pathtoPublish: '$(Build.ArtifactStagingDirectory)'
               artifactName: 'artifact_wheel_$(vmImageName)'
-  - stage: stage_run_tests
-    displayName: 'stage: «run_tests»'
+  - stage: stage_install_user_self_test
+    displayName: 'stage: «install --user, run self-test»'
     jobs:
       - job: job_run_test
-        displayName: 'job: «run test»'
+        displayName: 'job: «install --user, run self-test»'
         strategy:
           matrix:
             Ubuntu1604_Python35:
@@ -253,8 +252,7 @@ stages:
 
                 # update packages
                 python -m pip install --quiet --upgrade pip setuptools
-                python -m pip --version
-                python -c 'import setuptools; print(setuptools.__version__)'
+                python -m pip list --disable-pip-version-check --no-index -vvv
 
                 # update PATH with potential pip install locations
                 source "${GOTO_PATH_ADD_PIP_SITE}"
@@ -264,6 +262,7 @@ stages:
                 ls -l "${cv_whl}"
                 cd /tmp
                 python -m pip install --user --verbose "${cv_whl}"
+                python -m pip list --disable-pip-version-check --no-index -vvv
 
                 # check can run
                 "${GOTO_PROGRAM}" --version
@@ -290,8 +289,7 @@ stages:
 
                 # update packages
                 & python -m pip install --quiet --upgrade pip setuptools
-                & python -m pip --version
-                & python -c 'import setuptools; print(setuptools.__version__)'
+                & python -m pip list --disable-pip-version-check --no-index -vvv
 
                 # update PATH with potential pip install locations
                 $usersite = & python -B -c 'import site; print(site.USER_SITE);'
@@ -310,4 +308,93 @@ stages:
                 & bash "./tools/ci/server-test.sh"  # powershell to run bash! LOL!
                 # uninstall
                 python -m pip uninstall --yes --verbose "$env:GOTO_PACKAGE_NAME"
+  - stage: stage_install_systemd
+    displayName: 'stage: «install systemd, start service»'
+    jobs:
+      - job: job_install_systemd
+        displayName: 'job: «install systemd, start service»'
+        strategy:
+          matrix:
+            Ubuntu1604:
+              vmImageName: 'ubuntu-16.04'
+            Ubuntu1804:
+              vmImageName: 'ubuntu-18.04'
+        pool:
+          vmImage: $(vmImageName)
+        steps:
+          - task: UsePythonVersion@0
+            displayName: 'task: «UsePythonVersion@0» Python $(GOTO_PY_VERSION)'
+            inputs:
+              versionSpec: $(GOTO_PY_VERSION)
+          - task: DownloadPipelineArtifact@2
+            inputs:
+              artifact: $(GOTO_WHEEL_ARTIFACT_DEFAULT)
+              path: $(Build.BinariesDirectory)
+          - task: Bash@3
+            displayName: 'task: «Bash@3» vmImage "$(vmImageName)" Python $(GOTO_PY_VERSION)'
+            inputs:
+              targetType: inline
+              script: |
+                # script settings
+                set -eux
+
+                chmod -v +x "${GOTO_PATH_READLINK}"
+
+                # update PATH with potential pip install locations
+                source "${GOTO_PATH_ADD_PIP_SITE}"
+
+                function sudo_python () {
+                    # hack to force sudo shell to include the $PATH (which holds Python paths)
+                    # XXX: does not handle spaces in arguments, a clever `eval` might improve this
+                    declare PATH_=${PATH} 
+                    sudo -HE -- bash -c "export PATH=${PATH_}; python ${*}"
+                }
+                # update packages
+                sudo_python -m pip list --disable-pip-version-check --no-index -vvv
+                sudo_python -m pip install --quiet --upgrade pip setuptools
+                sudo_python -m pip list --disable-pip-version-check --no-index -vvv
+
+                # install wheel package
+                cv_whl=$("${GOTO_PATH_READLINK}" "$(find "${BUILD_BINARIESDIRECTORY}" -name '*.whl' -print -quit)")
+                ls -l "${cv_whl}"
+                cd /tmp
+                sudo_python -m pip install --verbose "${cv_whl}"
+                sudo_python -m pip list --disable-pip-version-check --no-index -vvv
+                cd -
+
+                # install redirects file
+                CSV_FILE=/usr/local/share/goto_http_redirect_server.csv
+                echo '/a	http://aaa.com	bob	2000-01-01 00:00:00' | sudo -- tee "${CSV_FILE}"
+
+                # link goto_http_redirect_server
+                GOTO=/usr/local/bin/goto_http_redirect_server
+                sudo -- ln -vs -- "$(which goto_http_redirect_server)" "${GOTO}"
+                head -n20 -- "${GOTO}"
+                "${GOTO}" --version  # check it can run from new location
+
+                # copy systemd wrapper
+                WRAPPER=/usr/local/bin/goto_http_redirect_server.sh
+                sudo -- cp -v -- ./service/goto_http_redirect_server.sh "$(dirname -- "${WRAPPER}")"
+                sudo -- chmod -v +x -- "${WRAPPER}"
+
+                # install systemd
+                SERVICE=goto_http_redirect_server.service
+                SERVICE_FILE=/etc/systemd/user/${SERVICE}
+                sudo -- cp -v -- ./service/goto_http_redirect_server.service "$(dirname -- "${SERVICE_FILE}")"
+                sudo -- chmod -v 0444 -- "${SERVICE_FILE}"
+
+                # enable and start systemd service
+                sudo -- systemctl enable "${SERVICE_FILE}"
+                sudo -- systemctl start "${SERVICE}"
+                sleep 2
+
+                # check systemd service
+                sudo -- systemctl status "${SERVICE}"
+
+                # query service
+                URL='http://127.0.0.1:80'
+                curl --version
+                curl -v --fail --output /dev/null "${URL}/a"
+
+                # TODO: test service wrapper parameters `-u ... -n ...` etc.
 ...
