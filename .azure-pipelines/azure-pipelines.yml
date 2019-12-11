@@ -344,10 +344,9 @@ stages:
                 source "${GOTO_PATH_ADD_PIP_SITE}"
 
                 function sudo_python () {
-                    # hack to force sudo shell to include the $PATH (which holds Python paths)
+                    # hack to force sudo shell to include the $PATH (which holds installed Python paths)
                     # XXX: does not handle spaces in arguments, a clever `eval` might improve this
-                    declare PATH_=${PATH} 
-                    sudo -HE -- bash -c "export PATH=${PATH_}; python ${*}"
+                    sudo -HE -- bash -c "export PATH=${PATH}; python ${*}"
                 }
                 # update packages
                 sudo_python -m pip list --disable-pip-version-check --no-index -vvv
@@ -369,7 +368,6 @@ stages:
                 # link goto_http_redirect_server
                 GOTO=/usr/local/bin/goto_http_redirect_server
                 sudo -- ln -vs -- "$(which goto_http_redirect_server)" "${GOTO}"
-                head -n20 -- "${GOTO}"
                 "${GOTO}" --version  # check it can run from new location
 
                 # copy systemd wrapper
