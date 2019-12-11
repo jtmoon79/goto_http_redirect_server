@@ -22,6 +22,8 @@ readonly URL="http://${IP_LISTEN}:${PORT}"
 
 set -x
 curl --version  # note curl, fail sooner if not installed
+which "${PROGRAM_NAME}"
+"${PROGRAM_NAME}" --version
 "${PROGRAM_NAME}" --debug \
     --shutdown 8 \
     --ip "${IP_LISTEN}" \
