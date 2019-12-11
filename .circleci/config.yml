@@ -136,17 +136,42 @@ jobs:
             ./.circleci/build-install-run.sh
 workflows:
   version: 2
-  #filters:
-  #  branches:
-  #    only:
-  #      - master
   workflow_py:
     jobs:
       - build_install_run__circleci_python_3_5
+          filters:
+            branches:
+              only:
+                - master
       - build_install_run__circleci_python_3_6
+          filters:
+            branches:
+              only:
+                - master
       - build_install_run__circleci_python_3_7
+          filters:
+            branches:
+              only:
+                - master
       - build_install_run__circleci_python_3_8
+          filters:
+            branches:
+              only:
+                - master
       - build_install_run__python_3_6_alpine
+          filters:
+            branches:
+              only:
+                - master
       #- build_install_run__python_3_7_windowsservercore  # Issue #2
       - build_install_run__python_3_6_slim_stretch
+          filters:
+            branches:
+              only:
+                - master
       - build_install_run__python_3_6_slim_buster
+          filters:
+            branches:
+              only:
+                - master
+...
