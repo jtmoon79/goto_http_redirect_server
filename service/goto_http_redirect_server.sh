@@ -85,9 +85,9 @@ GOTO_FILE_LOG=${GOTO_FILE_LOG-/var/log/goto_http_redirect_server.log}
 
 set -x
 exec \
-    ${sudoas} \
-        ${authbind} \
-            ${nice} \
+    ${nice} \
+        ${sudoas} \
+            ${authbind} \
                 ${GOTO_FILE_SCRIPT} \
                     --redirects "${GOTO_FILE_REDIRECTS}" \
                     --log "${GOTO_FILE_LOG}" \
