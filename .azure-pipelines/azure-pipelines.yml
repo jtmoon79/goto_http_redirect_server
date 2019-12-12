@@ -442,12 +442,4 @@ stages:
                 curl -v --fail --output /dev/null "${URL}/status"
 
                 sudo -- systemctl status "${GOTO_SERVICE}"
-          - task: Bash@3
-            displayName: 'task: «Bash@3» vmImage "$(vmImageName)" Python $(GOTO_PY_VERSION)'
-            inputs:
-              targetType: inline
-              script: |
-                # script settings
-                set -x
-                which authbind
 ...
