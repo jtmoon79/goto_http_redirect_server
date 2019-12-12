@@ -39,9 +39,13 @@ This file is described in the top-level [README.md](./../README.md).
   curl -o /usr/local/bin/goto_http_redirect_server.sh https://raw.githubusercontent.com/jtmoon79/goto_http_redirect_server/master/service/goto_http_redirect_server.sh
   chmod 0555 /usr/local/bin/goto_http_redirect_server.sh
   ```
-  The wrapper-script expects the Python package to install to
-  `/usr/local/bin/goto_http_redirect_server`.  The wrapper-script has options
-  for environment variable overrides.
+
+- `/etc/goto_http_redirect_server.conf`
+  ```
+  curl -o /etc/goto_http_redirect_server.conf https://raw.githubusercontent.com/jtmoon79/goto_http_redirect_server/master/service/goto_http_redirect_server.conf
+  chmod 0755 /etc/goto_http_redirect_server.conf
+  ```
+  Adjust this file as preferred.
 
 - `/etc/systemd/user/goto_http_redirect_server.service`
   ```
@@ -71,7 +75,3 @@ Setup the low privilege port for user `nobody`:
      chmod 0500 /etc/authbind/byport/80
      chgrp nogroup /etc/authbind/byport/80
      chown nobody /etc/authbind/byport/80
-
-In systemd service script `/etc/systemd/user/goto_http_redirect_server.service`
-adjust declaration `ExecStart` and then restart the service.  User `nobody` may
-be any other user.

@@ -1,8 +1,11 @@
 # systemd service file goto_http_redirect_server.service
 #
-# Following systemd guide at
+# Follows systemd unit-file tutorial at
 # https://www.digitalocean.com/community/tutorials/understanding-systemd-units-and-unit-files
 # (http://archive.ph/TUaJL)
+#
+# goto_http_redirect_server.sh options may be set in configuration file
+# /etc/goto_http_redirect_server.conf
 
 [Unit]
 Description=The "Go To" HTTP Redirect Server

@@ -338,6 +338,19 @@ stages:
                 # script settings
                 set -eux
 
+                # verify curl is installed
+                curl --version
+                # verify user for test exists
+                USERTEST=nobody
+                cat /etc/passwd  # XXX: REMOVE THIS
+                id -u "${USERTEST}" &>/dev/null
+
+                # install and configure authbind
+                sudo -- apt install -y authbind
+                sudo -- touch /etc/authbind/byport/80
+                sudo -- chown -v "${USERTEST}" /etc/authbind/byport/80
+                sudo -- chmod -v 0500 /etc/authbind/byport/80
+
                 chmod -v +x "${GOTO_PATH_READLINK}"
 
                 # update PATH with potential pip install locations
@@ -362,37 +375,77 @@ stages:
                 cd -
 
                 # install redirects file
-                CSV_FILE=/usr/local/share/goto_http_redirect_server.csv
-                echo '/a	http://aaa.com	bob	2000-01-01 00:00:00' | sudo -- tee "${CSV_FILE}"
+                GOTO_FILE_REDIRECTS=/usr/local/share/goto_http_redirect_server.csv
+                echo '/a	http://aaa.com	bob	2000-01-01 00:00:00' | sudo -- tee "${GOTO_FILE_REDIRECTS}"
 
                 # link goto_http_redirect_server
-                GOTO=/usr/local/bin/goto_http_redirect_server
-                sudo -- ln -vs -- "$(which goto_http_redirect_server)" "${GOTO}"
-                "${GOTO}" --version  # check it can run from new location
+                GOTO_FILE_SCRIPT=/usr/local/bin/goto_http_redirect_server
+                sudo -- ln -vs -- "$(which goto_http_redirect_server)" "${GOTO_FILE_SCRIPT}"
+                "${GOTO_FILE_SCRIPT}" --version  # check it can run from new location
 
                 # copy systemd wrapper
-                WRAPPER=/usr/local/bin/goto_http_redirect_server.sh
-                sudo -- cp -v -- ./service/goto_http_redirect_server.sh "$(dirname -- "${WRAPPER}")"
-                sudo -- chmod -v +x -- "${WRAPPER}"
+                GOTO_SYSTEMD_SH=/usr/local/bin/goto_http_redirect_server.sh
+                sudo -- cp -v -- ./service/goto_http_redirect_server.sh "$(dirname -- "${GOTO_SYSTEMD_SH}")"
+                sudo -- chmod -v +x -- "${GOTO_SYSTEMD_SH}"
+
+                # copy systemd wrapper configuration
+                GOTO_CONFIG=/etc/goto_http_redirect_server.conf
+                sudo -- cp -v -- ./service/goto_http_redirect_server.conf "${GOTO_CONFIG}"
+                cat "${GOTO_CONFIG}"  # note contents in debug log
+                # adjust settings by appending new settings
+                echo 'GOTO_LISTEN_IP=127.0.0.1' >> "${GOTO_CONFIG}"
 
                 # install systemd
-                SERVICE=goto_http_redirect_server.service
-                SERVICE_FILE=/etc/systemd/user/${SERVICE}
-                sudo -- cp -v -- ./service/goto_http_redirect_server.service "$(dirname -- "${SERVICE_FILE}")"
-                sudo -- chmod -v 0444 -- "${SERVICE_FILE}"
+                GOTO_SERVICE=goto_http_redirect_server.service
+                GOTO_SERVICE_FILE=/etc/systemd/user/${SERVICE}
+                sudo -- cp -v -- ./service/goto_http_redirect_server.service "$(dirname -- "${GOTO_SERVICE_FILE}")"
+                sudo -- chmod -v 0444 -- "${GOTO_SERVICE_FILE}"
 
                 # enable and start systemd service
-                sudo -- systemctl enable "${SERVICE_FILE}"
-                sudo -- systemctl start "${SERVICE}"
+                sudo -- systemctl enable "${GOTO_SERVICE_FILE}"
+                sudo -- systemctl start "${GOTO_SERVICE}"
                 sleep 2
 
                 # check systemd service
-                sudo -- systemctl status "${SERVICE}"
+                sudo -- systemctl status "${GOTO_SERVICE}"
 
                 # query service
                 URL='http://127.0.0.1:80'
-                curl --version
                 curl -v --fail --output /dev/null "${URL}/a"
 
-                # TODO: test service wrapper parameters `-u ... -n ...` etc.
+                #
+                # test all other systemd wrapper configuration options
+                #
+                echo "
+                GOTO_NICE_ENABLE=true
+                GOTO_AUTHBIND_ENABLE=true
+                GOTO_SUDOAS_ENABLE=true
+                GOTO_SUDOAS_USER=${USERTEST}
+                GOTO_NICE_ENABLE=true
+                GOTO_NICE_LEVEL=-10
+                GOTO_DEBUG_ENABLE=true
+                GOTO_LISTEN_IP=127.0.0.2
+                GOTO_PORT=8082
+                GOTO_FILE_LOG=/var/log/goto_http_redirect_server.log
+                GOTO_FILE_SCRIPT=/usr/local/bin/goto_http_redirect_server
+                GOTO_FILE_REDIRECTS=/usr/local/share/goto_http_redirect_server.csv
+                GOTO_PATH_STATUS=/status
+                GOTO_PATH_RELOAD=/reload
+                " >> "${GOTO_CONFIG}"
+                cat "${GOTO_CONFIG}"  # note contents in debug log
+                # use a different port because linux tends to hold the TCP port
+                # open long after the process has exited.
+                URL='http://127.0.0.2:8082'
+
+                sudo -- systemctl restart "${GOTO_SERVICE}"
+                sleep 4
+                sudo -- systemctl status "${GOTO_SERVICE}"
+
+                # query various URI paths
+                curl -v --fail --output /dev/null "${URL}/a"
+                curl -v --fail --output /dev/null "${URL}/reload"
+                sleep 0.5
+                curl -v --fail --output /dev/null "${URL}/status"
+
+                sudo -- systemctl status "${GOTO_SERVICE}"
 ...
