@@ -24,9 +24,10 @@ variables:
   GOTO_PATH_TEST: $(Build.SourcesDirectory)/goto_http_redirect_server/test
   GOTO_PATH_DIST: $(Build.SourcesDirectory)/dist
   GOTO_PATH_MYPY_INIT: $(Build.SourcesDirectory)/.config/mypy.ini
-  GOTO_PATH_YAMLLINT: $(Build.SourcesDirectory)/tools/ci/yamllint.sh
-  GOTO_PATH_READLINK: $(Build.SourcesDirectory)/tools/ci/readlink.sh
-  GOTO_PATH_ADD_PIP_SITE: $(Build.SourcesDirectory)/tools/ci/PATH-add-pip-site.sh
+  GOTO_PATH_TOOLS_CI: $(Build.SourcesDirectory)/tools/ci
+  GOTO_PATH_YAMLLINT: $(GOTO_PATH_TOOLS_CI)/yamllint.sh
+  GOTO_PATH_READLINK: $(GOTO_PATH_TOOLS_CI)/readlink.sh
+  GOTO_PATH_ADD_PIP_SITE: $(GOTO_PATH_TOOLS_CI)/PATH-add-pip-site.sh
   GOTO_PYTEST_REPORT: pytest-report.xml
   GOTO_VM_IMAGE: 'ubuntu-18.04'  # default working VM
   GOTO_PY_VERSION: '3.7'  # default working Python
@@ -338,19 +339,18 @@ stages:
                 # script settings
                 set -eux
 
-                # verify curl is installed
+                # verify and check system settings
+                systemctl --version
+                systemctl show-environment
                 curl --version
-                # verify user for test exists
                 USERTEST=nobody
-                cat /etc/passwd  # XXX: REMOVE THIS
                 id -u "${USERTEST}" &>/dev/null
 
-                # install and configure authbind
-                sudo -- apt install -y authbind
-                sudo -- touch /etc/authbind/byport/80
-                sudo -- chown -v "${USERTEST}" /etc/authbind/byport/80
-                sudo -- chmod -v 0500 /etc/authbind/byport/80
-
+                # install authbind
+                chmod -vR +x "${GOTO_PATH_TOOLS_CI}"
+                PORT1=80
+                sudo -- "${GOTO_PATH_TOOLS_CI}/authbind-install.sh" "${USERTEST}" ${PORT1}
+                
                 chmod -v +x "${GOTO_PATH_READLINK}"
 
                 # update PATH with potential pip install locations
@@ -361,9 +361,6 @@ stages:
                     # XXX: does not handle spaces in arguments, a clever `eval` might improve this
                     sudo -HE -- bash -c "export PATH=${PATH}; python ${*}"
                 }
-                # update packages
-                sudo_python -m pip list --disable-pip-version-check --no-index -vvv
-                sudo_python -m pip install --quiet --upgrade pip setuptools
                 sudo_python -m pip list --disable-pip-version-check --no-index -vvv
 
                 # install wheel package
@@ -374,48 +371,40 @@ stages:
                 sudo_python -m pip list --disable-pip-version-check --no-index -vvv
                 cd -
 
-                # install redirects file
+                # configure service files
+                GOTO_CONFIG=/etc/goto_http_redirect_server.conf
+                GOTO_FILE_SCRIPT=/usr/local/bin/goto_http_redirect_server
                 GOTO_FILE_REDIRECTS=/usr/local/share/goto_http_redirect_server.csv
+                GOTO_FILE_LOG=/var/log/goto_http_redirect_server.log
+                GOTO_SERVICE=goto_http_redirect_server.service
+                GOTO_LISTEN_IP=0.0.0.0
+
+                # install service files
+                sudo -- "${GOTO_PATH_TOOLS_CI}/service-install.sh" --enable
+                sudo -- systemctl list-dependencies "${GOTO_SERVICE}"
+
+                "${GOTO_FILE_SCRIPT}" --version  # check can run from new location
+
+                # adjust settings
                 echo '/a	http://aaa.com	bob	2000-01-01 00:00:00' | sudo -- tee "${GOTO_FILE_REDIRECTS}"
 
-                # link goto_http_redirect_server
-                GOTO_FILE_SCRIPT=/usr/local/bin/goto_http_redirect_server
-                sudo -- ln -vs -- "$(which goto_http_redirect_server)" "${GOTO_FILE_SCRIPT}"
-                "${GOTO_FILE_SCRIPT}" --version  # check it can run from new location
-
-                # copy systemd wrapper
-                GOTO_SYSTEMD_SH=/usr/local/bin/goto_http_redirect_server.sh
-                sudo -- cp -v -- ./service/goto_http_redirect_server.sh "$(dirname -- "${GOTO_SYSTEMD_SH}")"
-                sudo -- chmod -v +x -- "${GOTO_SYSTEMD_SH}"
-
-                # copy systemd wrapper configuration
-                GOTO_CONFIG=/etc/goto_http_redirect_server.conf
-                sudo -- cp -v -- ./service/goto_http_redirect_server.conf "${GOTO_CONFIG}"
-                cat "${GOTO_CONFIG}"  # note contents in debug log
-                # adjust settings by appending new settings
-                echo 'GOTO_LISTEN_IP=127.0.0.1' >> "${GOTO_CONFIG}"
-
-                # install systemd
-                GOTO_SERVICE=goto_http_redirect_server.service
-                GOTO_SERVICE_FILE=/etc/systemd/user/${SERVICE}
-                sudo -- cp -v -- ./service/goto_http_redirect_server.service "$(dirname -- "${GOTO_SERVICE_FILE}")"
-                sudo -- chmod -v 0444 -- "${GOTO_SERVICE_FILE}"
-
-                # enable and start systemd service
-                sudo -- systemctl enable "${GOTO_SERVICE_FILE}"
+                # start and check systemd service
                 sudo -- systemctl start "${GOTO_SERVICE}"
-                sleep 2
-
-                # check systemd service
+                sleep 3
+                tail "${GOTO_FILE_LOG}" || true
+                sudo -- journalctl -u "${GOTO_SERVICE}"
                 sudo -- systemctl status "${GOTO_SERVICE}"
 
-                # query service
-                URL='http://127.0.0.1:80'
+                # user query service
+                URL="http://${GOTO_LISTEN_IP}:${PORT1}"
                 curl -v --fail --output /dev/null "${URL}/a"
 
                 #
                 # test all other systemd wrapper configuration options
                 #
+                GOTO_LISTEN_IP=127.0.0.2
+                PORT2=8083
+                sudo -- chmod -v 0666 "${GOTO_FILE_LOG}"  # allow writing by $USERTEST
                 echo "
                 GOTO_NICE_ENABLE=true
                 GOTO_AUTHBIND_ENABLE=true
@@ -423,29 +412,41 @@ stages:
                 GOTO_SUDOAS_USER=${USERTEST}
                 GOTO_NICE_ENABLE=true
                 GOTO_NICE_LEVEL=-10
-                GOTO_DEBUG_ENABLE=true
-                GOTO_LISTEN_IP=127.0.0.2
-                GOTO_PORT=8082
-                GOTO_FILE_LOG=/var/log/goto_http_redirect_server.log
-                GOTO_FILE_SCRIPT=/usr/local/bin/goto_http_redirect_server
-                GOTO_FILE_REDIRECTS=/usr/local/share/goto_http_redirect_server.csv
-                GOTO_PATH_STATUS=/status
-                GOTO_PATH_RELOAD=/reload
-                " >> "${GOTO_CONFIG}"
-                cat "${GOTO_CONFIG}"  # note contents in debug log
+                GOTO_FILE_REDIRECTS='${GOTO_FILE_REDIRECTS}'
+                GOTO_FILE_LOG='${GOTO_FILE_LOG}'
+                declare -ag GOTO_ARGV=(
+                    '--ip' '${GOTO_LISTEN_IP}'
+                    '--port' '${PORT2}'
+                    '--status-path' '/status'
+                    '--reload-path' '/reload'
+                    '--debug'
+                )
+                " | sudo -- tee "${GOTO_CONFIG}"
+                sudo -- cat "${GOTO_CONFIG}"  # note contents in debug log
+
                 # use a different port because linux tends to hold the TCP port
                 # open long after the process has exited.
-                URL='http://127.0.0.2:8082'
+                URL="http://${GOTO_LISTEN_IP}:${PORT2}"
+                sudo -- "${GOTO_PATH_TOOLS_CI}/authbind-install.sh" "${USERTEST}" ${PORT2}
 
                 sudo -- systemctl restart "${GOTO_SERVICE}"
-                sleep 4
+                sleep 20
+                tail "${GOTO_FILE_LOG}" || true
+                sudo -- journalctl -u "${GOTO_SERVICE}"
                 sudo -- systemctl status "${GOTO_SERVICE}"
 
-                # query various URI paths
+                # user query various URI paths
                 curl -v --fail --output /dev/null "${URL}/a"
                 curl -v --fail --output /dev/null "${URL}/reload"
-                sleep 0.5
                 curl -v --fail --output /dev/null "${URL}/status"
 
                 sudo -- systemctl status "${GOTO_SERVICE}"
+          - task: Bash@3
+            displayName: 'task: «Bash@3» vmImage "$(vmImageName)" Python $(GOTO_PY_VERSION)'
+            inputs:
+              targetType: inline
+              script: |
+                # script settings
+                set -x
+                which authbind
 ...
