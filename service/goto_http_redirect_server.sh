@@ -10,7 +10,6 @@
 
 set -u
 set -e
-set -x
 
 # if available, load configuration file
 GOTO_CONF=${GOTO_CONF-/etc/goto_http_redirect_server.conf}
@@ -84,7 +83,6 @@ GOTO_FILE_SCRIPT=${GOTO_FILE_SCRIPT:-/usr/local/bin/goto_http_redirect_server}
 GOTO_FILE_REDIRECTS=${GOTO_FILE_REDIRECTS:-/usr/local/share/goto_http_redirect_server.csv}
 GOTO_FILE_LOG=${GOTO_FILE_LOG-/var/log/goto_http_redirect_server.log}
 
-(declare -p | sort | grep 'GOTO_') || true
 set -x
 exec \
     ${sudoas} \
