@@ -1,29 +1,30 @@
 # systemd service file goto_http_redirect_server.service
 #
-# Following systemd guide at
+# Follows systemd unit-file tutorial at
 # https://www.digitalocean.com/community/tutorials/understanding-systemd-units-and-unit-files
 # (http://archive.ph/TUaJL)
+#
+# goto_http_redirect_server.sh options may be set in configuration file
+# /etc/goto_http_redirect_server.conf
 
 [Unit]
 Description=The "Go To" HTTP Redirect Server
 Wants=network-online.target
 After=network-online.target
+Requires=network-online.target
 
 [Install]
 Alias=goto-http-redirect-server
 
 [Service]
 Type=simple
-Requires=network-online.target
 
 [Service]
 ExecStart=/usr/local/bin/goto_http_redirect_server.sh
-# the next ExecStart requires authbind configured
-#ExecStart=/usr/local/bin/goto_http_redirect_server.sh -a -u nobody
 ExecReload=/bin/kill -HUP $MAINPID
 KillMode=process
 Restart=on-failure
-RestartSec=10s
+RestartSec=20s
 
 [Install]
 WantedBy=multi-user.target

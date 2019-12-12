@@ -1,50 +1,69 @@
 #!/usr/bin/env bash
 #
-# systemd wrapper for goto_http_redirect_server
-# accepts some command-line options for adjusting process ownership and access-levels
-# various parameters may be overridden by environment variables
+# systemd wrapper for goto_http_redirect_server.service
 #
-# XXX: makes presumptions! needs work to be more portable!
-# XXX: only tested on Debian 9
+# Options may be adjusted via command-line or configuration file.
+# Configuration file is defaults to /etc/goto_http_redirect_server.conf.
+# Remaining unprocessed command-line options are passed to
+# goto_http_redirect_server
+#
 
 set -u
 set -e
-set -o pipefail
+set -x
+
+# if available, load configuration file
+GOTO_CONF=${GOTO_CONF-/etc/goto_http_redirect_server.conf}
+if [ -f "${GOTO_CONF}" ]; then
+    source "${GOTO_CONF}"
+else
+    echo "NOTE: configuration file '${GOTO_CONF}' was not found" >&2
+fi
 
 authbind=
+if ${GOTO_AUTHBIND_ENABLE-false} &>/dev/null; then
+    authbind='authbind --deep'
+fi
 sudoas=
+if ${GOTO_SUDOAS_ENABLE-false} &>/dev/null; then
+    sudoas="sudo -u ${GOTO_SUDOAS_USER} --"
+fi
 nice=
-port=
-debug=
+if ${GOTO_NICE_ENABLE-false} &>/dev/null; then
+    nice="nice -n ${GOTO_NICE_LEVEL}"
+fi
 
-while getopts "au:n:p:dh?" opt; do
+declare -a argv=("${@}")  # pass `getopts` a copy of args to allow `shift`s
+while getopts "au:n:p:dh?" opt "${argv[@]:-}"; do
     case ${opt} in
         a)
             authbind='authbind --deep'
+            shift;
             ;;
         u)
             sudoas="sudo -u ${OPTARG} --"
+            shift;
+            shift;
             ;;
         n)
             nice="nice -n ${OPTARG}"
-            ;;
-        p)
-            port="--port ${OPTARG}"
-            ;;
-        d)
-            debug='--debug'
+            shift;
+            shift;
             ;;
         h)
             ;&
         \?)
             (
-                echo "Usage: ${0} [-a] [-u USER] [-n NICE] [-p PORT] [-d]"
+                echo "Invokes goto_http_redirect_server with optional process adjustments."
+                echo
+                echo "Usage: ${0} [-a] [-u USER] [-n NICE] [-p PORT] [-d] …"                
                 echo
                 echo "       -a  lower privilege using 'authbind --deep' (requires authbind)"
                 echo "       -u  run process using 'sudo -u USER'  (requires sudo)"
                 echo "       -n  run process with nice level NICE"
-                echo "       -p  pass '--port PORT' option"
-                echo "       -d  pass '--debug' option"
+                echo "       … remaining unprocessed arguments are passed directly to goto_http_redirect_server"
+                echo
+                echo "This script imports other settings from /etc/goto_http_redirect_server.conf"
                 echo
                 echo "Usage: ${0} [-h] [-?]"
                 echo
@@ -55,34 +74,23 @@ while getopts "au:n:p:dh?" opt; do
     esac
 done
 
-GOTO_IP_ADDR=${GOTO_IP_ADDR:-'0.0.0.0'}
-GOTO_LOG=${GOTO_LOG-/var/log/goto_http_redirect_server.log}
-GOTO_SCRIPT=${GOTO_SCRIPT:-/usr/local/bin/goto_http_redirect_server}
-GOTO_REDIRECTS_FILE=${GOTO_REDIRECTS_FILE:-/usr/local/share/goto_http_redirect_server.csv}
-GOTO_PATH_STATUS=${GOTO_PATH_STATUS-/}
-GOTO_PATH_RELOAD=${GOTO_PATH_RELOAD-/reload}
-
-declare -a GOTO_PATH_STATUS_PARAMS=()
-if [[ "${GOTO_PATH_STATUS}" ]]; then
-     GOTO_PATH_STATUS_PARAMS[0]='--status-path'
-     GOTO_PATH_STATUS_PARAMS[1]=${GOTO_PATH_STATUS}
+# append remaining arguments to array GOTO_ARGV
+if ! declare -p GOTO_ARGV &>/dev/null; then
+    GOTO_ARGV=("${@}")
+else
+    GOTO_ARGV+=("${@}")
 fi
-declare -a GOTO_PATH_RELOAD_PARAMS=()
-if [[ "${GOTO_PATH_RELOAD}" ]]; then
-     GOTO_PATH_RELOAD_PARAMS[0]='--reload-path'
-     GOTO_PATH_RELOAD_PARAMS[1]=${GOTO_PATH_RELOAD}
-fi
+GOTO_FILE_SCRIPT=${GOTO_FILE_SCRIPT:-/usr/local/bin/goto_http_redirect_server}
+GOTO_FILE_REDIRECTS=${GOTO_FILE_REDIRECTS:-/usr/local/share/goto_http_redirect_server.csv}
+GOTO_FILE_LOG=${GOTO_FILE_LOG-/var/log/goto_http_redirect_server.log}
 
+(declare -p | sort | grep 'GOTO_') || true
 set -x
 exec \
     ${sudoas} \
         ${authbind} \
             ${nice} \
-                ${GOTO_SCRIPT} \
-                    --redirects "${GOTO_REDIRECTS_FILE}" \
-                    --ip "${GOTO_IP_ADDR}" \
-                    ${port} \
-                    "${GOTO_PATH_STATUS_PARAMS[@]}" \
-                    "${GOTO_PATH_RELOAD_PARAMS[@]}" \
-                    --log "${GOTO_LOG}" \
-                    ${debug}
+                ${GOTO_FILE_SCRIPT} \
+                    --redirects "${GOTO_FILE_REDIRECTS}" \
+                    --log "${GOTO_FILE_LOG}" \
+                    "${GOTO_ARGV[@]}"

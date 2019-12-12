@@ -38,8 +38,8 @@ __url_issues__ = 'https://github.com/jtmoon79/goto_http_redirect_server/issues'
 # first line of __doc__ is used in setup.py. Should match README.md and title at
 # github.com project site.
 __doc__ = """\
-The "Go To" HTTP Redirect Server for sharing custom shortened HTTP URLs on \
-your network.
+The "Go To" HTTP Redirect Server for sharing dynamic short HTTP URLs on your \
+network.
 
 Modules used are available within the standard CPython distribution.
 Written for Python 3.7 but hacked to run with at least Python 3.5.2.
@@ -81,7 +81,8 @@ htmls_str = typing.Union[htmls, str]
 #
 
 PROGRAM_NAME = 'goto_http_redirect_server'
-IP_LISTEN = '0.0.0.0'
+LISTEN_IP = '0.0.0.0'
+LISTEN_PORT = 80
 HOSTNAME = socket.gethostname()
 TIME_START = time.time()
 DATETIME_START = datetime.datetime.fromtimestamp(TIME_START)
@@ -921,9 +922,8 @@ def process_options() -> typing.Tuple[str,
     sys_args = copy.copy(sys.argv)  # set once
 
     parser = argparse.ArgumentParser(
-        description="""\
-The "Go To" HTTP Redirect Server! For sharing custom shortened HTTP URLs on \
-your network.
+        description=__doc__ +
+                        """
 
 HTTP %s %s reply server. Load this server with redirects of "from path" and
 "to URL" and let it run indefinitely. Reload the running server by signaling the
@@ -954,12 +954,13 @@ process or HTTP requesting the RELOAD_PATH.
                         default=list())
 
     pgroup = parser.add_argument_group(title='Network Options')
-    pgroup.add_argument('--ip', '-i', action='store', default=IP_LISTEN,
+    pgroup.add_argument('--ip', '-i', action='store', default=LISTEN_IP,
                         help='IP interface to listen on.'
                              ' Default is %(default)s .')
-    pgroup.add_argument('--port', '-p', action='store', type=int, default=80,
+    pgroup.add_argument('--port', '-p', action='store', type=int,
+                        default=LISTEN_PORT,
                         help='IP port to listen on.'
-                             ' Default is %(default)s .')
+                             ' Default is %(default)d .')
 
     pgroup = parser.add_argument_group(title='Server Options')
     pgroup.add_argument('--status-path', action='store',
@@ -1058,7 +1059,7 @@ About Redirect Entries:
 
     http://bug-tracker.mycorp.local/view.cgi?id=123
 
-Redirect Entry Template Syntax:
+Redirect Entry Template Syntax ("dynamic" URLs):
 
   Special substrings with Python string.Template syntax may be set in the
   redirect entry "To" field.

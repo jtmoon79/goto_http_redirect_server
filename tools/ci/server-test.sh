@@ -16,9 +16,9 @@ set -u
 set -o pipefail
 
 readonly PROGRAM_NAME='goto_http_redirect_server'
-readonly IP_LISTEN='127.0.0.1'
+readonly LISTEN_IP='127.0.0.1'
 readonly PORT=55923  # hopefully not in-use!
-readonly URL="http://${IP_LISTEN}:${PORT}"
+readonly URL="http://${LISTEN_IP}:${PORT}"
 
 set -x
 curl --version  # note curl, fail sooner if not installed
@@ -26,7 +26,7 @@ which "${PROGRAM_NAME}"
 "${PROGRAM_NAME}" --version
 "${PROGRAM_NAME}" --debug \
     --shutdown 8 \
-    --ip "${IP_LISTEN}" \
+    --ip "${LISTEN_IP}" \
     --port ${PORT} \
     --from-to '/a' 'http://foo.com' \
     --status-path '/status' \
