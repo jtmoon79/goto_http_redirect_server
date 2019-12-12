@@ -8,7 +8,7 @@
 [![Python versions](https://img.shields.io/pypi/pyversions/goto-http-redirect-server.svg?longCache=True)](https://pypi.org/pypi/goto-http-redirect-server/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-The **_"Go To" HTTP Redirect Server_** for sharing custom shortened HTTP URLs
+The **_"Go To" HTTP Redirect Server_** for sharing dynamic short HTTP URLs
 on your network.
 
 Trivial to install and run.  Only uses Python built-in modules.  Super handy 😄 ‼
@@ -37,7 +37,7 @@ Trivial to install and run.  Only uses Python built-in modules.  Super handy �
    Fields are "_from path_", "_to URL_", "_added by user_", and "_added on datetime_".<br />
    For example, given a file `./redirects1.csv`
 
-       /builds	https://build-server.mycorp.local/build-list	alice	2019-08-10 00:05:10
+       /bug	https://bugtracker.mycorp.local/view.cgi=${query}	alice	2019-08-10 00:05:10
        /hr	http://human-resources.mycorp.local/login	bob	2018-07-11 22:15:10
        /aws	https://us-west-2.console.aws.amazon.com/console/home?region=us-west-2#	carl	2019-01-05 12:35:10
 
