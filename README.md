@@ -96,7 +96,8 @@ From your browser, browse to a redirect path!  For example, given a network host
 `goto` running `goto_http_redirect_server` on port `80`, and given the
 example redirects file `./redirects1.csv` above, then<br />
 in your browser, type **`goto/hr⏎`**. Your browser will end up at
-**`http://human-resources.mycorp.local/login`** 😝‼
+**`http://human-resources.mycorp.local/login`** 😆‼<br />
+Try  **`goto/bug?456⏎`**… shows bug 456 😝❗❗
 
 ## Gotchas
 
