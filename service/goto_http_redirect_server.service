@@ -11,13 +11,13 @@
 Description=The "Go To" HTTP Redirect Server
 Wants=network-online.target
 After=network-online.target
+Requires=network-online.target
 
 [Install]
 Alias=goto-http-redirect-server
 
 [Service]
 Type=simple
-Requires=network-online.target
 
 [Service]
 ExecStart=/usr/local/bin/goto_http_redirect_server.sh
