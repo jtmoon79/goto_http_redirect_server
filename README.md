@@ -159,6 +159,8 @@ No service downtime!
       chmod 0500 /etc/authbind/byport/80
       sudo -u nobody -- authbind --deep python goto_http_redirect_server …
 
+  This is an optional setting in [the systemd service](./service/).
+
 <br />
 
 ----
