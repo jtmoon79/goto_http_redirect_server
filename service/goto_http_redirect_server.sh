@@ -55,7 +55,7 @@ while getopts "au:n:p:dh?" opt "${argv[@]:-}"; do
             (
                 echo "Invokes goto_http_redirect_server with optional process adjustments."
                 echo
-                echo "Usage: ${0} [-a] [-u USER] [-n NICE] [-p PORT] [-d] …"                
+                echo "Usage: ${0} [-a] [-u USER] [-n NICE] …"
                 echo
                 echo "       -a  lower privilege using 'authbind --deep' (requires authbind)"
                 echo "       -u  run process using 'sudo -u USER'  (requires sudo)"
