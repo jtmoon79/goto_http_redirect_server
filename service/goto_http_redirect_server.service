@@ -18,12 +18,10 @@ Requires=network-online.target
 
 [Service]
 ExecStart=/usr/local/bin/goto_http_redirect_server.sh
-# the next ExecStart requires authbind configured
-#ExecStart=/usr/local/bin/goto_http_redirect_server.sh -a -u nobody
 ExecReload=/bin/kill -HUP $MAINPID
 KillMode=process
 Restart=on-failure
-RestartSec=10s
+RestartSec=20s
 
 [Install]
 WantedBy=multi-user.target
