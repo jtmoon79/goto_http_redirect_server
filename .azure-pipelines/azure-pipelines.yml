@@ -47,6 +47,7 @@ stages:
               targetType: inline
               script: |
                 set -eux
+                shopt
                 pwd
                 whoami
                 hostname
