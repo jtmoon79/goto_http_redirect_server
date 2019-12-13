@@ -54,7 +54,7 @@ userbasebin=${userbase}/bin  # --user install location on Ubuntu
 export PATH="${PATH}:${usersite}:${userbase}:${userbasebin}"
 
 SERVER_TEST=$(readlink_ "./tools/ci/server-test.sh")
-PY_TEST=$(readlink_ "./goto_http_redirect_server/tools/pytest.sh")
+PY_TEST=$(readlink_ "./tools/pytest.sh")
 
 # install development requirements
 python -m pip install --user --verbose -e '.[development]'
