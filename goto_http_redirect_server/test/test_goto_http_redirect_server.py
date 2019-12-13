@@ -12,7 +12,9 @@ from urllib.parse import ParseResult
 import pytest
 
 from goto_http_redirect_server.goto_http_redirect_server import (
-    combine_parseresult
+    html_escape,
+    htmls,
+    combine_parseresult,
 )
 
 # all committed test resources should be under this directory
@@ -33,6 +35,40 @@ def pr(**kwargs):
 
 
 class Test_Functions(object):
+
+    @pytest.mark.parametrize(
+        's_,'
+        'expected',
+        (
+            pytest.param(
+                '',
+                htmls(''),
+            ),
+            pytest.param(
+                'A',
+                htmls('A'),
+            ),
+            pytest.param(
+                '&',
+                htmls('&amp;'),
+            ),
+            pytest.param(
+                '<>',
+                htmls('&lt;&gt;'),
+            ),
+            pytest.param(
+                'foo\nbar',
+                htmls('foo<br />\nbar'),
+            ),
+        )
+    )
+    def test_html_escape(self,
+                         s_,
+                         expected):
+        actual = html_escape(s_)
+        assert expected == actual
+        assert type(expected) == type(actual)
+
 
     @pytest.mark.parametrize(
         'pr1,'
