@@ -14,8 +14,5 @@ exec python \
         -m pytest \
             --verbose \
             -c ./.config/pytest.ini \
-            . \
-            --cov=goto_http_redirect_server \
             --cov-config=./.config/coverage.ini \
-            --cov-report=xml \
-            --cov-report=html \
+            . \

@@ -29,6 +29,7 @@ variables:
   GOTO_PATH_READLINK: $(GOTO_PATH_TOOLS_CI)/readlink.sh
   GOTO_PATH_ADD_PIP_SITE: $(GOTO_PATH_TOOLS_CI)/PATH-add-pip-site.sh
   GOTO_PYTEST_REPORT: pytest-report.xml
+  GOTO_PYTEST_COVERAGE_REPORT: pytest-cov-coverage.xml
   GOTO_VM_IMAGE: 'ubuntu-18.04'  # default working VM
   GOTO_PY_VERSION: '3.7'  # default working Python
   GOTO_WHEEL_ARTIFACT_DEFAULT: artifact_wheel_$(GOTO_VM_IMAGE)  # default wheel package - one of the built wheel artifacts must have this name
@@ -117,16 +118,31 @@ stages:
               targetType: inline
               script: |
                 set -eux
-                python -m pip install --quiet --user pytest
+                # TODO: install via setup.py
+                python -m pip install --quiet --user pytest pytest-cov
                 python -m pip list --disable-pip-version-check --no-index -vvv
-                python -m pytest --verbose --junit-xml="${GOTO_PYTEST_REPORT}" "${GOTO_PATH_TEST}"
+                chmod -v +x -- ./tools/pytest.sh
+                ./tools/pytest.sh
                 cat "${GOTO_PYTEST_REPORT}" | python -c "import sys;import xml.dom.minidom;s=sys.stdin.read();print(xml.dom.minidom.parseString(s).toprettyxml())"
+                # XXX: is this `cp` necessary?
                 cp -av -- "${GOTO_PYTEST_REPORT}" "${BUILD_ARTIFACTSTAGINGDIRECTORY}/"
+                cp -av -- "${GOTO_PYTEST_COVERAGE_REPORT}" "${BUILD_ARTIFACTSTAGINGDIRECTORY}/"
           - task: PublishBuildArtifacts@1
             displayName: 'task: «PublishBuildArtifacts@1» $(GOTO_PYTEST_REPORT) "$(Build.ArtifactStagingDirectory)"'
             inputs:
               pathtoPublish: '$(Build.ArtifactStagingDirectory)'
               artifactName: artifact_pytest_report
+          - task: PublishTestResults@2
+            displayName: 'task: «PublishTestResults@2» $(GOTO_PYTEST_REPORT)'
+            inputs:
+              testResultsFiles: '**/$(GOTO_PYTEST_REPORT)'
+              testRunTitle: 'pytest for build $(Build.BuildId) commit $(Build.SourceVersion)'
+          - task: PublishCodeCoverageResults@1
+            displayName: 'task: «PublishCodeCoverageResults@2» $(GOTO_PYTEST_COVERAGE_REPORT)'
+            inputs:
+              codeCoverageTool: cobertura
+              summaryFileLocation: '**/$(GOTO_PYTEST_COVERAGE_REPORT)'
+              failIfCoverageEmpty: true
   - stage: stage_build
     displayName: 'stage: «build»'
     jobs:

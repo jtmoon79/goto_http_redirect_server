@@ -22,5 +22,7 @@ pytestdebug.log
 
 # pytest-cov
 coverage.xml
+pytest-cov-coverage.xml
 coverage_html/
+pytest-cov-coverage_html/
 .coverage
