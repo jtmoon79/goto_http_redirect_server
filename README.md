@@ -1,7 +1,7 @@
 
 # Go To HTTP Redirect Server
 
-[![CircleCI](https://circleci.com/gh/jtmoon79/coverlovin2.svg?style=svg)](https://circleci.com/gh/jtmoon79/goto_http_redirect_server)
+[![CircleCI](https://circleci.com/gh/jtmoon79/goto_http_redirect_server.svg?style=svg)](https://circleci.com/gh/jtmoon79/goto_http_redirect_server)
 [![Build Status](https://dev.azure.com/jtmmoon/goto_http_redirect_server/_apis/build/status/jtmoon79.goto_http_redirect_server?branchName=master)](https://dev.azure.com/jtmmoon/goto_http_redirect_server/_build/latest?definitionId=1&branchName=master)
 [![Requirements Status](https://requires.io/github/jtmoon79/goto_http_redirect_server/requirements.svg?branch=master)](https://requires.io/github/jtmoon79/goto_http_redirect_server/requirements/?branch=master)
 [![PyPI version](https://badge.fury.io/py/goto-http-redirect-server.svg)](https://badge.fury.io/py/goto-http-redirect-server)
