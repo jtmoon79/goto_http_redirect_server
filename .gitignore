@@ -2,15 +2,25 @@
 .idea/
 .vscode/
 
-# various Python artifacts
+# virtualenvs
+.venv*/
+
+# Python builds
 .eggs/
 dist/
 build/
 goto_http_redirect_server.egg-info/
 *__pycache__/
+
+# mypy
 .mypy_cache/
+
+# pytest
 .pytest_cache/
 pytest-report.xml
+pytestdebug.log
 
-# virtualenvs
-.venv*/
+# pytest-cov
+coverage.xml
+coverage_html/
+.coverage

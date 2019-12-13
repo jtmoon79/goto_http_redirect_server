@@ -41,6 +41,7 @@ setup(
         'development': [
             'mypy',
             'pytest',
+            'pytest-cov',
             'yamllint',
         ],
         'readme': [
