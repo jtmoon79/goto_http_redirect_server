@@ -38,7 +38,7 @@ __url_issues__ = 'https://github.com/jtmoon79/goto_http_redirect_server/issues'
 # first line of __doc__ is used in setup.py. Should match README.md and title at
 # github.com project site.
 __doc__ = """\
-The "Go To" HTTP Redirect Server for sharing dynamic short HTTP URLs on your \
+The "Go To" HTTP Redirect Server for sharing dynamic shortcut URLs on your \
 network.
 
 Modules used are available within the standard CPython distribution.
@@ -922,8 +922,9 @@ def process_options() -> typing.Tuple[str,
     sys_args = copy.copy(sys.argv)  # set once
 
     parser = argparse.ArgumentParser(
-        description=__doc__ +
-                        """
+        description=
+        __doc__ +
+        """
 
 HTTP %s %s reply server. Load this server with redirects of "from path" and
 "to URL" and let it run indefinitely. Reload the running server by signaling the
