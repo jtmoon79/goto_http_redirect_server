@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# portable `readlink -f` (close enough, at least)
+# portable `realpath` (may not perfectly emulate error conditions)
 
 set -e
 set -u

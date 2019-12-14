@@ -27,7 +27,7 @@ variables:
   GOTO_PATH_TOOLS_CI: $(Build.SourcesDirectory)/tools/ci
   GOTO_PATH_MYPY: $(GOTO_PATH_TOOLS)/mypy.sh
   GOTO_PATH_YAMLLINT: $(GOTO_PATH_TOOLS)/yamllint.sh
-  GOTO_PATH_READLINK: $(GOTO_PATH_TOOLS)/readlink.sh
+  GOTO_PATH_REALPATH: $(GOTO_PATH_TOOLS)/realpath.sh
   GOTO_PATH_ADD_PIP_SITE: $(GOTO_PATH_TOOLS_CI)/PATH-add-pip-site.sh
   GOTO_PYTEST_REPORT: pytest-report.xml
   GOTO_PYTEST_COVERAGE_REPORT: pytest-cov-coverage.xml
@@ -61,7 +61,7 @@ stages:
                 python --version
                 python -m pip --version
                 python -m pip list --disable-pip-version-check --no-index -vvv
-                chmod -v +x "${GOTO_PATH_READLINK}"  # test
+                chmod -v +x "${GOTO_PATH_REALPATH}"  # test
   - stage: stage_yamllint_mypy_pytest
     displayName: 'stage: «yamllint mypy pytest»'
     jobs:
@@ -276,7 +276,7 @@ stages:
                 # script settings
                 set -eux
 
-                chmod -v +x "${GOTO_PATH_READLINK}"
+                chmod -v +x "${GOTO_PATH_REALPATH}"
 
                 # update packages
                 #python -m pip install --quiet --upgrade pip setuptools
@@ -286,7 +286,7 @@ stages:
                 source "${GOTO_PATH_ADD_PIP_SITE}"
 
                 # install wheel package
-                cv_whl=$("${GOTO_PATH_READLINK}" "$(find "${BUILD_BINARIESDIRECTORY}" -name '*.whl' -print -quit)")
+                cv_whl=$("${GOTO_PATH_REALPATH}" "$(find "${BUILD_BINARIESDIRECTORY}" -name '*.whl' -print -quit)")
                 ls -l "${cv_whl}"
                 cd /tmp
                 python -m pip install --user --verbose "${cv_whl}"
@@ -297,7 +297,7 @@ stages:
 
                 # server test
                 cd -
-                SERVER_TEST=$("${GOTO_PATH_READLINK}" "./tools/ci/server-test.sh")
+                SERVER_TEST=$("${GOTO_PATH_REALPATH}" "./tools/ci/server-test.sh")
                 chmod -v +x "${SERVER_TEST}"
                 "${SERVER_TEST}"
 
@@ -378,7 +378,7 @@ stages:
                 PORT1=80
                 sudo -- "${GOTO_PATH_TOOLS_CI}/authbind-install.sh" "${USERTEST}" ${PORT1}
                 
-                chmod -v +x "${GOTO_PATH_READLINK}"
+                chmod -v +x "${GOTO_PATH_REALPATH}"
 
                 # update PATH with potential pip install locations
                 source "${GOTO_PATH_ADD_PIP_SITE}"
@@ -391,7 +391,7 @@ stages:
                 sudo_python -m pip list --disable-pip-version-check --no-index -vvv
 
                 # install wheel package
-                cv_whl=$("${GOTO_PATH_READLINK}" "$(find "${BUILD_BINARIESDIRECTORY}" -name '*.whl' -print -quit)")
+                cv_whl=$("${GOTO_PATH_REALPATH}" "$(find "${BUILD_BINARIESDIRECTORY}" -name '*.whl' -print -quit)")
                 ls -l "${cv_whl}"
                 cd /tmp
                 sudo_python -m pip install --verbose "${cv_whl}"
