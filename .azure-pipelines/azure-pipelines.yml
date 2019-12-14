@@ -104,15 +104,21 @@ stages:
                 python -m mypy --config-file "${GOTO_PATH_MYPY_INIT}" "${GOTO_PATH_PROGRAM_PY}"
       - job: job_pytest
         displayName: 'job: «pytest»'
+        strategy:
+          matrix:
+            Python35:
+              python.release: '3.5'
+            Python37:
+              python.release: $(GOTO_PY_VERSION)
         pool:
           vmImage: $(GOTO_VM_IMAGE)
         steps:
           - task: UsePythonVersion@0
-            displayName: 'task: «UsePythonVersion@0» Python $(GOTO_PY_VERSION)'
+            displayName: 'task: «UsePythonVersion@0» Python $(python.release)'
             inputs:
-              versionSpec: $(GOTO_PY_VERSION)
+              versionSpec: $(python.release)
           - task: Bash@3
-            displayName: 'task: «Bash@3»'
+            displayName: 'task: «Bash@3» Python $(python.release)'
             inputs:
               targetType: inline
               script: |
@@ -128,16 +134,19 @@ stages:
                 cp -av -- "${GOTO_PYTEST_COVERAGE_REPORT}" "${BUILD_ARTIFACTSTAGINGDIRECTORY}/"
           - task: PublishBuildArtifacts@1
             displayName: 'task: «PublishBuildArtifacts@1» $(GOTO_PYTEST_REPORT) "$(Build.ArtifactStagingDirectory)"'
+            condition: in(variables['python.release'], variables['GOTO_PY_VERSION'])
             inputs:
               pathtoPublish: '$(Build.ArtifactStagingDirectory)'
               artifactName: artifact_pytest_report
           - task: PublishTestResults@2
             displayName: 'task: «PublishTestResults@2» $(GOTO_PYTEST_REPORT)'
+            condition: in(variables['python.release'], variables['GOTO_PY_VERSION'])
             inputs:
               testResultsFiles: '**/$(GOTO_PYTEST_REPORT)'
               testRunTitle: 'pytest for build $(Build.BuildId) commit $(Build.SourceVersion)'
           - task: PublishCodeCoverageResults@1
             displayName: 'task: «PublishCodeCoverageResults@2» $(GOTO_PYTEST_COVERAGE_REPORT)'
+            condition: in(variables['python.release'], variables['GOTO_PY_VERSION'])
             inputs:
               codeCoverageTool: cobertura
               summaryFileLocation: '**/$(GOTO_PYTEST_COVERAGE_REPORT)'
