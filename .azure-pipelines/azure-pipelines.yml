@@ -23,10 +23,11 @@ variables:
   GOTO_PACKAGE_NAME: goto_http_redirect_server
   GOTO_PATH_TEST: $(Build.SourcesDirectory)/goto_http_redirect_server/test
   GOTO_PATH_DIST: $(Build.SourcesDirectory)/dist
+  GOTO_PATH_TOOLS: $(Build.SourcesDirectory)/tools
   GOTO_PATH_TOOLS_CI: $(Build.SourcesDirectory)/tools/ci
-  GOTO_PATH_MYPY: $(GOTO_PATH_TOOLS_CI)/mypy.sh
-  GOTO_PATH_YAMLLINT: $(GOTO_PATH_TOOLS_CI)/yamllint.sh
-  GOTO_PATH_READLINK: $(GOTO_PATH_TOOLS_CI)/readlink.sh
+  GOTO_PATH_MYPY: $(GOTO_PATH_TOOLS)/mypy.sh
+  GOTO_PATH_YAMLLINT: $(GOTO_PATH_TOOLS)/yamllint.sh
+  GOTO_PATH_READLINK: $(GOTO_PATH_TOOLS)/readlink.sh
   GOTO_PATH_ADD_PIP_SITE: $(GOTO_PATH_TOOLS_CI)/PATH-add-pip-site.sh
   GOTO_PYTEST_REPORT: pytest-report.xml
   GOTO_PYTEST_COVERAGE_REPORT: pytest-cov-coverage.xml

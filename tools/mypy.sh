@@ -5,9 +5,7 @@
 set -e
 set -u
 
-cd "$(dirname -- "${0}")/../.."
-
-#export PYTHONPATH+=:"${PWD}"
+cd "$(dirname -- "${0}")/.."
 
 python -m mypy --version
 set -x

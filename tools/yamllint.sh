@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 #
-# run yamllint on all *.yml
-# presumes yamllint is installed
+# run yamllint with necessary settings on found yaml files
 
 set -e
 set -u
 
-cd "$(dirname -- "${0}")/../.."
-YAMLCONFIG=./.config/yamllint.yml
+cd "$(dirname -- "${0}")/.."
+
+readonly YAMLCONFIG=./.config/yamllint.yml
 
 yamllint --version
 
