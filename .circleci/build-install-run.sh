@@ -30,15 +30,17 @@ python --version
 pip --version
 pip list -vvv
 
+chmod -v +x -- "${REALPATH}" "${MYPY}"
+SERVER_TEST=$("${REALPATH}" './tools/ci/server-test.sh')
+PY_TEST=$("${REALPATH}" './tools/pytest.sh')
+chmod -v +x -- "${SERVER_TEST}" "${PY_TEST}"
+
 # install and upgrade necessary packages
 python -m pip install --quiet --user --upgrade pip setuptools
 python -m pip install --quiet --user twine mypy
 python -m pip list --disable-pip-version-check --no-index -vvv
 
 source ./tools/ci/PATH-add-pip-site.sh
-
-SERVER_TEST=$("${REALPATH}" "./tools/ci/server-test.sh")
-PY_TEST=$("${REALPATH}" "./goto_http_redirect_server/test/pytest.sh")
 
 # install development requirements
 python -m pip install --user --verbose -e '.[development]'
@@ -57,10 +59,8 @@ python -m pip install --user --verbose "${cv_whl}"
 # run
 "${PROGRAM_NAME}" --version
 # pytest test
-chmod -v +x -- "${PY_TEST}"
 "${PY_TEST}"
 # server test
-chmod -v +x -- "${SERVER_TEST}"
 "${SERVER_TEST}"
 # uninstall
 python -m pip uninstall --yes --verbose "${PACKAGE_NAME}"
