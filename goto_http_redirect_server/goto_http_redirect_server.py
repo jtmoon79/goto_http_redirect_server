@@ -177,7 +177,7 @@ def html_escape(s_: htmls_str) -> htmls:
     )
 
 
-def html_a(href: str, text: str = '') -> htmls:
+def html_a(href: str, text: str_None = None) -> htmls:
     """create HTML <a> from href URL"""
     if text is None:
         text = href
@@ -462,7 +462,7 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
                 val = rd[key]
                 s_ += he('  "') + html_a(key) + he('": [\n')  # type: ignore
                 s_ += he('    "') + html_a(val[0]) + he('",\n')  # type: ignore
-                s_ += he('    "%s",\n' % val[1]) # type: ignore
+                s_ += he('    "%s",\n' % val[1])  # type: ignore
                 s_ += he('    "%s"\n' % val[2])  # type: ignore
                 s_ += he('  ]\n')  # type: ignore
             s_ += he('\n}')  # type: ignore
