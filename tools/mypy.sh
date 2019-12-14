@@ -13,4 +13,5 @@ exec python \
         -m mypy \
             --config-file ./.config/mypy.ini \
             --warn-unused-configs \
-            goto_http_redirect_server/goto_http_redirect_server.py
+            goto_http_redirect_server/goto_http_redirect_server.py \
+            "${@}"
