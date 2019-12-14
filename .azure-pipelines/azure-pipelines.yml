@@ -80,8 +80,7 @@ stages:
               script: |
                 set -eux
                 source "${GOTO_PATH_ADD_PIP_SITE}"
-                # TOOD: install yamllint using setup.py
-                python -m pip install --quiet --user yamllint
+                python -m pip install --user -e '.[development-yamllint]'
                 python -m pip list --disable-pip-version-check --no-index -vvv
                 chmod -v +x "${GOTO_PATH_YAMLLINT}"
                 "${GOTO_PATH_YAMLLINT}"
@@ -100,7 +99,7 @@ stages:
               targetType: inline
               script: |
                 set -eux
-                python -m pip install --quiet --user mypy
+                python -m pip install --user -e '.[development-mypy]'
                 python -m pip list --disable-pip-version-check --no-index -vvv
                 python -m mypy --config-file "${GOTO_PATH_MYPY_INIT}" "${GOTO_PATH_PROGRAM_PY}"
       - job: job_pytest
@@ -118,8 +117,8 @@ stages:
               targetType: inline
               script: |
                 set -eux
-                # TODO: install via setup.py
-                python -m pip install --quiet --user pytest pytest-cov
+                python --version
+                python -m pip install --user -e '.[development-pytest]'
                 python -m pip list --disable-pip-version-check --no-index -vvv
                 chmod -v +x -- ./tools/pytest.sh
                 ./tools/pytest.sh
