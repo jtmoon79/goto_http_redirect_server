@@ -1,3 +1,5 @@
+# PATH-add-pip-site.sh
+#
 # source this file from bash
 
 # update PATH with potential pip install locations

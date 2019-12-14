@@ -3,9 +3,9 @@
 # systemd wrapper for goto_http_redirect_server.service
 #
 # Options may be adjusted via command-line or configuration file.
-# Configuration file is defaults to /etc/goto_http_redirect_server.conf.
+# Configuration file is defaults to `/etc/goto_http_redirect_server.conf`.
 # Remaining unprocessed command-line options are passed to
-# goto_http_redirect_server
+# goto_http_redirect_server executable.
 #
 
 set -u

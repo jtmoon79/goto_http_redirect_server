@@ -6,7 +6,6 @@ set -e
 set -u
 set -o pipefail
 
-echo -n "${1}" | python -B -c '\
-import os, sys
-input_ = sys.stdin.read()
-print(os.path.realpath(input_))'
+python -B -c '\
+import os
+print(os.path.realpath(r""" '"${1}"' """[1:-1]))'

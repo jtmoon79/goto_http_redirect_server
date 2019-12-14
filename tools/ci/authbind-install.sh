@@ -16,6 +16,6 @@ if ! which authbind &>/dev/null; then
 fi
 
 set -x
-touch /etc/authbind/byport/${PORT}
-chown -v "${USERA}" /etc/authbind/byport/${PORT}
-chmod -v 0500 /etc/authbind/byport/${PORT}
+touch "/etc/authbind/byport/${PORT}"
+chown -v "${USERA}" "/etc/authbind/byport/${PORT}"
+chmod -v 0500 "/etc/authbind/byport/${PORT}"

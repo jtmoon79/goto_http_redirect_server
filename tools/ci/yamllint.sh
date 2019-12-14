@@ -11,7 +11,7 @@ YAMLCONFIG=./.config/yamllint.yml
 
 yamllint --version
 
-for yaml in $(find -maxdepth 3 \( -name '*.yaml' -or -name '*.yml' \)); do
+for yaml in $(find -maxdepth 3 -type f \( -name '*.yaml' -or -name '*.yml' \)); do
     (
         set -x 
         yamllint --config-file "${YAMLCONFIG}" "${yaml}"

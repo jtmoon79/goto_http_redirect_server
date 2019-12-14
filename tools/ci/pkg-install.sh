@@ -7,29 +7,17 @@ set -e
 set -u
 
 if which apk 2>/dev/null 1>&2; then
-    (
-        set -x
-        apk add "${@}"
-    )
-    exit
+    set -x
+    exec apk add "${@}"
 elif which yum 2>/dev/null 1>&2; then
-    (
-        set -x
-        yum install -y "${@}"
-    )
-    exit
+    set -x
+    exec yum install -y "${@}"
 elif which apt 2>/dev/null 1>&2; then
-    (
-        set -x
-        apt install -y "${@}"
-    )
-    exit
+    set -x
+    exec apt install -y "${@}"
 elif which zypper 2>/dev/null 1>&2; then
-    (
-        set -x
-        zypper install -y "${@}"
-    )
-    exit
+    set -x
+    exec zypper install -y "${@}"
 fi
 
 echo "ERROR: cannot find a package manager; cannot install '${*}'" 1>&2

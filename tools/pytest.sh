@@ -9,6 +9,7 @@ cd "$(dirname -- "${0}")/.."
 
 export PYTHONPATH+=:"${PWD}"
 
+python -m pytest --version
 set -x
 exec python \
         -m pytest \
