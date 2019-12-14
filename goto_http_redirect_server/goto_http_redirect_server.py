@@ -203,7 +203,7 @@ def combine_parseresult(pr1: parse.ParseResult, pr2: parse.ParseResult) -> str:
     The RedirectEntry 'To' can use string.Template syntax to replace with URI
     parts from pr1
     For example, given RedirectEntry supplied at start-time `pr1`
-       /b	http://bugzilla.corp.local/search/bug.cgi?id=${query}	bob	
+       /b	http://bugzilla.corp.local/search/bug.cgi?id=${query}	bob	2019-01-01 11:30:00
     A user incoming GET request for URL `pr2`
        'http://goto/b?123
     processed by `combine_parseresult` would become URL
@@ -239,8 +239,8 @@ def combine_parseresult(pr1: parse.ParseResult, pr2: parse.ParseResult) -> str:
             remove[key] = False
             if val != val_old:
                 remove[key] = True
-                #pr2d.pop(key)
-            #log.debug('    "%s": "%s" -> "%s"  POP? %s', key, val_old, val, popd)
+                # pr2d.pop(key)
+            # log.debug('    "%s": "%s" -> "%s"  POP? %s', key, val_old, val, popd)
         for key, rm in remove.items():
             if rm and key in pr2d:
                 pr2d.pop(key)
@@ -386,7 +386,7 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
         """
         try:
             prepend = str(self.client_address[0]) + ':' + \
-                       str(self.client_address[1]) + ' '
+                str(self.client_address[1]) + ' '
             if 'loglevel' in kwargs and \
                isinstance(kwargs['loglevel'], type(log.level)):
                 log.log(kwargs['loglevel'], prepend + format_, *args)
@@ -665,7 +665,7 @@ Redirect Path not found: <code>{esc_path}</code>
                 self.command, self.path,
                 str(self.headers).strip('\n').replace('\n', '\n    '),
             )
-        except:
+        except Exception:
             log.exception('Failed to log request')
 
     def do_GET(self) -> None:
@@ -776,7 +776,7 @@ def load_redirects_files(redirects_files: Path_List,
                                 Re_To(to_url),
                                 Re_User(user_added),
                                 Re_Date(dt),)
-                            )
+                        )
                     except Exception:
                         log.exception('Error processing row %d of file %s',
                                       csvr.line_num, rfilen)
@@ -959,15 +959,13 @@ def process_options() -> typing.Tuple[str,
     sys_args = copy.copy(sys.argv)  # set once
 
     parser = argparse.ArgumentParser(
-        description=
-        __doc__ +
-        """
+        description=__doc__ + """\
 
 HTTP %s %s reply server. Load this server with redirects of "from path" and
 "to URL" and let it run indefinitely. Reload the running server by signaling the
 process or HTTP requesting the RELOAD_PATH.
 """
-                    % (int(rcd), rcd.phrase),
+        % (int(rcd), rcd.phrase),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         prog=PROGRAM_NAME,
         add_help=False
@@ -1020,7 +1018,8 @@ process or HTTP requesting the RELOAD_PATH.
                         default=int(rcd), type=int,
                         help='Set HTTP Redirect Status Code as an'
                              ' integer. Most often the desired override will'
-                             ' be ' + str(int(rc_302)) + ' (' + rc_302.phrase +
+                             ' be ' + str(int(rc_302)) +  # NOQA
+                             ' (' + rc_302.phrase +  # NOQA
                              '). Any HTTP Status Code could be used but odd'
                              ' things will happen if a value like 500 is'
                              ' returned.'
@@ -1030,13 +1029,13 @@ process or HTTP requesting the RELOAD_PATH.
                              ' %(default)s (' + rcd.phrase + ').')
     pgroup.add_argument('--field-delimiter', action='store',
                         default=FIELD_DELIMITER_DEFAULT,
-                        help=(
-                             'Field delimiter string for --redirects files'
+                        help='Field delimiter string for --redirects files'
                              ' per-line redirect entries.'
-                             ' Default is "' + FIELD_DELIMITER_DEFAULT_ESCAPED +
-                             '" (ordinal ' +
+                             ' Default is "' +  # NOQA
+                             FIELD_DELIMITER_DEFAULT_ESCAPED +  # NOQA
+                             '" (ordinal ' +  # NOQA
                              str(ord(FIELD_DELIMITER_DEFAULT[0])) + ').'
-                             ))
+                        )
     assert len(FIELD_DELIMITER_DEFAULT) == 1,\
         '--help is wrong about default FIELD_DELIMITER'
     pgroup.add_argument('--status-note-file', action='store', type=str,
@@ -1154,7 +1153,7 @@ About Paths:
         ignore=REDIRECT_FILE_IGNORE_LINE,
         query='{query}',
         rand1=str(uuid.uuid4()),
-       )
+    )
 
     args = parser.parse_args()
 
