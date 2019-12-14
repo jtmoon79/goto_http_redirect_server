@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# portable readlink
+# portable `readlink -f` (close enough, at least)
 
 set -e
 set -u

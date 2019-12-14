@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 #
 # a ~lazy~ eazy! way to download and run goto_http_redirect_server
+# this is hacky!
 
 set -e
 set -u
