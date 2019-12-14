@@ -180,8 +180,8 @@ stages:
                 # script settings
                 set -eux
                 # install build packages
-                # TODO: install wheel using setup.py
-                python -m pip install --quiet --user wheel twine
+                source "${GOTO_PATH_ADD_PIP_SITE}"
+                python -m pip install --quiet --user -e '.[build]'
                 python -m pip list --disable-pip-version-check --no-index -vvv
                 # do the build
                 python setup.py -v bdist_wheel
@@ -201,7 +201,7 @@ stages:
                 $ErrorActionPreference = "Stop"
                 Set-PSDebug -Trace 1
                 # install build packages
-                & python -m pip install --quiet --user wheel twine
+                & python -m pip install --quiet --user -e ".[build]"
                 & python -m pip list --disable-pip-version-check --no-index -vvv
                 # do the build
                 & python setup.py -v bdist_wheel
