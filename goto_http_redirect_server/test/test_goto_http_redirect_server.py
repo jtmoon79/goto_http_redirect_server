@@ -1,5 +1,7 @@
 #!/usr/bin/env python3.7
 # -*- coding: utf-8 -*-
+#
+# This is easiest to run with helper script ./tools/pytest.sh
 
 
 __author__ = 'jtmoon79'
