@@ -1,4 +1,6 @@
-## Reminder of steps for building a release
+## Create A New Release
+
+A reminder of end-to-end steps for creating a new release.
 
 ### locally
 
