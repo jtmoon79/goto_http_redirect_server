@@ -57,6 +57,12 @@ setup(
         'development-yamllint': [
             'yamllint',
         ],
+        'build': [
+            'pip',
+            'setuptools',
+            'twine',
+            'wheel',
+        ],
         'readme': [
             'md_toc',
         ]
