@@ -30,7 +30,7 @@ import uuid
 
 
 # canonical module informations used by setup.py
-__version__ = '0.7.3'
+__version__ = '0.7.5'
 __author__ = 'jtmoon79'
 __url_project__ = 'https://github.com/jtmoon79/goto_http_redirect_server'
 __url_pypi__ = 'https://pypi.org/project/goto-http-redirect-server/'
