@@ -25,6 +25,7 @@ variables:
   GOTO_PATH_DIST: $(Build.SourcesDirectory)/dist
   GOTO_PATH_TOOLS: $(Build.SourcesDirectory)/tools
   GOTO_PATH_TOOLS_CI: $(Build.SourcesDirectory)/tools/ci
+  GOTO_PATH_FLAKE8: $(GOTO_PATH_TOOLS)/flake8.sh
   GOTO_PATH_MYPY: $(GOTO_PATH_TOOLS)/mypy.sh
   GOTO_PATH_YAMLLINT: $(GOTO_PATH_TOOLS)/yamllint.sh
   GOTO_PATH_REALPATH: $(GOTO_PATH_TOOLS)/realpath.sh
@@ -62,9 +63,29 @@ stages:
                 python -m pip --version
                 python -m pip list --disable-pip-version-check --no-index -vvv
                 chmod -v +x "${GOTO_PATH_REALPATH}"  # test
-  - stage: stage_yamllint_mypy_pytest
-    displayName: 'stage: «yamllint mypy pytest»'
+  - stage: stage_flake8_yamllint_mypy_pytest
+    displayName: 'stage: «flake8 yamllint mypy pytest»'
     jobs:
+      - job: job_flake8
+        displayName: 'job: «flake8»'
+        pool:
+          vmImage: $(GOTO_VM_IMAGE)
+        steps:
+          - task: UsePythonVersion@0
+            displayName: 'task: «UsePythonVersion@0» Python $(GOTO_PY_VERSION)'
+            inputs:
+              versionSpec: $(GOTO_PY_VERSION)
+          - task: Bash@3
+            displayName: 'task: «Bash@3»'
+            inputs:
+              targetType: inline
+              script: |
+                set -eux
+                source "${GOTO_PATH_ADD_PIP_SITE}"
+                python -m pip install --user -e '.[development-flake8]'
+                python -m pip list --disable-pip-version-check --no-index -vvv
+                chmod -v +x "${GOTO_PATH_FLAKE8}"
+                "${GOTO_PATH_FLAKE8}"
       - job: job_yamllint
         displayName: 'job: «yamllint»'
         pool:

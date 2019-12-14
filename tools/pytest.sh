@@ -17,3 +17,4 @@ exec python \
             -c ./.config/pytest.ini \
             --cov-config=./.config/coverage.ini \
             . \
+            "${@}"

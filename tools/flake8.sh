@@ -13,4 +13,5 @@ exec \
     flake8 \
         --config=./.config/flake8.ini \
         goto_http_redirect_server/goto_http_redirect_server.py \
-        setup.py
+        setup.py \
+        "${@}"

@@ -47,7 +47,7 @@ ls -l \
     "${GOTO_FILE_REDIRECTS}" \
     "${GOTO_FILE_SCRIPT}" \
     "${GOTO_SYSTEMD_SH}" \
-    "${GOTO_CONFIG=}" \
+    "${GOTO_CONFIG}" \
     "${GOTO_FILE_SERVICE}"
 
 if [[ "${1:-}" == '--enable' ]]; then
