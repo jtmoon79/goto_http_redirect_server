@@ -181,7 +181,7 @@ def html_escape(s_: htmls_str) -> htmls:
 
 def html_a(href: str, text: str = '') -> htmls:
     """create HTML <a> from href URL"""
-    if not text:
+    if text is None:
         text = href
     return htmls('<a href="' + href + '">' + html_escape(text) + '</a>')
 
