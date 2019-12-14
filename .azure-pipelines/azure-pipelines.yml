@@ -268,7 +268,7 @@ stages:
                 chmod -v +x "${GOTO_PATH_READLINK}"
 
                 # update packages
-                python -m pip install --quiet --upgrade pip setuptools
+                #python -m pip install --quiet --upgrade pip setuptools
                 python -m pip list --disable-pip-version-check --no-index -vvv
 
                 # update PATH with potential pip install locations
@@ -305,7 +305,7 @@ stages:
                 Set-PSDebug -Trace 1
 
                 # update packages
-                & python -m pip install --quiet --upgrade pip setuptools
+                #& python -m pip install --quiet --upgrade pip setuptools
                 & python -m pip list --disable-pip-version-check --no-index -vvv
 
                 # update PATH with potential pip install locations
