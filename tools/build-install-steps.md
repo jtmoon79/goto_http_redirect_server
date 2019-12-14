@@ -2,7 +2,12 @@
 
 ### locally
 
-1. commit bump version `A.B.C`
+1. modify `__version__` string to `A.B.C`
+
+2. run `goto_http_redirect_server.py --help`<br />
+   update the top-level `README.md` with the latest `--help`
+
+3. commit bump version `A.B.C` and updated `--help`
 
        git add .
        git commit -m 'bump version A.B.C'
@@ -10,11 +15,11 @@
 
    - wait for CI to complete
 
-2. build release using `build-install` script.
+4. build release using `build-install` script.
 
-3. upload to pypi following `build-install` script instructions
+5. upload to pypi following `build-install` script instructions
 
-4. tagging
+6. tagging
 
    new tag `A.B.C`, reset tag `latest`
 
@@ -23,7 +28,7 @@
        git tag A.B.C
        git tag latest
 
-5. push tags
+7. push tags
 
        git push -v --tags 
 
