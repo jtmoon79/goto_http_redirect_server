@@ -367,7 +367,7 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
               status_code: http.HTTPStatus,
               status_path: str,
               reload_path: str_None,
-              note: htmls):
+              note_admin: htmls):
         """set class-wide attributes to new values"""
         cls.redirects = redirects
         cls.status_code = status_code
