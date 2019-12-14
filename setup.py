@@ -42,6 +42,19 @@ setup(
             'mypy',
             'pytest',
             'pytest-cov',
+            'pytest-timeout',
+            'yamllint',
+        ],
+        # parts of 'development' for faster `pip install` in CI
+        'development-mypy': [
+            'mypy',
+        ],
+        'development-pytest': [
+            'pytest',
+            'pytest-cov',
+            'pytest-timeout',
+        ],
+        'development-yamllint': [
             'yamllint',
         ],
         'readme': [

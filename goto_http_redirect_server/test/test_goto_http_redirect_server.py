@@ -7,14 +7,22 @@ __doc__ = \
     """Test the goto_http_redirect_server project using pytest."""
 
 from collections import defaultdict
+import threading
+import time
 from urllib.parse import ParseResult
 
 import pytest
 
 from goto_http_redirect_server.goto_http_redirect_server import (
     html_escape,
+    html_a,
     htmls,
+    print_debug,
     combine_parseresult,
+    redirect_handler_factory,
+    RedirectHandler,
+    RedirectServer,
+
 )
 
 # all committed test resources should be under this directory
@@ -37,38 +45,34 @@ def pr(**kwargs):
 class Test_Functions(object):
 
     @pytest.mark.parametrize(
-        's_,'
-        'expected',
+        's_, expected',
         (
-            pytest.param(
-                '',
-                htmls(''),
-            ),
-            pytest.param(
-                'A',
-                htmls('A'),
-            ),
-            pytest.param(
-                '&',
-                htmls('&amp;'),
-            ),
-            pytest.param(
-                '<>',
-                htmls('&lt;&gt;'),
-            ),
-            pytest.param(
-                'foo\nbar',
-                htmls('foo<br />\nbar'),
-            ),
+            pytest.param('', htmls(''),),
+            pytest.param('A', htmls('A'),),
+            pytest.param('&', htmls('&amp;'),),
+            pytest.param('<>', htmls('&lt;&gt;'),),
+            pytest.param('foo\nbar', htmls('foo<br />\nbar'),),
         )
     )
-    def test_html_escape(self,
-                         s_,
-                         expected):
+    def test_html_escape(self, s_, expected):
         actual = html_escape(s_)
         assert expected == actual
         assert type(expected) == type(actual)
 
+    @pytest.mark.parametrize(
+        'href, text, expected',
+        (
+            pytest.param('', None, '<a href=""></a>'),
+            pytest.param('', '', '<a href=""></a>'),
+            pytest.param('ABC', None, '<a href="ABC">ABC</a>'),
+            pytest.param('ABC', '', '<a href="ABC"></a>'),
+            pytest.param('ABC', '123', '<a href="ABC">123</a>'),
+            pytest.param('<>', '<>', '<a href="<>">&lt;&gt;</a>'),
+        )
+    )
+    def test_html_a(self, href, text, expected):
+        actual = html_a(href, text)
+        assert expected == actual
 
     @pytest.mark.parametrize(
         'pr1,'
@@ -201,3 +205,58 @@ class Test_Functions(object):
                                  expected: str):
         actual = combine_parseresult(pr1, pr2)
         assert expected == actual
+
+    @pytest.mark.parametrize(
+        'mesg, end',
+        (
+            pytest.param('', None),
+            pytest.param('', ''),
+            pytest.param('A', None),
+            pytest.param('B', ''),
+            pytest.param('C', '\n'),
+        )
+    )
+    def test_print_debug(self, mesg, end):
+        print_debug(mesg, end=end)
+
+    @pytest.mark.parametrize(
+        'href, text, expected',
+        (
+                pytest.param('', None, '<a href=""></a>'),
+                pytest.param('', '', '<a href=""></a>'),
+                pytest.param('ABC', None, '<a href="ABC">ABC</a>'),
+                pytest.param('ABC', '', '<a href="ABC"></a>'),
+                pytest.param('ABC', '123', '<a href="ABC">123</a>'),
+                pytest.param('<>', '<>', '<a href="<>">&lt;&gt;</a>'),
+        )
+    )
+    def test_html_a(self, href, text, expected):
+        actual = html_a(href, text)
+        assert expected == actual
+
+
+class Test_Classes(object):
+
+    ip = '127.0.0.2'
+    port = 42395
+    redirect_handler = RedirectHandler
+
+    def test_RedirectServer_server_activate(self):
+        with RedirectServer((self.ip, self.port),
+                            self.redirect_handler) as redirect_server:
+            redirect_server.server_activate()
+
+    @pytest.mark.timeout(4)
+    def test_RedirectServer_serve_forever(self):
+        def shutdown_server(redirect_server_):
+            time.sleep(2)
+            redirect_server_.shutdown()
+
+        with RedirectServer((self.ip, self.port),
+                            self.redirect_handler) as redirect_server:
+            st = threading.Thread(
+                name='pytest-shutdown_thread',
+                target=shutdown_server,
+                args=(redirect_server,))
+            st.start()
+            redirect_server.serve_forever(poll_interval=0.5)
