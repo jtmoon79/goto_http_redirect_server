@@ -94,7 +94,7 @@ PATH_FAVICON = '/favicon.ico'
 REDIRECT_PATHS_NOT_ALLOWED = (PATH_FAVICON,)
 # HTTP Status Code used for redirects (among several possible redirect codes)
 REDIRECT_CODE_DEFAULT = http.HTTPStatus.PERMANENT_REDIRECT
-Redirect_Code = REDIRECT_CODE_DEFAULT
+REDIRECT_CODE = REDIRECT_CODE_DEFAULT
 # urlparse-related things
 RE_URI_KEYWORDS = re.compile(r'\${(path|params|query|fragment)}')
 URI_KEYWORDS_REPL = ('path', 'params', 'query', 'fragment')
@@ -129,12 +129,12 @@ sys_args = []  # type: typing.List[str]
 Redirect_FromTo_List = []  # type: FromTo_List
 # global list of --redirects files
 Redirect_Files_List = []  # type: Path_List
-reload = False
+reload_do = False
 reload_datetime = datetime.datetime.now()  # set for mypy, will be set again
 redirect_counter = defaultdict(int)  # type: typing.DefaultDict[str, int]
-status_path = None
-reload_path = None
-note_admin = htmls('')
+STATUS_PATH = None
+RELOAD_PATH = None
+NOTE_ADMIN = htmls('')
 
 
 #
@@ -145,6 +145,7 @@ note_admin = htmls('')
 class StrDelay(object):
     """
     Delayed evaluation of object.__str__.
+
     Intended for logging messages that may not need to execute a passed function
     because the logging level may not be set.
     e.g.
@@ -340,351 +341,389 @@ def fromisoformat(dts: str) -> datetime.datetime:
     return dt
 
 
+class RedirectHandler(server.SimpleHTTPRequestHandler):
+    """
+    XXX: This class is passed to RedirectServer which creates instances of
+         RedirectHandler. But RedirectHandler instances need to access values
+         that may change and there is not way to have RedirectServer pass some
+         tuple of values to new instances. So RedirectHandler instances hold
+         references to class-wide values. Those are set in the
+         redirect_handler_factory.
+    """
+
+    Header_Server_Host = ('Redirect-Server-Host', HOSTNAME)
+    Header_Server_Version = ('Redirect-Server-Version', __version__)
+    __count = 0
+
+    redirects = None  # type: Re_Entry_Dict
+    status_code = None  # type: http.HTTPStatus
+    status_path = None  # type: str
+    reload_path = None  # type: str_None
+    note_admin = None  # type: htmls
+
+    @classmethod
+    def set_c(cls,
+              redirects: Re_Entry_Dict,
+              status_code: http.HTTPStatus,
+              status_path: str,
+              reload_path: str_None,
+              note: htmls):
+        """set class-wide attributes to new values"""
+        cls.redirects = redirects
+        cls.status_code = status_code
+        cls.status_path = status_path
+        cls.reload_path = reload_path
+        cls.note_admin = note_admin
+
+    def __init__(self, *args, **kwargs):
+        RedirectHandler.__count += 1
+        super().__init__(*args, **kwargs)
+        log.debug('RedirectHandler.__init__ %d (0x%08X)',
+                  RedirectHandler.__count, id(self))
+
+    def log_message(self, format_, *args, **kwargs):
+        """
+        override the RedirectHandler.log_message so RedirectHandler
+        instances use the module-level logging.Logger instance `log`
+        """
+        try:
+            prepend = str(self.client_address[0]) + ':' + \
+                       str(self.client_address[1]) + ' '
+            if 'loglevel' in kwargs and \
+               isinstance(kwargs['loglevel'], type(log.level)):
+                log.log(kwargs['loglevel'], prepend + format_, *args)
+                return
+            log.debug(prepend + format_, *args)
+        except Exception as ex:
+            print('Error during log_message\n%s' % str(ex), file=sys.stderr)
+
+    def _write_html_doc(self, html_doc: htmls) -> None:
+        """
+        Write out the HTML document and required headers.
+        This calls end_headers!
+        """
+        # From https://tools.ietf.org/html/rfc2616#section-14.13
+        #      The Content-Length entity-header field indicates the size of
+        #      the entity-body, in decimal number of OCTETs
+        # XXX: does this follow *all* Message Length rules?
+        #      https://tools.ietf.org/html/rfc2616#section-4.4
+        html_docb = bytes(html_doc,
+                          encoding='utf-8',
+                          errors='xmlcharrefreplace')
+        self.send_header('Content-Length', str(len(html_docb)))
+        self.end_headers()
+        self.wfile.write(html_docb)
+        return
+
+    def do_GET_status(self, note_admin: htmls) -> None:
+        """dump status information about this server instance"""
+
+        http_sc = http.HTTPStatus.OK  # HTTP Status Code
+        self.log_message('status requested, returning %s (%s)',
+                         int(http_sc), http_sc.phrase,
+                         loglevel=logging.INFO)
+        self.send_response(http_sc)
+        self.send_header(*self.Header_Server_Host)
+        self.send_header(*self.Header_Server_Version)
+        he = html_escape  # abbreviate
+
+        # create the html body
+        esc_title = he(
+            '%s status' % PROGRAM_NAME)
+        start_datetime = datetime.datetime.\
+            fromtimestamp(TIME_START).replace(microsecond=0)
+        uptime = time.time() - TIME_START
+        esc_overall = \
+            'Program {}'.format(
+                html_a(__url_project__, PROGRAM_NAME)
+            )
+        esc_overall += he(' version {}.\n'.format(__version__))
+        esc_overall += he(
+            'Process ID %s listening on %s:%s on host %s\n'
+            'Process start datetime %s (up time %s)\n'
+            'Successful Redirect Status Code is %s (%s)'
+            % (os.getpid(), self.server.server_address[0],
+               self.server.server_address[1], HOSTNAME,
+               start_datetime, datetime.timedelta(seconds=uptime),
+               int(self.status_code), self.status_code.phrase,)
+        )
+        esc_reload_datetime = he(reload_datetime.isoformat())
+
+        def obj_to_html(obj, sort_keys=False) -> htmls:
+            """Convert an object to html"""
+            return he(
+                json.dumps(obj, indent=2, ensure_ascii=False,
+                           sort_keys=sort_keys, default=str)
+                # pprint.pformat(obj)
+            )
+
+        def redirects_to_html(rd: Re_Entry_Dict) -> htmls:
+            """Convert Re_Entry_Dict linkable html"""
+            s_ = he('{\n')
+            for key in rd.keys():
+                val = rd[key]
+                s_ += he('  "') + html_a(key) + he('": [\n')  # type: ignore
+                s_ += he('    "') + html_a(val[0]) + he('",\n')  # type: ignore
+                s_ += he('    "%s",\n' % val[1]) # type: ignore
+                s_ += he('    "%s"\n' % val[2])  # type: ignore
+                s_ += he('  ]\n')  # type: ignore
+            s_ += he('\n}')  # type: ignore
+            return s_
+
+        esc_reload_info = he(
+            ' (process signal %d (%s))' % (SIGNAL_RELOAD, SIGNAL_RELOAD)
+        )
+        esc_redirects_counter = obj_to_html(redirect_counter)
+        esc_redirects = redirects_to_html(self.redirects)
+        esc_files = obj_to_html(Redirect_Files_List)
+        if note_admin:
+            note_admin = htmls('\n    <div>\n') + note_admin + htmls('\n    </div>\n')  # type: ignore
+        html_doc = htmls("""\
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>{esc_title}</title>
+</head>
+<body>
+<!-- begin status-page-file note -->{note}<!-- end status-page-file note -->
+<div>
+    <h3>Process Information:</h3>
+    <pre>
+{esc_overall}
+    </pre>
+</div>
+<div>
+    <h3>Redirects Counter:</h3>
+    Counting of successful redirect responses:
+    <pre>
+{esc_redirects_counter}
+    </pre>
+    <h3>Currently Loaded Redirects:</h3>
+    Last Reload Time {esc_reload_datetime}
+    <pre>
+{esc_redirects}
+    </pre>
+</div>
+<div>
+    <h3>Redirect Files Searched During an Reload{esc_reload_info}:</h3>
+    <pre>
+{esc_files}
+    </pre>
+</div>
+</body>
+</html>\
+"""
+            .format(esc_title=esc_title,
+                    esc_overall=esc_overall,
+                    note=note_admin,
+                    esc_redirects_counter=esc_redirects_counter,
+                    esc_reload_datetime=esc_reload_datetime,
+                    esc_redirects=esc_redirects,
+                    esc_reload_info=esc_reload_info,
+                    esc_files=esc_files)
+        )
+        self._write_html_doc(html_doc)
+        return
+
+    def do_GET_reload(self) -> None:
+        http_sc = http.HTTPStatus.ACCEPTED  # HTTP Status Code
+        self.log_message('reload requested, returning %s (%s)',
+                         int(http_sc), http_sc.phrase,
+                         loglevel=logging.INFO)
+        esc_datetime = html_escape(datetime.datetime.now().isoformat())
+        self.send_response(http_sc)
+        self.send_header(*self.Header_Server_Host)
+        self.send_header(*self.Header_Server_Version)
+        esc_title = html_escape('%s reload' % PROGRAM_NAME)
+        html_doc = htmls("""\
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>{esc_title}</title>
+</head>
+<body>
+Reload request accepted at {esc_datetime}.
+</body>
+</html>\
+"""
+            .format(esc_title=esc_title, esc_datetime=esc_datetime)
+        )
+        self._write_html_doc(html_doc)
+        global reload_do
+        reload_do = True
+        return
+
+    def do_GET_redirect_NOT_FOUND(self, path: str) -> None:
+        """a Redirect request was not found, return some HTML to the user"""
+
+        self.send_response(http.HTTPStatus.NOT_FOUND)
+        self.send_header(*self.Header_Server_Host)
+        self.send_header(*self.Header_Server_Version)
+        esc_title = html_escape("Not Found - '%s'" % path[:64])
+        esc_path = html_escape(path)
+        html_doc = htmls("""\
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>{esc_title}</title>
+</head>
+<body>
+Redirect Path not found: <code>{esc_path}</code>
+</body>
+</html>\
+"""
+        .format(esc_title=esc_title,
+                esc_path=esc_path)
+        )
+        self._write_html_doc(html_doc)
+        return
+
+    def do_HEAD_redirect_NOT_FOUND(self) -> None:
+        self.send_response(http.HTTPStatus.NOT_FOUND)
+        self.send_header(*self.Header_Server_Host)
+        self.send_header(*self.Header_Server_Version)
+        self.end_headers()
+        return
+
+    def do_HEAD_nothing(self) -> None:
+        self.send_response(http.HTTPStatus.FOUND)
+        self.send_header(*self.Header_Server_Host)
+        self.send_header(*self.Header_Server_Version)
+        self.end_headers()
+        return
+
+    def do_VERB_redirect(self,
+                         parseresult: parse.ParseResult,
+                         redirects_: Re_Entry_Dict) -> None:
+        """
+        handle the HTTP Redirect Request (the entire purpose of this
+        script).  Used for GET and HEAD requests.
+        HEAD requests must not have a body (among many other differences
+        in HEAD and GET behavior).
+        """
+
+        if parseresult.path not in redirects_.keys():
+            self.log_message(
+                'no redirect found for (%s), returning %s (%s)',
+                parseresult.path,
+                int(http.HTTPStatus.NOT_FOUND),
+                http.HTTPStatus.NOT_FOUND.phrase,
+                loglevel=logging.INFO)
+            cmd = self.command.upper()
+            if cmd == 'GET':
+                return self.do_GET_redirect_NOT_FOUND(parseresult.path)
+            elif cmd == 'HEAD':
+                return self.do_HEAD_redirect_NOT_FOUND()
+            else:
+                log.error('Unhandled command "%s"', cmd)
+                return
+
+        key = Re_EntryKey(Re_From(parseresult.path))
+        # merge RedirectEntry URI parts with incoming requested URI parts
+        to_parsed = parse.urlparse(redirects_[key][0])
+        to = combine_parseresult(to_parsed, parseresult)
+        user = redirects_[key][1]
+        dt = redirects_[key][2]
+
+        self.log_message('redirect found (%s) → (%s), returning %s (%s)',
+                         key, to,
+                         int(self.status_code), self.status_code.phrase,
+                         loglevel=logging.INFO)
+
+        self.send_response(self.status_code)
+        # The 'Location' Header is used by browsers for HTTP 30X Redirects
+        # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Location
+        self.send_header(*self.Header_Server_Host)
+        self.send_header(*self.Header_Server_Version)
+        # the most important statement in this program
+        self.send_header('Location', to)
+        try:
+            self.send_header('Redirect-Created-By', user)
+        except UnicodeEncodeError:
+            log.exception('header "Redirect-Created-By" set to fallback')
+            self.send_header('Redirect-Created-By', 'Error Encoding User')
+        self.send_header('Redirect-Created-Date', dt.isoformat())
+        # TODO: https://tools.ietf.org/html/rfc2616#section-10.3.2
+        #       the entity of the response SHOULD contain a short hypertext
+        #       note with a hyperlink to the new URI(s)
+        self.end_headers()
+        # Do Not Write HTTP Content
+        count_key = '(%s) → (%s)' % (parseresult.path, to)
+        redirect_counter[count_key] += 1
+        return
+
+    def _do_VERB_log(self):
+        """simple helper"""
+        print_debug('')
+        try:
+            self.log_message(
+                '\n  self: %s (0x%08X)\n  self.client_address: %s\n  '
+                'self.command: %s\n  self.path: "%s"\n  '
+                'self.headers:\n    %s',
+                type(self), id(self), self.client_address,
+                self.command, self.path,
+                str(self.headers).strip('\n').replace('\n', '\n    '),
+            )
+        except:
+            log.exception('Failed to log request')
+
+    def do_GET(self) -> None:
+        """invoked per HTTP GET Request"""
+        self._do_VERB_log()
+
+        parseresult = parse.urlparse(self.path)
+        if parseresult.path == self.status_path:
+            self.do_GET_status(self.note_admin)
+            return
+        elif parseresult.path == self.reload_path:
+            self.do_GET_reload()
+            return
+
+        self.do_VERB_redirect(parseresult, self.redirects)
+        return
+
+    def do_HEAD(self) -> None:
+        """invoked per HTTP HEAD Request"""
+        self._do_VERB_log()
+
+        parseresult = parse.urlparse(self.path)
+        if parseresult.path == self.status_path:
+            self.do_HEAD_nothing()
+            return
+        elif parseresult.path == self.reload_path:
+            self.do_HEAD_nothing()
+            return
+
+        self.do_VERB_redirect(parseresult, self.redirects)
+        return
+
+
 def redirect_handler_factory(redirects: Re_Entry_Dict,
                              status_code: http.HTTPStatus,
-                             status_path_: str,
-                             reload_path_: str_None,
-                             note_: htmls):
+                             status_path: str,
+                             reload_path: str_None,
+                             note_admin: htmls):
     """
     :param redirects: dictionary of from-to redirects for the server
     :param status_code: HTTPStatus instance to use for successful redirects
-    :param status_path_: server status page path
-    :param reload_path_: reload request path
-    :param note_: status page note HTML
+    :param status_path: server status page path
+    :param reload_path: reload request path
+    :param note_admin: status page note HTML
     :return: RedirectHandler type: request handler class type for
              RedirectServer.RequestHandlerClass
     """
 
     log.debug('using redirect dictionary (0x%08x) with %s entries:\n%s',
               id(redirects), len(redirects.keys()),
-              StrDelay(pprint.pformat, redirects, indent=2)
-    )
+              StrDelay(pprint.pformat, redirects, indent=2))
 
-    class RedirectHandler(server.SimpleHTTPRequestHandler):
+    rh = RedirectHandler
+    rh.set_c(redirects, status_code, status_path, reload_path, note_admin)
 
-        Header_Server_Host = ('Redirect-Server-Host', HOSTNAME)
-        Header_Server_Version = ('Redirect-Server-Version', __version__)
-
-        def log_message(self, format_, *args, **kwargs):
-            """
-            override the RedirectHandler.log_message so RedirectHandler
-            instances use the module-level logging.Logger instance `log`
-            """
-            try:
-                prepend = str(self.client_address[0]) + ':' + \
-                           str(self.client_address[1]) + ' '
-                if 'loglevel' in kwargs and \
-                   isinstance(kwargs['loglevel'], type(log.level)):
-                    log.log(kwargs['loglevel'], prepend + format_, *args)
-                    return
-                log.debug(prepend + format_, *args)
-            except Exception as ex:
-                print('Error during log_message\n%s' % str(ex), file=sys.stderr)
-
-        def _write_html_doc(self, html_doc: htmls) -> None:
-            """
-            Write out the HTML document and required headers.
-            This calls end_headers!
-            """
-            # From https://tools.ietf.org/html/rfc2616#section-14.13
-            #      The Content-Length entity-header field indicates the size of
-            #      the entity-body, in decimal number of OCTETs
-            # XXX: does this follow *all* Message Length rules?
-            #      https://tools.ietf.org/html/rfc2616#section-4.4
-            html_docb = bytes(html_doc,
-                              encoding='utf-8',
-                              errors='xmlcharrefreplace')
-            self.send_header('Content-Length', str(len(html_docb)))
-            self.end_headers()
-            self.wfile.write(html_docb)
-            return
-
-        def do_GET_status(self, note: htmls) -> None:
-            """dump status information about this server instance"""
-
-            http_sc = http.HTTPStatus.OK  # HTTP Status Code
-            self.log_message('status requested, returning %s (%s)',
-                             int(http_sc), http_sc.phrase,
-                             loglevel=logging.INFO)
-            self.send_response(http_sc)
-            self.send_header(*self.Header_Server_Host)
-            self.send_header(*self.Header_Server_Version)
-            he = html_escape  # abbreviate
-
-            # create the html body
-            esc_title = he(
-                '%s status' % PROGRAM_NAME)
-            start_datetime = datetime.datetime.\
-                fromtimestamp(TIME_START).replace(microsecond=0)
-            uptime = time.time() - TIME_START
-            esc_overall = \
-                'Program {}'.format(
-                    html_a(__url_project__, PROGRAM_NAME)
-                )
-            esc_overall += he(' version {}.\n'.format(__version__))
-            esc_overall += he(
-                'Process ID %s listening on %s:%s on host %s\n'
-                'Process start datetime %s (up time %s)\n'
-                'Successful Redirect Status Code is %s (%s)'
-                % (os.getpid(), self.server.server_address[0],
-                   self.server.server_address[1], HOSTNAME,
-                   start_datetime, datetime.timedelta(seconds=uptime),
-                   int(status_code), status_code.phrase,)
-            )
-            esc_reload_datetime = he(reload_datetime.isoformat())
-
-            def obj_to_html(obj, sort_keys=False) -> htmls:
-                """Convert an object to html"""
-                return he(
-                    json.dumps(obj, indent=2, ensure_ascii=False,
-                               sort_keys=sort_keys, default=str)
-                    # pprint.pformat(obj)
-                )
-
-            def redirects_to_html(rd: Re_Entry_Dict) -> htmls:
-                """Convert Re_Entry_Dict linkable html"""
-                s_ = he('{\n')
-                for key in rd.keys():
-                    val = rd[key]
-                    s_ += he('  "') + html_a(key) + he('": [\n')  # type: ignore
-                    s_ += he('    "') + html_a(val[0]) + he('",\n')  # type: ignore
-                    s_ += he('    "%s",\n' % val[1]) # type: ignore
-                    s_ += he('    "%s"\n' % val[2])  # type: ignore
-                    s_ += he('  ]\n')  # type: ignore
-                s_ += he('\n}')  # type: ignore
-                return s_
-
-            esc_reload_info = he(
-                ' (process signal %d (%s))' % (SIGNAL_RELOAD, SIGNAL_RELOAD)
-            )
-            esc_redirects_counter = obj_to_html(redirect_counter)
-            esc_redirects = redirects_to_html(redirects)
-            esc_files = obj_to_html(Redirect_Files_List)
-            if note:
-                note = htmls('\n    <div>\n') + note + htmls('\n    </div>\n')  # type: ignore
-            html_doc = htmls("""\
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-  <meta charset="utf-8"/>
-  <title>{esc_title}</title>
-  </head>
-  <body>
-<!-- begin status-page-file note -->{note}<!-- end status-page-file note -->
-    <div>
-        <h3>Process Information:</h3>
-        <pre>
-{esc_overall}
-        </pre>
-    </div>
-    <div>
-        <h3>Redirects Counter:</h3>
-        Counting of successful redirect responses:
-        <pre>
-{esc_redirects_counter}
-        </pre>
-        <h3>Currently Loaded Redirects:</h3>
-        Last Reload Time {esc_reload_datetime}
-        <pre>
-{esc_redirects}
-        </pre>
-    </div>
-    <div>
-        <h3>Redirect Files Searched During an Reload{esc_reload_info}:</h3>
-        <pre>
-{esc_files}
-        </pre>
-    </div>
-  </body>
-</html>\
-"""
-                .format(esc_title=esc_title,
-                        esc_overall=esc_overall,
-                        note=note,
-                        esc_redirects_counter=esc_redirects_counter,
-                        esc_reload_datetime=esc_reload_datetime,
-                        esc_redirects=esc_redirects,
-                        esc_reload_info=esc_reload_info,
-                        esc_files=esc_files)
-            )
-            self._write_html_doc(html_doc)
-            return
-
-        def do_GET_reload(self) -> None:
-            http_sc = http.HTTPStatus.ACCEPTED  # HTTP Status Code
-            self.log_message('reload requested, returning %s (%s)',
-                             int(http_sc), http_sc.phrase,
-                             loglevel=logging.INFO)
-            esc_datetime = html_escape(datetime.datetime.now().isoformat())
-            self.send_response(http_sc)
-            self.send_header(*self.Header_Server_Host)
-            self.send_header(*self.Header_Server_Version)
-            esc_title = html_escape('%s reload' % PROGRAM_NAME)
-            html_doc = htmls("""\
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-  <meta charset="utf-8"/>
-  <title>{esc_title}</title>
-  </head>
-  <body>
-    Reload request accepted at {esc_datetime}.
-  </body>
-</html>\
-"""
-                .format(esc_title=esc_title, esc_datetime=esc_datetime)
-            )
-            self._write_html_doc(html_doc)
-            global reload
-            reload = True
-            return
-
-        def do_GET_redirect_NOT_FOUND(self, path: str) -> None:
-            """a Redirect request was not found, return some HTML to the user"""
-
-            self.send_response(http.HTTPStatus.NOT_FOUND)
-            self.send_header(*self.Header_Server_Host)
-            self.send_header(*self.Header_Server_Version)
-            esc_title = html_escape("Not Found - '%s'" % path[:64])
-            esc_path = html_escape(path)
-            html_doc = htmls("""\
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-  <meta charset="utf-8"/>
-  <title>{esc_title}</title>
-  </head>
-  <body>
-    Redirect Path not found: <code>{esc_path}</code>
-  </body>
-</html>\
-"""
-            .format(esc_title=esc_title,
-                    esc_path=esc_path)
-            )
-            self._write_html_doc(html_doc)
-            return
-
-        def do_HEAD_redirect_NOT_FOUND(self) -> None:
-            self.send_response(http.HTTPStatus.NOT_FOUND)
-            self.send_header(*self.Header_Server_Host)
-            self.send_header(*self.Header_Server_Version)
-            self.end_headers()
-            return
-
-        def do_HEAD_nothing(self) -> None:
-            self.send_response(http.HTTPStatus.FOUND)
-            self.send_header(*self.Header_Server_Host)
-            self.send_header(*self.Header_Server_Version)
-            self.end_headers()
-            return
-
-        def do_VERB_redirect(self,
-                             parseresult: parse.ParseResult,
-                             redirects_: Re_Entry_Dict) -> None:
-            """
-            handle the HTTP Redirect Request (the entire purpose of this
-            script).  Used for GET and HEAD requests.
-            HEAD requests must not have a body (among many other differences
-            in HEAD and GET behavior).
-            """
-
-            if parseresult.path not in redirects_.keys():
-                self.log_message(
-                    'no redirect found for (%s), returning %s (%s)',
-                    parseresult.path,
-                    int(http.HTTPStatus.NOT_FOUND),
-                    http.HTTPStatus.NOT_FOUND.phrase,
-                    loglevel=logging.INFO)
-                cmd = self.command.upper()
-                if cmd == 'GET':
-                    return self.do_GET_redirect_NOT_FOUND(parseresult.path)
-                elif cmd == 'HEAD':
-                    return self.do_HEAD_redirect_NOT_FOUND()
-                else:
-                    log.error('Unhandled command "%s"', cmd)
-                    return
-
-            key = Re_EntryKey(Re_From(parseresult.path))
-            # merge RedirectEntry URI parts with incoming requested URI parts
-            to_parsed = parse.urlparse(redirects_[key][0])
-            to = combine_parseresult(to_parsed, parseresult)
-            user = redirects_[key][1]
-            dt = redirects_[key][2]
-
-            self.log_message('redirect found (%s) → (%s), returning %s (%s)',
-                             key, to,
-                             int(status_code), status_code.phrase,
-                             loglevel=logging.INFO)
-
-            self.send_response(status_code)
-            # The 'Location' Header is used by browsers for HTTP 30X Redirects
-            # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Location
-            self.send_header(*self.Header_Server_Host)
-            self.send_header(*self.Header_Server_Version)
-            # the most important statement in this program
-            self.send_header('Location', to)
-            try:
-                self.send_header('Redirect-Created-By', user)
-            except UnicodeEncodeError:
-                log.exception('header "Redirect-Created-By" set to fallback')
-                self.send_header('Redirect-Created-By', 'Error Encoding User')
-            self.send_header('Redirect-Created-Date', dt.isoformat())
-            # TODO: https://tools.ietf.org/html/rfc2616#section-10.3.2
-            #       the entity of the response SHOULD contain a short hypertext
-            #       note with a hyperlink to the new URI(s)
-            self.end_headers()
-            # Do Not Write HTTP Content
-            count_key = '(%s) → (%s)' % (parseresult.path, to)
-            redirect_counter[count_key] += 1
-            return
-
-        def _do_VERB_log(self):
-            """simple helper"""
-            print_debug('')
-            try:
-                self.log_message(
-                    'self: %s (0x%08X)\nself.client_address: %s\n'
-                    'self.command: %s\nself.path: "%s"\n'
-                    'self.headers:\n  %s',
-                    type(self), id(self), self.client_address,
-                    self.command, self.path,
-                    str(self.headers).strip('\n').replace('\n', '\n  '),
-                )
-            except:
-                log.exception('Failed to log request')
-
-        def do_GET(self) -> None:
-            """invoked per HTTP GET Request"""
-            self._do_VERB_log()
-
-            parseresult = parse.urlparse(self.path)
-            if parseresult.path == status_path_:
-                self.do_GET_status(note_)
-                return
-            elif parseresult.path == reload_path_:
-                self.do_GET_reload()
-                return
-
-            self.do_VERB_redirect(parseresult, redirects)
-            return
-
-        def do_HEAD(self) -> None:
-            """invoked per HTTP HEAD Request"""
-            self._do_VERB_log()
-
-            parseresult = parse.urlparse(self.path)
-            if parseresult.path == status_path_:
-                self.do_HEAD_nothing()
-                return
-            elif parseresult.path == reload_path_:
-                self.do_HEAD_nothing()
-                return
-
-            self.do_VERB_redirect(parseresult, redirects)
-            return
-
-    return RedirectHandler
+    return rh
 
 
 def load_redirects_fromto(from_to: FromTo_List) -> Re_Entry_Dict:
@@ -853,35 +892,34 @@ class RedirectServer(socketserver.ThreadingTCPServer):
               function or class instance
         """
 
-        #print_debug('.', end='')
         super(RedirectServer, self).service_actions()
 
-        global reload
-        if not reload:
+        global reload_do
+        if not reload_do:
             return
-        reload = False
+        reload_do = False
         global Redirect_FromTo_List
         global Redirect_Files_List
         entrys = load_redirects(Redirect_FromTo_List,
                                 Redirect_Files_List,
                                 self.field_delimiter)
-        global status_path
+        global STATUS_PATH
         global reload_datetime
-        global reload_path
-        global note_admin
+        global RELOAD_PATH
+        global NOTE_ADMIN
         # distracting to read microsecond, set to 0
         reload_datetime = datetime.datetime.now().replace(microsecond=0)
         redirect_handler = redirect_handler_factory(entrys,
-                                                    Redirect_Code,
-                                                    status_path,
-                                                    reload_path,
-                                                    note_admin)
+                                                    REDIRECT_CODE,
+                                                    STATUS_PATH,
+                                                    RELOAD_PATH,
+                                                    NOTE_ADMIN)
         pid = os.getpid()
         log.debug(
             "reload %s (0x%08x)\n"
             "new RequestHandlerClass (0x%08x) to replace old (0x%08x)\n"
             "PID %d",
-            reload, id(reload),
+            reload_do, id(reload_do),
             id(redirect_handler), id(self.RequestHandlerClass),
             pid
         )
@@ -892,15 +930,16 @@ class RedirectServer(socketserver.ThreadingTCPServer):
 def reload_signal_handler(signum, _) -> None:
     """
     Catch signal and set global reload (which is checked elsewhere)
+
     :param signum: signal number (int)
     :param _: Python frame (unused)
     :return: None
     """
-    global reload
+    global reload_do
     log.debug(
-        'reload_signal_handler: Signal Number %s, reload %s (0x%08x)',
-        signum, reload, id(reload))
-    reload = True
+        'reload_signal_handler: Signal Number %s, reload_do %s (0x%08x)',
+        signum, reload_do, id(reload_do))
+    reload_do = True
 
 
 def process_options() -> typing.Tuple[str,
@@ -1163,9 +1202,9 @@ def main() -> None:
         port, \
         log_debug, \
         log_filename, \
-        status_path_, \
-        reload_path_, \
-        redirect_code_, \
+        status_path, \
+        reload_path, \
+        redirect_code, \
         shutdown, \
         field_delimiter, \
         status_note_file, \
@@ -1197,26 +1236,26 @@ def main() -> None:
     if len(entry_list) < 1:
         log.warning('There are no redirect entries')
 
-    global status_path
-    status_path = status_path_
-    log.debug('status_path %s', status_path)
+    global STATUS_PATH
+    STATUS_PATH = status_path
+    log.debug('status_path (%s)', STATUS_PATH)
 
-    global reload_path
-    reload_path = reload_path_
-    log.debug('reload_path %s', reload_path)
+    global RELOAD_PATH
+    RELOAD_PATH = reload_path
+    log.debug('reload_path (%s)', RELOAD_PATH)
 
-    redirect_code = http.HTTPStatus(int(redirect_code_))
-    global Redirect_Code
-    Redirect_Code = redirect_code
-    log.debug('Successful Redirect Status Code is %s (%s)', int(redirect_code),
-              redirect_code.phrase)
+    redirect_code_ = http.HTTPStatus(int(redirect_code))
+    global REDIRECT_CODE
+    REDIRECT_CODE = redirect_code_
+    log.debug('Successful Redirect Status Code is %s (%s)', int(REDIRECT_CODE),
+              REDIRECT_CODE.phrase)
 
-    global note_admin
+    global NOTE_ADMIN
     if status_note_file:
         log.debug('reading --status-note-file (%s)', status_note_file)
         note_s = open(str(status_note_file)).read()
-        note_admin = htmls(note_s)
-        log.debug('read %d characters from --status-note-file', len(note_admin))
+        NOTE_ADMIN = htmls(note_s)
+        log.debug('read %d characters from --status-note-file', len(NOTE_ADMIN))
 
     # register the signal handler function
     log.debug('Register handler for signal %d (%s)',
@@ -1238,9 +1277,11 @@ def main() -> None:
         redirect_server_.shutdown()
 
     # create the first instance of the Redirect Handler
-    redirect_handler = redirect_handler_factory(entry_list, redirect_code,
-                                                status_path_, reload_path_,
-                                                note_admin)
+    redirect_handler = redirect_handler_factory(entry_list,
+                                                REDIRECT_CODE,
+                                                STATUS_PATH,
+                                                RELOAD_PATH,
+                                                NOTE_ADMIN)
     with RedirectServer((ip, port), redirect_handler) as redirect_server:
         serve_time = 'forever'
         if shutdown:
