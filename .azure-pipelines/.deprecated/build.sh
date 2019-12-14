@@ -12,6 +12,7 @@ set -u
 set -o pipefail
 
 readonly PACKAGE_NAME='goto_http_redirect_server'
+readonly REALPATH='./tools/realpath.sh'
 BUILD_ARTIFACTSTAGINGDIRECTORY=${BUILD_ARTIFACTSTAGINGDIRECTORY-/tmp}  # should be defined in Azure Pipeline
 
 # dump much information about the Azure Pipelines environment
@@ -35,18 +36,10 @@ python -m pip --version
 python -m twine --version
 python -m pip list -vvv
 
-# portable readlink
-function readlink_(){
-    echo -n "${1}" | python -B -c '\
-import os, sys
-input_ = sys.stdin.read()
-print(os.path.realpath(input_))'
-}
-
 # build
 version=$(python -B -c 'from goto_http_redirect_server import goto_http_redirect_server as gh;print(gh.__version__)')
 python setup.py -v bdist_wheel
-cv_whl=$(readlink_ "./dist/${PACKAGE_NAME}-${version}-py3-none-any.whl")
+cv_whl=$("${REALPATH}" "./dist/${PACKAGE_NAME}-${version}-py3-none-any.whl")
 python -m twine check "${cv_whl}"
 
 ls -la ./dist/  # REMOVE THIS

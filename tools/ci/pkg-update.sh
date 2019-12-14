@@ -7,29 +7,17 @@ set -e
 set -u
 
 if which apk 2>/dev/null 1>&2; then
-    (
-        set -x
-        apk update
-    )
-    exit
+    set -x
+    exec apk update "${@}"
 elif which yum 2>/dev/null 1>&2; then
-    (
-        set -x
-        yum update
-    )
-    exit
+    set -x
+    exec yum update "${@}"
 elif which apt 2>/dev/null 1>&2; then
-    (
-        set -x
-        apt update
-    )
-    exit
+    set -x
+    exec apt update "${@}"
 elif which zypper 2>/dev/null 1>&2; then
-    (
-        set -x
-        zypper update
-    )
-    exit
+    set -x
+    exec zypper update "${@}"
 fi
 
 echo "ERROR: cannot find a package manager to update." 1>&2

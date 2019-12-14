@@ -23,10 +23,11 @@ variables:
   GOTO_PACKAGE_NAME: goto_http_redirect_server
   GOTO_PATH_TEST: $(Build.SourcesDirectory)/goto_http_redirect_server/test
   GOTO_PATH_DIST: $(Build.SourcesDirectory)/dist
-  GOTO_PATH_MYPY_INIT: $(Build.SourcesDirectory)/.config/mypy.ini
+  GOTO_PATH_TOOLS: $(Build.SourcesDirectory)/tools
   GOTO_PATH_TOOLS_CI: $(Build.SourcesDirectory)/tools/ci
-  GOTO_PATH_YAMLLINT: $(GOTO_PATH_TOOLS_CI)/yamllint.sh
-  GOTO_PATH_READLINK: $(GOTO_PATH_TOOLS_CI)/readlink.sh
+  GOTO_PATH_MYPY: $(GOTO_PATH_TOOLS)/mypy.sh
+  GOTO_PATH_YAMLLINT: $(GOTO_PATH_TOOLS)/yamllint.sh
+  GOTO_PATH_REALPATH: $(GOTO_PATH_TOOLS)/realpath.sh
   GOTO_PATH_ADD_PIP_SITE: $(GOTO_PATH_TOOLS_CI)/PATH-add-pip-site.sh
   GOTO_PYTEST_REPORT: pytest-report.xml
   GOTO_PYTEST_COVERAGE_REPORT: pytest-cov-coverage.xml
@@ -60,7 +61,7 @@ stages:
                 python --version
                 python -m pip --version
                 python -m pip list --disable-pip-version-check --no-index -vvv
-                chmod -v +x "${GOTO_PATH_READLINK}"  # test
+                chmod -v +x "${GOTO_PATH_REALPATH}"  # test
   - stage: stage_yamllint_mypy_pytest
     displayName: 'stage: «yamllint mypy pytest»'
     jobs:
@@ -80,8 +81,7 @@ stages:
               script: |
                 set -eux
                 source "${GOTO_PATH_ADD_PIP_SITE}"
-                # TOOD: install yamllint using setup.py
-                python -m pip install --quiet --user yamllint
+                python -m pip install --user -e '.[development-yamllint]'
                 python -m pip list --disable-pip-version-check --no-index -vvv
                 chmod -v +x "${GOTO_PATH_YAMLLINT}"
                 "${GOTO_PATH_YAMLLINT}"
@@ -100,26 +100,33 @@ stages:
               targetType: inline
               script: |
                 set -eux
-                python -m pip install --quiet --user mypy
+                python -m pip install --user -e '.[development-mypy]'
                 python -m pip list --disable-pip-version-check --no-index -vvv
-                python -m mypy --config-file "${GOTO_PATH_MYPY_INIT}" "${GOTO_PATH_PROGRAM_PY}"
+                chmod -v +x -- "${GOTO_PATH_MYPY}"
+                "${GOTO_PATH_MYPY}"
       - job: job_pytest
         displayName: 'job: «pytest»'
+        strategy:
+          matrix:
+            Python35:
+              python.release: '3.5'
+            Python37:
+              python.release: $(GOTO_PY_VERSION)
         pool:
           vmImage: $(GOTO_VM_IMAGE)
         steps:
           - task: UsePythonVersion@0
-            displayName: 'task: «UsePythonVersion@0» Python $(GOTO_PY_VERSION)'
+            displayName: 'task: «UsePythonVersion@0» Python $(python.release)'
             inputs:
-              versionSpec: $(GOTO_PY_VERSION)
+              versionSpec: $(python.release)
           - task: Bash@3
-            displayName: 'task: «Bash@3»'
+            displayName: 'task: «Bash@3» Python $(python.release)'
             inputs:
               targetType: inline
               script: |
                 set -eux
-                # TODO: install via setup.py
-                python -m pip install --quiet --user pytest pytest-cov
+                python --version
+                python -m pip install --user -e '.[development-pytest]'
                 python -m pip list --disable-pip-version-check --no-index -vvv
                 chmod -v +x -- ./tools/pytest.sh
                 ./tools/pytest.sh
@@ -129,16 +136,19 @@ stages:
                 cp -av -- "${GOTO_PYTEST_COVERAGE_REPORT}" "${BUILD_ARTIFACTSTAGINGDIRECTORY}/"
           - task: PublishBuildArtifacts@1
             displayName: 'task: «PublishBuildArtifacts@1» $(GOTO_PYTEST_REPORT) "$(Build.ArtifactStagingDirectory)"'
+            condition: in(variables['python.release'], variables['GOTO_PY_VERSION'])
             inputs:
               pathtoPublish: '$(Build.ArtifactStagingDirectory)'
               artifactName: artifact_pytest_report
           - task: PublishTestResults@2
             displayName: 'task: «PublishTestResults@2» $(GOTO_PYTEST_REPORT)'
+            condition: in(variables['python.release'], variables['GOTO_PY_VERSION'])
             inputs:
               testResultsFiles: '**/$(GOTO_PYTEST_REPORT)'
               testRunTitle: 'pytest for build $(Build.BuildId) commit $(Build.SourceVersion)'
           - task: PublishCodeCoverageResults@1
             displayName: 'task: «PublishCodeCoverageResults@2» $(GOTO_PYTEST_COVERAGE_REPORT)'
+            condition: in(variables['python.release'], variables['GOTO_PY_VERSION'])
             inputs:
               codeCoverageTool: cobertura
               summaryFileLocation: '**/$(GOTO_PYTEST_COVERAGE_REPORT)'
@@ -170,8 +180,8 @@ stages:
                 # script settings
                 set -eux
                 # install build packages
-                # TODO: install wheel using setup.py
-                python -m pip install --quiet --user wheel twine
+                source "${GOTO_PATH_ADD_PIP_SITE}"
+                python -m pip install --quiet --user -e '.[build]'
                 python -m pip list --disable-pip-version-check --no-index -vvv
                 # do the build
                 python setup.py -v bdist_wheel
@@ -191,7 +201,7 @@ stages:
                 $ErrorActionPreference = "Stop"
                 Set-PSDebug -Trace 1
                 # install build packages
-                & python -m pip install --quiet --user wheel twine
+                & python -m pip install --quiet --user -e ".[build]"
                 & python -m pip list --disable-pip-version-check --no-index -vvv
                 # do the build
                 & python setup.py -v bdist_wheel
@@ -266,17 +276,17 @@ stages:
                 # script settings
                 set -eux
 
-                chmod -v +x "${GOTO_PATH_READLINK}"
+                chmod -v +x "${GOTO_PATH_REALPATH}"
 
                 # update packages
-                python -m pip install --quiet --upgrade pip setuptools
+                #python -m pip install --quiet --upgrade pip setuptools
                 python -m pip list --disable-pip-version-check --no-index -vvv
 
                 # update PATH with potential pip install locations
                 source "${GOTO_PATH_ADD_PIP_SITE}"
 
                 # install wheel package
-                cv_whl=$("${GOTO_PATH_READLINK}" "$(find "${BUILD_BINARIESDIRECTORY}" -name '*.whl' -print -quit)")
+                cv_whl=$("${GOTO_PATH_REALPATH}" "$(find "${BUILD_BINARIESDIRECTORY}" -name '*.whl' -print -quit)")
                 ls -l "${cv_whl}"
                 cd /tmp
                 python -m pip install --user --verbose "${cv_whl}"
@@ -287,7 +297,7 @@ stages:
 
                 # server test
                 cd -
-                SERVER_TEST=$("${GOTO_PATH_READLINK}" "./tools/ci/server-test.sh")
+                SERVER_TEST=$("${GOTO_PATH_REALPATH}" "./tools/ci/server-test.sh")
                 chmod -v +x "${SERVER_TEST}"
                 "${SERVER_TEST}"
 
@@ -306,7 +316,7 @@ stages:
                 Set-PSDebug -Trace 1
 
                 # update packages
-                & python -m pip install --quiet --upgrade pip setuptools
+                #& python -m pip install --quiet --upgrade pip setuptools
                 & python -m pip list --disable-pip-version-check --no-index -vvv
 
                 # update PATH with potential pip install locations
@@ -368,7 +378,7 @@ stages:
                 PORT1=80
                 sudo -- "${GOTO_PATH_TOOLS_CI}/authbind-install.sh" "${USERTEST}" ${PORT1}
                 
-                chmod -v +x "${GOTO_PATH_READLINK}"
+                chmod -v +x "${GOTO_PATH_REALPATH}"
 
                 # update PATH with potential pip install locations
                 source "${GOTO_PATH_ADD_PIP_SITE}"
@@ -381,7 +391,7 @@ stages:
                 sudo_python -m pip list --disable-pip-version-check --no-index -vvv
 
                 # install wheel package
-                cv_whl=$("${GOTO_PATH_READLINK}" "$(find "${BUILD_BINARIESDIRECTORY}" -name '*.whl' -print -quit)")
+                cv_whl=$("${GOTO_PATH_REALPATH}" "$(find "${BUILD_BINARIESDIRECTORY}" -name '*.whl' -print -quit)")
                 ls -l "${cv_whl}"
                 cd /tmp
                 sudo_python -m pip install --verbose "${cv_whl}"

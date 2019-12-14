@@ -12,8 +12,9 @@
 #
 # XXX: images circleci/…  require `sudo` for package updates
 #
-# TODO: break up "build, install, and run" jobs into pipeline dependencies
-#       of: 1. pytest 2. build, install 3. run test
+# TODO: break up "build, install, and run" jobs into pipeline dependencies of:
+#       1. pytest 2. build, install 3. run test
+#       similar to Azure delineation.
 ---
 version: 2.1
 jobs:

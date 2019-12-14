@@ -35,6 +35,7 @@ setup(
     long_description_content_type='text/markdown',
     long_description=long_description,
     license='Apache License 2.0 (Apache-2.0)',
+    license_file='LICENSE',
     install_requires=[],
     setup_requires=['wheel'],
     extras_require={
@@ -42,7 +43,26 @@ setup(
             'mypy',
             'pytest',
             'pytest-cov',
+            'pytest-timeout',
             'yamllint',
+        ],
+        # parts of 'development' for faster `pip install` in CI
+        'development-mypy': [
+            'mypy',
+        ],
+        'development-pytest': [
+            'pytest',
+            'pytest-cov',
+            'pytest-timeout',
+        ],
+        'development-yamllint': [
+            'yamllint',
+        ],
+        'build': [
+            'pip',
+            'setuptools',
+            'twine',
+            'wheel',
         ],
         'readme': [
             'md_toc',

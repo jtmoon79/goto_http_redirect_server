@@ -1,7 +1,5 @@
 Files for adding the _"Go To" HTTP Redirect Server_ as a Linux systemd service.
 
-_Tested on Debian Linux 9. MMV._
-
 ----
 
 <!-- python -m md_toc README.md github -->
@@ -75,3 +73,7 @@ Setup the low privilege port for user `nobody`:
      chmod 0500 /etc/authbind/byport/80
      chgrp nogroup /etc/authbind/byport/80
      chown nobody /etc/authbind/byport/80
+
+## Notes
+
+Tested on multiple platforms in [Azure Pipelines](../.azure-pipelines/azure-pipelines.yml).
