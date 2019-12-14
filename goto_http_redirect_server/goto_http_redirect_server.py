@@ -876,7 +876,7 @@ class RedirectServer(socketserver.ThreadingTCPServer):
     def shutdown(self):
         """helper to allow others to know when shutdown was called"""
         self._shutdown = True
-        return super(socketserver.TCPServer, self).shutdown()
+        return super(socketserver.ThreadingTCPServer, self).shutdown()
 
     def service_actions(self):
         """
