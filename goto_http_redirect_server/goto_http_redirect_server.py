@@ -70,8 +70,8 @@ Path_List = typing.List[pathlib.Path]
 FromTo_List = typing.List[typing.Tuple[str, str]]
 Redirect_Counter = typing.DefaultDict[str, int]
 Redirect_Code_Value = typing.NewType('Redirect_Code_Value', int)
-str_None = typing.Union[str, None]
-Path_None = typing.Union[pathlib.Path, None]
+str_None = typing.Optional[str]
+Path_None = typing.Optional[pathlib.Path]
 htmls = typing.NewType('htmls', str)  # HTML String
 htmls_str = typing.Union[htmls, str]
 
