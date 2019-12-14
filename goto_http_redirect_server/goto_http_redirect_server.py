@@ -163,8 +163,6 @@ class StrDelay(object):
         self._kwargs = kwargs
 
     def __str__(self) -> str:
-        #print('%s.__str__ of instance 0x%08X' %
-        # (self.__class__.__name__, id(self)))
         out = ''
         if self._func:
             out = str(self._func(*self._args, **self._kwargs))
