@@ -37,10 +37,11 @@ A reminder of end-to-end steps for creating a new release.
 ### github.com
 
 1. From _Tags_ page, for `A.B.C` click `...`, select _Create release_.
-2. _Release title_ `A.B.C`
+2. _Release title_ `A.B.C`.
 3. drag+drop `projct/dist/goto_http_redirect_server-A.B.C-py3-none-any.whl` in
    _Attach binaries_.
-4. click _Publish release_
+4. add pypi URL with version in _Write_ area.
+4. click _Publish release_.
 
 ## update local server
 
