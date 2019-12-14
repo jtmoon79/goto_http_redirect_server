@@ -39,3 +39,28 @@
 3. drag+drop `projct/dist/goto_http_redirect_server-A.B.C-py3-none-any.whl` in
    _Attach binaries_.
 4. click _Publish release_
+
+## update local server
+
+On server running `goto_http_redirect_server`
+
+1. pip upgrade
+   ```
+   pip install --upgrade goto-http-redirect-server
+   ```
+
+2. restart service
+   ```
+   systemctl restart goto_http_redirect_server.service
+   ```
+
+3. check status
+   ```
+   systemctl status goto_http_redirect_server.service
+   journalctl -u goto_http_redirect_server.service
+   cat /var/log/goto_http_redirect_server.log
+   ```
+   Sometimes the tcp socket remains open and prevents new instances. Close all
+   browser windows viewing `--status-path`.
+
+4. web browser to `--status-path` locally
