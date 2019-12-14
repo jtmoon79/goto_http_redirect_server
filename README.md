@@ -3,6 +3,7 @@
 
 [![CircleCI Build Status](https://circleci.com/gh/jtmoon79/goto_http_redirect_server.svg?style=svg)](https://circleci.com/gh/jtmoon79/goto_http_redirect_server)
 [![Azure Build Status](https://dev.azure.com/jtmmoon/goto_http_redirect_server/_apis/build/status/jtmoon79.goto_http_redirect_server?branchName=master)](https://dev.azure.com/jtmmoon/goto_http_redirect_server/_build/latest?definitionId=1&branchName=master)
+<!--[![pytest-cov Code Coverage](https://img.shields.io/azure-devops/coverage/jtmmoon/goto_http_redirect_server/25)](https://img.shields.io/azure-devops/coverage/jtmmoon/goto_http_redirect_server/25)-->
 [![Requirements Status](https://requires.io/github/jtmoon79/goto_http_redirect_server/requirements.svg?branch=master)](https://requires.io/github/jtmoon79/goto_http_redirect_server/requirements/?branch=master)
 [![PyPI version](https://badge.fury.io/py/goto-http-redirect-server.svg)](https://badge.fury.io/py/goto-http-redirect-server)
 [![Commits since](https://img.shields.io/github/commits-since/jtmoon79/goto_http_redirect_server/latest.svg)](https://img.shields.io/github/commits-since/jtmoon79/goto_http_redirect_server/latest.svg)
@@ -179,7 +180,10 @@ No service downtime!
                                      [--shutdown SHUTDOWN] [--log LOG] [--debug]
                                      [--version] [-?]
 
-    The "Go To" HTTP Redirect Server! For sharing custom shortened HTTP URLs on your network.
+    The "Go To" HTTP Redirect Server for sharing dynamic shortcut URLs on your network.
+
+    Modules used are available within the standard CPython distribution.
+    Written for Python 3.7 but hacked to run with at least Python 3.5.2.
 
     HTTP 308 Permanent Redirect reply server. Load this server with redirects of "from path" and
     "to URL" and let it run indefinitely. Reload the running server by signaling the
@@ -233,7 +237,7 @@ No service downtime!
                             sys.stderr.
       --debug               Set logging level to DEBUG. Default logging level is
                             INFO.
-      --version             Print "goto_http_redirect_server 0.7.3" and exit.
+      --version             Print "goto_http_redirect_server 0.7.6" and exit.
       -?, -h, --help        Print this help message and exit.
 
     About Redirect Entries:
@@ -272,7 +276,7 @@ No service downtime!
 
         http://bug-tracker.mycorp.local/view.cgi?id=123
 
-    Redirect Entry Template Syntax:
+    Redirect Entry Template Syntax ("dynamic" URLs):
 
       Special substrings with Python string.Template syntax may be set in the
       redirect entry "To" field.
@@ -320,7 +324,7 @@ No service downtime!
       Options --status-path and --reload-path may be passed paths to obscure access
       from unauthorized users. e.g.
 
-          --status-path '/8927b6f0-dcef-4b9b-af89-b96d4b24c443'
+          --status-path '/059108f1-3fcf-40e7-9e78-e2f07324937f'
 
 ----
 
