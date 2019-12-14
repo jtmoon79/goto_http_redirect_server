@@ -40,6 +40,7 @@ setup(
     setup_requires=['wheel'],
     extras_require={
         'development': [
+            'flake8',
             'mypy',
             'pytest',
             'pytest-cov',
@@ -47,6 +48,9 @@ setup(
             'yamllint',
         ],
         # parts of 'development' for faster `pip install` in CI
+        'development-flake8': [
+            'flake8',
+        ],
         'development-mypy': [
             'mypy',
         ],
