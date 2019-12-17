@@ -60,6 +60,15 @@ This file is described in the top-level [README.md](./../README.md).
 
     systemctl status goto_http_redirect_server.service
 
+### OS-Specific
+
+#### CentOS
+
+Allow access through the CentOS firewall.
+
+    firewall-cmd --permanent --add-service=http
+    firewall-cmd --reload
+
 ### (optional) Harden the Process with authbind and Low Privilege User
 
 The wrapper-script `goto_http_redirect_server.sh` accepts options to run
