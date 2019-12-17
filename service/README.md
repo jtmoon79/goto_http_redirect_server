@@ -78,10 +78,10 @@ Using a package manager, install `authbind`.
 
 Setup the low privilege port for user `nobody`:
 
-     touch /etc/authbind/byport/80
-     chmod 0500 /etc/authbind/byport/80
-     chgrp nogroup /etc/authbind/byport/80
-     chown nobody /etc/authbind/byport/80
+    touch /etc/authbind/byport/80
+    chmod 0500 /etc/authbind/byport/80
+    chgrp nogroup /etc/authbind/byport/80
+    chown nobody /etc/authbind/byport/80
 
 ## Notes
 
