@@ -11,7 +11,13 @@
 set -u
 set -e
 
-# if available, load configuration file
+# set default GOTO_ARGV in case it is not set by $GOTO_CONF file
+declare -a GOTO_ARGV=(
+    '--redirects' '/usr/local/share/goto_http_redirect_server.csv'
+    '--log' '/tmp/goto_http_redirect_server.log'
+)
+
+# if available, load configuration file, should overwrite GOTO_ARGV
 GOTO_CONF=${GOTO_CONF-/etc/goto_http_redirect_server.conf}
 if [ -f "${GOTO_CONF}" ]; then
     source "${GOTO_CONF}"
@@ -80,8 +86,6 @@ else
     GOTO_ARGV+=("${@}")
 fi
 GOTO_FILE_SCRIPT=${GOTO_FILE_SCRIPT:-/usr/local/bin/goto_http_redirect_server}
-GOTO_FILE_REDIRECTS=${GOTO_FILE_REDIRECTS:-/usr/local/share/goto_http_redirect_server.csv}
-GOTO_FILE_LOG=${GOTO_FILE_LOG-/var/log/goto_http_redirect_server.log}
 
 set -x
 exec \
@@ -89,6 +93,4 @@ exec \
         ${sudoas} \
             ${authbind} \
                 ${GOTO_FILE_SCRIPT} \
-                    --redirects "${GOTO_FILE_REDIRECTS}" \
-                    --log "${GOTO_FILE_LOG}" \
                     "${GOTO_ARGV[@]}"
