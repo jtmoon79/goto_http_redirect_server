@@ -2,9 +2,6 @@
 #
 # for CircleCI job build_install_run
 #
-# XXX: nearly identical to .azure-pipelines/build-install-run.sh
-# XXX: very similar to tools/build-install.sh
-#
 # TODO: break this up into jobs for Circle CI Pipeline
 # $PWD is presumed to be at project root directory
 
@@ -30,6 +27,8 @@ python --version
 pip --version
 pip list -vvv
 
+# setup scripts
+# BUG: set git file mode instead
 chmod -v +x -- "${REALPATH}" "${MYPY}"
 SERVER_TEST=$("${REALPATH}" './tools/ci/server-test.sh')
 PY_TEST=$("${REALPATH}" './tools/pytest.sh')
@@ -53,14 +52,20 @@ version=$(python -B -c 'from goto_http_redirect_server import goto_http_redirect
 python setup.py -v bdist_wheel
 cv_whl=$("${REALPATH}" "./dist/${PACKAGE_NAME}-${version}-py3-none-any.whl")
 python -m twine check "${cv_whl}"
+
 cd ..  # move out of project directory so pip install behaves correctly
+
 # install
 python -m pip install --user --verbose "${cv_whl}"
+
 # run
 "${PROGRAM_NAME}" --version
+
 # pytest test
 "${PY_TEST}"
+
 # server test
 "${SERVER_TEST}"
+
 # uninstall
 python -m pip uninstall --yes --verbose "${PACKAGE_NAME}"
