@@ -454,15 +454,13 @@ stages:
                 PORT2=8083
                 sudo -- chmod -v 0666 "${GOTO_FILE_LOG}"  # allow writing by $USERTEST
                 echo "
-                GOTO_NICE_ENABLE=true
                 GOTO_AUTHBIND_ENABLE=true
                 GOTO_SUDOAS_ENABLE=true
                 GOTO_SUDOAS_USER=${USERTEST}
                 GOTO_NICE_ENABLE=true
                 GOTO_NICE_LEVEL=-10
-                GOTO_FILE_REDIRECTS='${GOTO_FILE_REDIRECTS}'
-                GOTO_FILE_LOG='${GOTO_FILE_LOG}'
                 declare -ag GOTO_ARGV=(
+                    '--redirects' '${GOTO_FILE_REDIRECTS}'
                     '--ip' '${GOTO_LISTEN_IP}'
                     '--port' '${PORT2}'
                     '--status-path' '/status'
@@ -472,7 +470,7 @@ stages:
                 " | sudo -- tee "${GOTO_CONFIG}"
                 sudo -- cat "${GOTO_CONFIG}"  # note contents in debug log
 
-                # use a different port because linux tends to hold the TCP port
+                # use a different port because sometimes the TCP port is held
                 # open long after the process has exited.
                 URL="http://${GOTO_LISTEN_IP}:${PORT2}"
                 sudo -- "${GOTO_PATH_TOOLS_CI}/authbind-install.sh" "${USERTEST}" ${PORT2}
