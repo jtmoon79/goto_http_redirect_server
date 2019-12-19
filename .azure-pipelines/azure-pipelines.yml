@@ -398,7 +398,7 @@ stages:
                 chmod -vR +x "${GOTO_PATH_TOOLS_CI}"
                 PORT1=80
                 sudo -- "${GOTO_PATH_TOOLS_CI}/authbind-install.sh" "${USERTEST}" ${PORT1}
-                
+
                 chmod -v +x "${GOTO_PATH_REALPATH}"
 
                 # update PATH with potential pip install locations
