@@ -38,6 +38,19 @@ from goto_http_redirect_server.goto_http_redirect_server import (
 GOTO_FILE_REDIRECTS = '/usr/local/share/goto_http_redirect_server.csv'
 GOTO_CONFIG = '/etc/goto_http_redirect_server.conf'
 _HERED = os.path.abspath(os.path.dirname(__file__))
+GOTO_SERVICE_FILES = [os.path.join(_HERED, 'service', file_) for
+                        file_ in (
+                           'goto_http_redirect_server.conf',
+                           'goto_http_redirect_server.service',
+                           'goto_http_redirect_server.sh',
+                           'service-install.sh',
+                           'service-uninstall.sh',
+                        )
+                      ]
+PACKAGE_DATA = GOTO_SERVICE_FILES + [
+    os.path.join(_HERED, 'setup.py'),
+    os.path.join(_HERED, 'README.md'),
+]
 
 
 class GotoSetupCommand(Command, abc.ABC):
@@ -101,8 +114,7 @@ class systemd_install(GotoSetupCommand):
     """
 
     script = os.path.join(_HERED,
-                          'tools',
-                          'ci',
+                          'service',
                           'service-install.sh')
 
     description = 'install systemd service files for' + \
@@ -138,8 +150,7 @@ class systemd_uninstall(GotoSetupCommand):
     """
 
     script = os.path.join(_HERED,
-                          'tools',
-                          'ci',
+                          'service',
                           'service-uninstall.sh')
 
     description = 'uninstall systemd service files for' + \
@@ -248,4 +259,8 @@ setup(
         'systemd_install': systemd_install,
         'systemd_uninstall': systemd_uninstall,
     },
+    package_data={
+        'goto_http_redirect_server': PACKAGE_DATA,
+    },
+    include_package_data=True,
 )

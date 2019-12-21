@@ -4,16 +4,44 @@ Files for adding the _"Go To" HTTP Redirect Server_ as a Linux systemd service.
 
 <!-- python -m md_toc README.md github -->
 
-- [Install Instructions](#install-instructions)
+- [`setuptools` Install Instrucions](#setuptools-install-instrucions)
+- [Manual Install Instructions](#manual-install-instructions)
   - [Create HTTP Redirects File](#create-http-redirects-file)
   - [Install Files](#install-files)
   - [Enable and Start systemd Service](#enable-and-start-systemd-service)
   - [Check systemd Service](#check-systemd-service)
+  - [OS-Specific](#os-specific)
   - [(optional) Harden the Process with authbind and Low Privilege User](#optional-harden-the-process-with-authbind-and-low-privilege-user)
+- [Notes](#notes)
 
 ----
 
-## Install Instructions
+## `setuptools` Install Instructions
+
+As `root` user, replace `*`
+
+1. unpack the wheel package
+
+       python -m wheel unpack goto_http_redirect_server-*-py3-none-any.whl
+
+2. make installer scripts executable
+
+       chmod -Rv  +x goto_http_redirect_server-*/service/
+
+3. run `systemd_install` command
+
+       python ./goto_http_redirect_server-*/setup.py systemd_install
+
+   There are options for the `systemd_install` command. Pass `--help`.
+
+4. if needed it can be uninstall.<br />
+   Run `systemd_uninstall` command
+
+       python ./goto_http_redirect_server-*/setup.py systemd_uninstall
+
+   There are options for the `systemd_uninstall` command. Pass `--help`.
+
+## Manual Install Instructions
 
 As `root` user,
 
