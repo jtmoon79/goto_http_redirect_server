@@ -38,15 +38,15 @@ from goto_http_redirect_server.goto_http_redirect_server import (
 GOTO_FILE_REDIRECTS = '/usr/local/share/goto_http_redirect_server.csv'
 GOTO_CONFIG = '/etc/goto_http_redirect_server.conf'
 _HERED = os.path.abspath(os.path.dirname(__file__))
-GOTO_SERVICE_FILES = [os.path.join(_HERED, 'service', file_) for
-                        file_ in (
-                           'goto_http_redirect_server.conf',
-                           'goto_http_redirect_server.service',
-                           'goto_http_redirect_server.sh',
-                           'service-install.sh',
-                           'service-uninstall.sh',
-                        )
-                      ]
+GOTO_SERVICE_FILES = [
+    os.path.join(_HERED, 'service', file_) for file_ in (
+        'goto_http_redirect_server.conf',
+        'goto_http_redirect_server.service',
+        'goto_http_redirect_server.sh',
+        'service-install.sh',
+        'service-uninstall.sh',
+    )
+]
 PACKAGE_DATA = GOTO_SERVICE_FILES + [
     os.path.join(_HERED, 'setup.py'),
     os.path.join(_HERED, 'README.md'),
