@@ -30,7 +30,7 @@ import uuid
 
 
 # canonical module informations used by setup.py
-__version__ = '0.7.7'
+__version__ = '0.7.8'
 __author__ = 'jtmoon79'
 __url_github__ = 'https://github.com/jtmoon79/goto_http_redirect_server'
 __url_azure__ = 'https://dev.azure.com/jtmmoon/goto_http_redirect_server'
