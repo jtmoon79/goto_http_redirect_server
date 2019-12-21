@@ -32,11 +32,13 @@ import uuid
 # canonical module informations used by setup.py
 __version__ = '0.7.7'
 __author__ = 'jtmoon79'
-__url_project__ = 'https://github.com/jtmoon79/goto_http_redirect_server'
+__url_github__ = 'https://github.com/jtmoon79/goto_http_redirect_server'
+__url_azure__ = 'https://dev.azure.com/jtmmoon/goto_http_redirect_server'
+__url_circleci__ = 'https://circleci.com/gh/jtmoon79/goto_http_redirect_server'
 __url_pypi__ = 'https://pypi.org/project/goto-http-redirect-server/'
 __url_issues__ = 'https://github.com/jtmoon79/goto_http_redirect_server/issues'
 # first line of __doc__ is used in setup.py. Should match README.md and title at
-# github.com project site.
+# github.com project site and Azure project site.
 __doc__ = """\
 The "Go To" HTTP Redirect Server for sharing dynamic shortcut URLs on your \
 network.
@@ -433,7 +435,7 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
         uptime = time.time() - TIME_START
         esc_overall = \
             'Program {}'.format(
-                html_a(__url_project__, PROGRAM_NAME)
+                html_a(__url_github__, PROGRAM_NAME)
             )
         esc_overall += he(' version {}.\n'.format(__version__))
         esc_overall += he(
