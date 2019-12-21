@@ -63,7 +63,7 @@ stages:
                 python --version
                 python -m pip --version
                 python -m pip list --disable-pip-version-check --no-index -vvv
-                chmod -v +x "${GOTO_PATH_REALPATH}"  # test
+                chmod -v +x -- "${GOTO_PATH_REALPATH}"  # test
   - stage: stage_flake8_yamllint_mypy_pytest
     displayName: 'stage: «flake8 yamllint mypy pytest»'
     jobs:
@@ -85,7 +85,7 @@ stages:
                 source "${GOTO_PATH_ADD_PIP_SITE}"
                 python -m pip install --user -e '.[development-flake8]'
                 python -m pip list --disable-pip-version-check --no-index -vvv
-                chmod -v +x "${GOTO_PATH_FLAKE8}"
+                chmod -v +x -- "${GOTO_PATH_FLAKE8}"
                 "${GOTO_PATH_FLAKE8}"
       - job: job_yamllint
         displayName: 'job: «yamllint»'
@@ -105,7 +105,7 @@ stages:
                 source "${GOTO_PATH_ADD_PIP_SITE}"
                 python -m pip install --user -e '.[development-yamllint]'
                 python -m pip list --disable-pip-version-check --no-index -vvv
-                chmod -v +x "${GOTO_PATH_YAMLLINT}"
+                chmod -v +x -- "${GOTO_PATH_YAMLLINT}"
                 "${GOTO_PATH_YAMLLINT}"
       - job: job_mypy
         displayName: 'job: «mypy»'
@@ -298,7 +298,7 @@ stages:
                 # script settings
                 set -eux
 
-                chmod -v +x "${GOTO_PATH_REALPATH}"
+                chmod -v +x -- "${GOTO_PATH_REALPATH}"
 
                 # update packages
                 #python -m pip install --quiet --upgrade pip setuptools
@@ -320,7 +320,7 @@ stages:
                 # server test
                 cd -
                 SERVER_TEST=$("${GOTO_PATH_REALPATH}" "./tools/ci/server-test.sh")
-                chmod -v +x "${SERVER_TEST}"
+                chmod -v +x -- "${SERVER_TEST}"
                 "${SERVER_TEST}"
 
                 # uninstall
@@ -396,11 +396,11 @@ stages:
                 id -u "${USERTEST}" &>/dev/null
 
                 # install authbind
-                chmod -vR +x "${GOTO_PATH_TOOLS_CI}"
+                chmod -vR +x -- "${GOTO_PATH_TOOLS_CI}"
                 PORT1=80
                 sudo -- "${GOTO_PATH_TOOLS_CI}/authbind-install.sh" "${USERTEST}" ${PORT1}
 
-                chmod -v +x "${GOTO_PATH_REALPATH}"
+                chmod -v +x -- "${GOTO_PATH_REALPATH}"
 
                 # update PATH with potential pip install locations
                 source "${GOTO_PATH_ADD_PIP_SITE}"
@@ -431,6 +431,7 @@ stages:
                 # TODO: service-install.sh, use `python setup.py systemd_install`
 
                 # install service files
+                chmod -vR +x -- "${GOTO_PATH_SERVICE}"
                 sudo -- "${GOTO_PATH_SERVICE}/service-install.sh" --enable
                 sudo -- systemctl list-dependencies "${GOTO_SERVICE}"
 
@@ -455,7 +456,7 @@ stages:
                 #
                 GOTO_LISTEN_IP=127.0.0.2
                 PORT2=8083
-                sudo -- chmod -v 0666 "${GOTO_FILE_LOG}"  # allow writing by $USERTEST
+                sudo -- chmod -v 0666 -- "${GOTO_FILE_LOG}"  # allow writing by $USERTEST
                 echo "
                 GOTO_AUTHBIND_ENABLE=true
                 GOTO_SUDOAS_ENABLE=true
