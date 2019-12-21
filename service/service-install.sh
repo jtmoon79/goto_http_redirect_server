@@ -66,7 +66,7 @@ if ${start} && ! ${enable}; then
     echo "Warning: --start without --enable will probably fail" >&2
 fi
 
-cd "$(dirname -- "${0}")/../.."
+cd "$(dirname -- "${0}")/.."
 
 # create redirects file
 touch "${GOTO_FILE_REDIRECTS}"

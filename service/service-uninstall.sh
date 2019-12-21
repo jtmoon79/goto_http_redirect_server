@@ -63,7 +63,7 @@ while true; do
     esac
 done
 
-cd "$(dirname -- "${0}")/../.."
+cd "$(dirname -- "${0}")/.."
 
 set +e            # no `set -e`; attempt to remove as much as possible
 declare -i ret=0  # but signal remove failures in script return code

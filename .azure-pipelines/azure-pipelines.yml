@@ -23,6 +23,7 @@ variables:
   GOTO_PACKAGE_NAME: goto_http_redirect_server
   GOTO_PATH_TEST: $(Build.SourcesDirectory)/goto_http_redirect_server/test
   GOTO_PATH_DIST: $(Build.SourcesDirectory)/dist
+  GOTO_PATH_SERVICE: $(Build.SourcesDirectory)/service
   GOTO_PATH_TOOLS: $(Build.SourcesDirectory)/tools
   GOTO_PATH_TOOLS_CI: $(Build.SourcesDirectory)/tools/ci
   GOTO_PATH_FLAKE8: $(GOTO_PATH_TOOLS)/flake8.sh
@@ -427,8 +428,10 @@ stages:
                 GOTO_SERVICE=goto_http_redirect_server.service
                 GOTO_LISTEN_IP=0.0.0.0
 
+                # TODO: service-install.sh, use `python setup.py systemd_install`
+
                 # install service files
-                sudo -- "${GOTO_PATH_TOOLS_CI}/service-install.sh" --enable
+                sudo -- "${GOTO_PATH_SERVICE}/service-install.sh" --enable
                 sudo -- systemctl list-dependencies "${GOTO_SERVICE}"
 
                 "${GOTO_FILE_SCRIPT}" --version  # check can run from new location
@@ -487,4 +490,6 @@ stages:
                 curl -v --fail --output /dev/null "${URL}/status"
 
                 sudo -- systemctl status "${GOTO_SERVICE}"
+
+                # TODO: use `python setup.py systemd_uninstall`
 ...
