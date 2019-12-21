@@ -32,7 +32,7 @@ A reminder of end-to-end steps for creating a new release.
 
 7. push tags
 
-       git push -v --tags 
+       git push -v --tags
 
 ### github.com
 
@@ -48,17 +48,17 @@ A reminder of end-to-end steps for creating a new release.
 On server running `goto_http_redirect_server`
 
 1. pip upgrade
-   ```
+   ```bash
    pip install --upgrade goto-http-redirect-server
    ```
 
 2. restart service
-   ```
+   ```bash
    systemctl restart goto_http_redirect_server.service
    ```
 
 3. check status
-   ```
+   ```bash
    systemctl status goto_http_redirect_server.service
    journalctl -u goto_http_redirect_server.service
    cat /var/log/goto_http_redirect_server.log
