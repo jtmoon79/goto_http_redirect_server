@@ -41,7 +41,7 @@ A reminder of end-to-end steps for creating a new release.
 3. drag+drop `projct/dist/goto_http_redirect_server-A.B.C-py3-none-any.whl` in
    _Attach binaries_.
 4. add pypi URL with version in _Write_ area.
-4. click _Publish release_.
+5. click _Publish release_.
 
 ## update local server
 
