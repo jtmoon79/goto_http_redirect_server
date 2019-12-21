@@ -26,7 +26,7 @@ As `root` user, replace `*`
 
 2. make installer scripts executable
 
-       chmod -Rv  +x goto_http_redirect_server-*/service/
+       chmod -Rv +x goto_http_redirect_server-*/service/
 
 3. run `systemd_install` command
 
@@ -34,7 +34,7 @@ As `root` user, replace `*`
 
    There are options for the `systemd_install` command. Pass `--help`.
 
-4. if needed it can be uninstall.<br />
+4. if needed it can be uninstalled.<br />
    Run `systemd_uninstall` command
 
        python ./goto_http_redirect_server-*/setup.py systemd_uninstall
