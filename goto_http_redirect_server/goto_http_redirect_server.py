@@ -25,6 +25,7 @@ import sys
 import threading
 import time
 import typing
+from typing import cast
 from urllib import parse
 import uuid
 
@@ -42,9 +43,6 @@ __url_issues__ = 'https://github.com/jtmoon79/goto_http_redirect_server/issues'
 __doc__ = """\
 The "Go To" HTTP Redirect Server for sharing dynamic shortcut URLs on your \
 network.
-
-Modules used are available within the standard CPython distribution.
-Written for Python 3.7 but hacked to run with at least Python 3.5.2.
 """
 
 
@@ -87,7 +85,8 @@ LISTEN_IP = '0.0.0.0'
 LISTEN_PORT = 80
 HOSTNAME = socket.gethostname()
 TIME_START = time.time()
-DATETIME_START = datetime.datetime.fromtimestamp(TIME_START)
+DATETIME_START = datetime.datetime.fromtimestamp(TIME_START).\
+    replace(microsecond=0)
 
 # RedirectServer class things
 SOCKET_LISTEN_BACKLOG = 30  # eventually passed to socket.listen
@@ -132,7 +131,7 @@ Redirect_FromTo_List = []  # type: FromTo_List
 # global list of --redirects files
 Redirect_Files_List = []  # type: Path_List
 reload_do = False
-reload_datetime = datetime.datetime.now()  # set for mypy, will be set again
+reload_datetime = None  # type: typing.Optional[datetime.datetime]
 redirect_counter = defaultdict(int)  # type: typing.DefaultDict[str, int]
 STATUS_PATH = None
 RELOAD_PATH = None
@@ -184,6 +183,14 @@ def html_a(href: str, text: str_None = None) -> htmls:
     if text is None:
         text = href
     return htmls('<a href="' + href + '">' + html_escape(text) + '</a>')
+
+
+def datetime_now() -> datetime.datetime:
+    """
+    Wrap datetime.now so pytests can override it.
+    Also, microseconds are annoying to print so set to 0.
+    """
+    return datetime.datetime.now().replace(microsecond=0)
 
 
 def combine_parseresult(pr1: parse.ParseResult, pr2: parse.ParseResult) -> str:
@@ -274,6 +281,31 @@ def combine_parseresult(pr1: parse.ParseResult, pr2: parse.ParseResult) -> str:
     return url
 
 
+def request_to_ParseResult(path_query: str) -> parse.ParseResult:
+    """create ParseResult from just the path and query"""
+    return parse.urlparse(path_query)
+
+
+def Re_Entry_to_ParseResult(key: Re_EntryKey) -> parse.ParseResult:
+    return request_to_ParseResult(key)
+
+
+def query_match(pr1: parse.ParseResult, pr2: parse.ParseResult) -> bool:
+    """
+    pr1 is assumed to represent a Re_To supplied at startup-time
+    pr2 is assumed to be an incoming user request
+    """
+    return pr1.path == pr2.path
+
+
+def query_match_contains(pr1: parse.ParseResult, redirects: Re_Entry_Dict) \
+        -> bool:
+    for key in redirects.keys():
+        if query_match(pr1, Re_Entry_to_ParseResult(key)):
+            return True
+    return False
+
+
 def logging_init(debug: bool, filename: Path_None) -> None:
     """initialize logging module to my preferences"""
 
@@ -359,6 +391,8 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
     status_code = None  # type: http.HTTPStatus
     status_path = None  # type: str
     reload_path = None  # type: str_None
+    status_path_pr = None  # type: parse.ParseResult
+    reload_path_pr = None  # type: parse.ParseResult
     note_admin = None  # type: htmls
 
     @classmethod
@@ -373,6 +407,8 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
         cls.status_code = status_code
         cls.status_path = status_path
         cls.reload_path = reload_path
+        cls.status_path_pr = request_to_ParseResult(cls.status_path)
+        cls.reload_path_pr = request_to_ParseResult(str(cls.reload_path))
         cls.note_admin = note_admin
 
     def __init__(self, *args, **kwargs):
@@ -447,7 +483,8 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
                start_datetime, datetime.timedelta(seconds=uptime),
                int(self.status_code), self.status_code.phrase,)
         )
-        esc_reload_datetime = he(reload_datetime.isoformat())
+        esc_reload_datetime = he(cast(datetime.datetime, reload_datetime)
+                                 .isoformat())
 
         def obj_to_html(obj, sort_keys=False) -> htmls:
             """Convert an object to html"""
@@ -531,7 +568,7 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
         self.log_message('reload requested, returning %s (%s)',
                          int(http_sc), http_sc.phrase,
                          loglevel=logging.INFO)
-        esc_datetime = html_escape(datetime.datetime.now().isoformat())
+        esc_datetime = html_escape(datetime_now().isoformat())
         self.send_response(http_sc)
         self.send_header(*self.Header_Server_Host)
         self.send_header(*self.Header_Server_Version)
@@ -555,14 +592,14 @@ Reload request accepted at {esc_datetime}.
         reload_do = True
         return
 
-    def do_GET_redirect_NOT_FOUND(self, path: str) -> None:
+    def do_GET_redirect_NOT_FOUND(self, parseresult: parse.ParseResult) -> None:
         """a Redirect request was not found, return some HTML to the user"""
 
         self.send_response(http.HTTPStatus.NOT_FOUND)
         self.send_header(*self.Header_Server_Host)
         self.send_header(*self.Header_Server_Version)
-        esc_title = html_escape("Not Found - '%s'" % path[:64])
-        esc_path = html_escape(path)
+        esc_title = html_escape("Not Found - '%s'" % parseresult.path[:64])
+        esc_path = html_escape(parseresult.path)
         html_doc = htmls("""\
 <!DOCTYPE html>
 <html lang="en">
@@ -605,7 +642,7 @@ Redirect Path not found: <code>{esc_path}</code>
         in HEAD and GET behavior).
         """
 
-        if parseresult.path not in redirects_.keys():
+        if not query_match_contains(parseresult, redirects_):
             self.log_message(
                 'no redirect found for (%s), returning %s (%s)',
                 parseresult.path,
@@ -614,7 +651,7 @@ Redirect Path not found: <code>{esc_path}</code>
                 loglevel=logging.INFO)
             cmd = self.command.upper()
             if cmd == 'GET':
-                return self.do_GET_redirect_NOT_FOUND(parseresult.path)
+                return self.do_GET_redirect_NOT_FOUND(parseresult)
             elif cmd == 'HEAD':
                 return self.do_HEAD_redirect_NOT_FOUND()
             else:
@@ -623,8 +660,8 @@ Redirect Path not found: <code>{esc_path}</code>
 
         key = Re_EntryKey(Re_From(parseresult.path))
         # merge RedirectEntry URI parts with incoming requested URI parts
-        to_parsed = parse.urlparse(redirects_[key][0])
-        to = combine_parseresult(to_parsed, parseresult)
+        to_ = request_to_ParseResult(redirects_[key][0])
+        to = combine_parseresult(to_, parseresult)
         user = redirects_[key][1]
         dt = redirects_[key][2]
 
@@ -671,14 +708,19 @@ Redirect Path not found: <code>{esc_path}</code>
             log.exception('Failed to log request')
 
     def do_GET(self) -> None:
-        """invoked per HTTP GET Request"""
+        """
+        baseclass invokes per HTTP GET Request (request entrypoint)
+
+        XXX: self.path in baseclass is poorly named. It is a combination of path
+             and query
+        """
         self._do_VERB_log()
 
-        parseresult = parse.urlparse(self.path)
-        if parseresult.path == self.status_path:
+        parseresult = request_to_ParseResult(self.path)
+        if query_match(self.status_path_pr, parseresult):
             self.do_GET_status(self.note_admin)
             return
-        elif parseresult.path == self.reload_path:
+        elif query_match(self.reload_path_pr, parseresult):
             self.do_GET_reload()
             return
 
@@ -686,14 +728,19 @@ Redirect Path not found: <code>{esc_path}</code>
         return
 
     def do_HEAD(self) -> None:
-        """invoked per HTTP HEAD Request"""
+        """
+        baseclass invokes per HTTP HEAD Request (request entrypoint)
+
+        XXX: self.path in baseclass is poorly named. It is a combination of path
+             and query
+        """
         self._do_VERB_log()
 
-        parseresult = parse.urlparse(self.path)
-        if parseresult.path == self.status_path:
+        parseresult = request_to_ParseResult(self.path)
+        if query_match(self.status_path_pr, parseresult):
             self.do_HEAD_nothing()
             return
-        elif parseresult.path == self.reload_path:
+        elif query_match(self.reload_path_pr, parseresult):
             self.do_HEAD_nothing()
             return
 
@@ -733,11 +780,11 @@ def load_redirects_fromto(from_to: FromTo_List) -> Re_Entry_Dict:
     """
 
     user = getpass.getuser()
-    now = datetime.datetime.now()
+    now = datetime_now()
     entrys = Re_Entry_Dict({})
-    for tf in from_to:
-        entrys[Re_EntryKey(Re_From(tf[0]))] = \
-            Re_EntryValue((Re_To(tf[1]), Re_User(user), Re_Date(now),))
+    for ft in from_to:
+        entrys[Re_EntryKey(Re_From(ft[0]))] = \
+            Re_EntryValue((Re_To(ft[1]), Re_User(user), Re_Date(now),))
     return entrys
 
 
@@ -907,8 +954,7 @@ class RedirectServer(socketserver.ThreadingTCPServer):
         global reload_datetime
         global RELOAD_PATH
         global NOTE_ADMIN
-        # distracting to read microsecond, set to 0
-        reload_datetime = datetime.datetime.now().replace(microsecond=0)
+        reload_datetime = datetime_now()
         redirect_handler = redirect_handler_factory(entrys,
                                                     REDIRECT_CODE,
                                                     STATUS_PATH,
@@ -1148,6 +1194,11 @@ About Paths:
 
       --status-path '/{rand1}'
 
+About this program:
+
+  Modules used are available within the standard CPython distribution.
+  Written for Python 3.7 but hacked to run with at least Python 3.5.2.
+
 """.format(
         fd=FIELD_DELIMITER_DEFAULT,
         sig_unix=SIGNAL_RELOAD_UNIX, sig_win=SIGNAL_RELOAD_WINDOWS,
@@ -1229,8 +1280,7 @@ def main() -> None:
                                 Redirect_Files_List,
                                 field_delimiter)
     global reload_datetime
-    # distracting to read microsecond, set to 0
-    reload_datetime = datetime.datetime.now().replace(microsecond=0)
+    reload_datetime = datetime_now()
 
     if len(entry_list) < 1:
         log.warning('There are no redirect entries')
