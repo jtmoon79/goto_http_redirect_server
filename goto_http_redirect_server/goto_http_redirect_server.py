@@ -903,7 +903,7 @@ class RedirectServer(socketserver.ThreadingTCPServer):
 
     def __init__(self, *args):
         """adjust parameters of the Parent class"""
-        #self.allow_reuse_address = True
+        # self.allow_reuse_address = True
         super().__init__(*args)
         self.block_on_close = False
         self.request_queue_size = SOCKET_LISTEN_BACKLOG
