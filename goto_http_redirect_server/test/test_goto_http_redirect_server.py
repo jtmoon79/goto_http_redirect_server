@@ -359,8 +359,9 @@ def new_redirect_handler(redirects: Re_Entry_Dict) \
     )
 
 
-# thread target
-def shutdown_server_thread(redirect_server: RedirectServer, sleep: int = 4):
+def shutdown_server_thread(redirect_server: RedirectServer, sleep: float = 4):
+
+    # thread target
     def shutdown_do(redirect_server_, sleep_):
         time.sleep(sleep_)
         redirect_server_.shutdown()
@@ -374,19 +375,18 @@ def shutdown_server_thread(redirect_server: RedirectServer, sleep: int = 4):
 
 
 # XXX: crude way to pass object from a thread back to main thread
-global Request_Thread_Return
 Request_Thread_Return = None
-# XXX: crude thread synchronization!
-global Request_Thread_Synch
-Request_Thread_Synch = 0.5
 
-# thread target
 req_count = 0
-def request_thread(ip: str, url: str, method: str):
+
+
+def request_thread(ip: str, port: int, url: str, method: str, wait: float):
     """caller should `.join` on thread"""
-    def request_do(ip_: str, url_: str, method_: str):
-        time.sleep(Request_Thread_Synch)
-        cl = client.HTTPConnection(ip_, port=port(), timeout=1)
+
+    # thread target
+    def request_do(ip_: str, port_: int, url_: str, method_: str, wait_: float):
+        time.sleep(wait_)
+        cl = client.HTTPConnection(ip_, port=port_, timeout=1)
         cl.request(method_, url_)
         global Request_Thread_Return
         Request_Thread_Return = cl.getresponse()
@@ -396,7 +396,7 @@ def request_thread(ip: str, url: str, method: str):
     rt = threading.Thread(
         name='pytest-request_thread-%d' % req_count,
         target=request_do,
-        args=(ip, url, method,))
+        args=(ip, port, url, method, wait))
     rt.start()
     return rt
 
@@ -410,8 +410,8 @@ class Test_Classes(object):
     @pytest.mark.timeout(5)
     def test_RedirectServer_serve_forever(self):
         with RedirectServer((IP, port()), new_redirect_handler(ENTRY_LIST)) as redirect_server:
-            _ = shutdown_server_thread(redirect_server, 2)
-            redirect_server.serve_forever(poll_interval=0.5)  # blocks
+            _ = shutdown_server_thread(redirect_server, 1)
+            redirect_server.serve_forever(poll_interval=0.3)  # blocks
 
 
 class Test_LiveServer(object):
@@ -465,7 +465,7 @@ class Test_LiveServer(object):
             pytest.param(IP, URL + '/.', ERR501, None, 'POST', rd, id='POST /.'),
         )
     )
-    @pytest.mark.timeout(10)
+    @pytest.mark.timeout(4)
     def test_requests(self,
                       ip: str,
                       url: str,
@@ -474,16 +474,17 @@ class Test_LiveServer(object):
                       method: str,
                       redirects: typing.Optional[Re_Entry_Dict]
                       ):
-        with RedirectServer((ip, port()), new_redirect_handler(redirects)) as redirect_server:
-            global Request_Thread_Synch
+        port_ = port()
+        with RedirectServer((ip, port_), new_redirect_handler(redirects)) as redirect_server:
             # XXX: crude synchronizations. Good enough for this test harness!
-            srv_uptime = Request_Thread_Synch + 1
-            thr_wait = Request_Thread_Synch + 0.3
+            wait = 0.5
+            srv_uptime = wait + 0.5
+            thr_wait = wait
             shutdown_server_thread(redirect_server, srv_uptime)
-            rt = request_thread(ip, url, method)
+            rt = request_thread(ip, port_, url, method, wait)
             redirect_server.serve_forever(poll_interval=0.2)  # blocks for srv_uptime until server is shutdown
             rt.join(thr_wait)  # blocks for thr_wait until thread ends
-            assert not rt.is_alive(), 'thread did not die in %s seconds' % thr_wait
+            assert not rt.is_alive(), 'thread did not end within %s seconds' % thr_wait
             global Request_Thread_Return
             assert Request_Thread_Return is not None, 'the thread did not set the global Request_Thread_Return; unlucky time synch? did the thread crash?'
             if hi is None:
