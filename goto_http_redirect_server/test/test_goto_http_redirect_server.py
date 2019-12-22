@@ -337,6 +337,7 @@ IP = '127.0.0.3'
 PORT = 42395
 ENTRY_LIST = {'/a': ('b', USER, NOW)}
 
+
 def port() -> int:
     """
     CI Services images tend to keep the port open after it's use, so
@@ -465,6 +466,7 @@ class Test_LiveServer(object):
             pytest.param(IP, URL + '/.', ERR501, None, 'POST', rd, id='POST /.'),
         )
     )
+
     @pytest.mark.timeout(4)
     def test_requests(self,
                       ip: str,
