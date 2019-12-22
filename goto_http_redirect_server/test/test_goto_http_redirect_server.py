@@ -337,6 +337,16 @@ IP = '127.0.0.3'
 PORT = 42395
 ENTRY_LIST = {'/a': ('b', USER, NOW)}
 
+def port() -> int:
+    """
+    CI Services images tend to keep the port open after it's use, so
+    a new RedirectServer will raise
+        OSError: [Errno 98] Address already in use
+    """
+    global PORT
+    PORT += 1
+    return PORT
+
 
 def new_redirect_handler(redirects: Re_Entry_Dict) \
         -> RedirectHandler:
@@ -376,7 +386,7 @@ def request_thread(ip: str, url: str, method: str):
     """caller should `.join` on thread"""
     def request_do(ip_: str, url_: str, method_: str):
         time.sleep(Request_Thread_Synch)
-        cl = client.HTTPConnection(ip_, port=PORT, timeout=1)
+        cl = client.HTTPConnection(ip_, port=port(), timeout=1)
         cl.request(method_, url_)
         global Request_Thread_Return
         Request_Thread_Return = cl.getresponse()
@@ -394,12 +404,12 @@ def request_thread(ip: str, url: str, method: str):
 class Test_Classes(object):
 
     def test_RedirectServer_server_activate(self):
-        with RedirectServer((IP, PORT), new_redirect_handler(ENTRY_LIST)) as redirect_server:
+        with RedirectServer((IP, port()), new_redirect_handler(ENTRY_LIST)) as redirect_server:
             redirect_server.server_activate()
 
     @pytest.mark.timeout(5)
     def test_RedirectServer_serve_forever(self):
-        with RedirectServer((IP, PORT), new_redirect_handler(ENTRY_LIST)) as redirect_server:
+        with RedirectServer((IP, port()), new_redirect_handler(ENTRY_LIST)) as redirect_server:
             _ = shutdown_server_thread(redirect_server, 2)
             redirect_server.serve_forever(poll_interval=0.5)  # blocks
 
@@ -464,7 +474,7 @@ class Test_LiveServer(object):
                       method: str,
                       redirects: typing.Optional[Re_Entry_Dict]
                       ):
-        with RedirectServer((ip, PORT), new_redirect_handler(redirects)) as redirect_server:
+        with RedirectServer((ip, port()), new_redirect_handler(redirects)) as redirect_server:
             global Request_Thread_Synch
             # XXX: crude synchronizations. Good enough for this test harness!
             srv_uptime = Request_Thread_Synch + 1
