@@ -32,6 +32,8 @@ jobs:
             sudo -- ./tools/ci/pkg-update.sh
             sudo -- ./tools/ci/pkg-install.sh curl  # for server-test.sh
             ./.circleci/build-install-run.sh
+      - store_test_results:
+          path: ./pytest-report.xml
   build_install_run__circleci_python_3_6:
     docker:
       - image: circleci/python:3.6
@@ -46,6 +48,8 @@ jobs:
             sudo -- ./tools/ci/pkg-update.sh
             sudo -- ./tools/ci/pkg-install.sh curl  # for server-test.sh
             ./.circleci/build-install-run.sh
+      - store_test_results:
+          path: ./pytest-report.xml
   build_install_run__circleci_python_3_7:
     docker:
       - image: circleci/python:3.7
@@ -60,6 +64,8 @@ jobs:
             sudo -- ./tools/ci/pkg-update.sh
             sudo -- ./tools/ci/pkg-install.sh curl  # for server-test.sh
             ./.circleci/build-install-run.sh
+      - store_test_results:
+          path: ./pytest-report.xml
   build_install_run__circleci_python_3_8:
     docker:
       - image: circleci/python:3.8
@@ -74,6 +80,8 @@ jobs:
             sudo -- ./tools/ci/pkg-update.sh
             sudo -- ./tools/ci/pkg-install.sh curl  # for server-test.sh
             ./.circleci/build-install-run.sh
+      - store_test_results:
+          path: ./pytest-report.xml
   build_install_run__python_3_7_windowsservercore:
     docker:
       - image: python:3.7-windowsservercore
@@ -88,6 +96,8 @@ jobs:
             ./tools/ci/pkg-update.sh
             ./tools/ci/pkg-install.sh curl  # for server-test.sh
             ./.circleci/build-install-run.sh
+      - store_test_results:
+          path: ./pytest-report.xml
   build_install_run__python_3_6_slim_stretch:
     docker:
       - image: python:3.6-slim-stretch
@@ -102,6 +112,8 @@ jobs:
             ./tools/ci/pkg-update.sh
             ./tools/ci/pkg-install.sh curl  # for server-test.sh
             ./.circleci/build-install-run.sh
+      - store_test_results:
+          path: ./pytest-report.xml
   build_install_run__python_3_6_slim_buster:
     docker:
       - image: python:3.6-slim-buster
@@ -116,6 +128,8 @@ jobs:
             ./tools/ci/pkg-update.sh
             ./tools/ci/pkg-install.sh curl  # for server-test.sh
             ./.circleci/build-install-run.sh
+      - store_test_results:
+          path: ./pytest-report.xml
   build_install_run__python_3_6_alpine:
     docker:
       - image: python:3-alpine
@@ -135,6 +149,8 @@ jobs:
             # for pip install of 'twine' (builds many libraries)
             ./tools/ci/pkg-install.sh gcc python3-dev musl-dev libffi-dev openssl-dev
             ./.circleci/build-install-run.sh
+      - store_test_results:
+          path: ./pytest-report.xml
 workflows:
   version: 2
   workflow_py:
