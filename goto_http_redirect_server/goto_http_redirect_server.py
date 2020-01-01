@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 # -*- encoding: utf-8 -*-
 # -*- pyversion: >=3.5.2 -*-
+#
+# TODO: needs to better handle potentially sensitive data within user-requests
+#       e.g. do not log URI parts query or params
+#
+# XXX: Disable Path Required Request Modifier
+#      This is work to allow '/' as a required modifier.
 
 
 import argparse
@@ -8,6 +14,7 @@ from collections import defaultdict
 import copy
 import csv
 import datetime
+import enum
 import getpass
 import html
 import http
@@ -25,7 +32,7 @@ import sys
 import threading
 import time
 import typing
-from typing import cast
+from typing import cast, NamedTuple
 from urllib import parse
 import uuid
 
@@ -45,26 +52,352 @@ The "Go To" HTTP Redirect Server for sharing dynamic shortcut URLs on your \
 network.
 """
 
+#
+# globals and constants initialization needed for default values
+#
+
+USER_DEFAULT = getpass.getuser()
+TIME_START = time.time()
+DATETIME_START = datetime.datetime.fromtimestamp(TIME_START).\
+    replace(microsecond=0)
 
 #
 # Types
+# FYI: "Re" means "Redirect Entry"
 #
+
+# XXX: `from parse import ParseResult` raises ModuleNotFoundError
+ParseResult = parse.ParseResult
 
 # Redirect Entry types
 
-Re_From = typing.NewType('Re_From', str)  # Redirect From URL Path
+Re_From = typing.NewType('Re_From', str)  # Redirect From URL Path as input from the Administrator (not modified)
 Re_To = typing.NewType('Re_To', str)  # Redirect To URL Location
 Re_User = typing.NewType('Re_User', str)  # User that created the Redirect (records-keeping thing, does not affect behavior)
 Re_Date = typing.NewType('Re_Date', datetime.datetime)  # Datetime Redirect was created (records-keeping thing, does not affect behavior)
-Re_EntryKey = typing.NewType('Re_EntryKey', Re_From)
-Re_EntryValue = typing.NewType('Re_EntryValue',
-                               typing.Tuple[Re_To, Re_User, Re_Date])
-Re_Entry_Dict = typing.NewType('Re_Entry_Dict',
-                               typing.Dict[Re_EntryKey, Re_EntryValue])
+Re_EntryKey = Re_From  # XXX: this might be too confusing?
+
+
+def Re_From_to_Re_EntryKey(from_: Re_From) -> Re_EntryKey:
+    """
+    Convert Re_From to Re_Entry
+
+    XXX: not necessary anymore since class re-design
+    """
+    return Re_EntryKey(from_)
+
+
+def to_ParseResult(value: typing.Union[str, Re_From, Re_To, Re_EntryKey]) \
+        -> ParseResult:
+    """
+    helpful wrapper
+
+    XXX: this is somewhat overdone since class re-design
+    """
+    return parse.urlparse(str(value))
+
+
+@enum.unique
+class Re_EntryType(enum.IntEnum):
+    """a.k.a. Required Request Modifier"""
+
+    # these must be in an order for `getEntryType_From` to succeed
+    _ = 0    # /foo              ''   must start from 0
+    _P = 1   # /foo;param        ';'
+    _Q = 2   # /foo?query        '?'
+    _PQ = 3  # /foo;param?query  ';?'
+    # XXX: Disable Path Required Request Modifier
+    # P =   4  # /foo/path         '/'
+    # PP =  5  # /foo/path;param   '/;'
+    # PQ =  6  # /foo/path?query   '/?'
+    # PPQ = 7  # /foo/path;param?query '/;?'
+
+    def __init__(self, *_):
+        # XXX: Python 3.7 introduced _ignore_ but this must support Python 3.5
+        #      So this is a hacky way to create these class-wide dict once.
+        # XXX: *_ is required but not used. Without *_, super().__init__()
+        #       raises TypeError
+        #          __init__() takes 1 positional argument but 2 were given
+        cls = self.__class__
+        if not hasattr(cls, 'Map'):
+            # create once, set once to class-wide attribute
+            # XXX: using enums, e.g. cls._P, will raise AttributeError
+            cls.Map = {
+                0: '',
+                1: ';',
+                2: '?',
+                3: ';?',
+                # XXX: Disable Path Required Request Modifier
+                # 4: '/',
+                # 5: '/;',
+                # 6: '/?',
+                # 7: '/;?',
+            }
+        if not hasattr(cls, 'MapRev'):
+            cls.MapRev = {v: k for k, v in cls.Map.items()}
+        # XXX: Disable Path Required Request Modifier
+        # if not hasattr(cls, 'Paths'):
+        #     cls.Paths = (4, 5, 6, 7)
+        super(cls, self).__init__()
+
+    def getStr_EntryType(self):
+        """reverse mapping of EntryType to it's required appending string"""
+        return self.Map[self]
+
+    @classmethod
+    def getEntryType_From(cls, from_: Re_From):
+        """the last matching Re_EntryType is the required matching"""
+        required = cls._
+        for typ in cls:
+            if from_.endswith(cls.Map[typ]):  # type: ignore
+                required = typ
+        return required
+
+    @classmethod
+    def getEntryKeys(cls, from_: Re_From) -> typing.List[Re_EntryKey]:
+        """
+        return list of all possible Re_EntryKeys
+
+        e.g. input '/a' returns ['/a', '/a;', '/a;?', '/a?', …]
+        """
+
+        ret = [Re_From_to_Re_EntryKey(from_)]
+        et = cls.getEntryType_From(from_)
+        for typ in cls:
+            if et != typ:
+                ret.append(
+                    Re_From_to_Re_EntryKey(from_ + typ.getStr_EntryType())
+                )
+        return ret
+
+    @classmethod
+    def getEntryTypes_fallback(cls, typ):
+        """return tuple of Re_EntryTypes in order of required fallbacks"""
+
+        if typ == cls._:      # '/a'
+            return cls._P, cls._Q, cls._PQ
+        elif typ == cls._P:   # '/a;p'
+            return cls._,     # '/a'
+        elif typ == cls._PQ:   # '/a;p?q'
+            return cls._,      # '/a'
+        elif typ == cls._Q:  # '/a?q'
+            return cls._,    # '/a'
+        # XXX: Disable Path Required Request Modifier
+        # elif typ == cls.P:    # '/a/b'
+        #     return cls._,     # '/a'
+        # elif typ == cls.PP:   # '/;'
+        #     return cls._,     #
+        # elif typ == cls.PPQ:  # '/;?'
+        #     return cls._,     #
+        # elif typ == cls.PQ:   # '/?'
+        #     return cls._,     #
+        raise ValueError('unmatched type value %s' % typ)
+
+    @classmethod
+    def getEntryType_ParseResult(cls, ppq: str, pr: ParseResult):
+        # TODO: urlparse does not distinguish empty parts and non-existent parts
+        #       using empty string and None.
+        #       e.g. parse.urlparse('/path?') is parse.urlparse('/path')
+        #       The ParseResult.query is '' in both cases but it should be None
+        #       in the second case.
+        #       This function should attempt to distinguish such.
+        # XXX: Disable Path Required Request Modifier
+        # if pr.path.count('/') > 1:
+        #     if pr.params and pr.query:
+        #         return cls.PPQ
+        #     elif pr.params:
+        #         return cls.PP
+        #     elif pr.query:
+        #         return cls.PQ
+        #     return cls.P
+        # else:
+        if pr.params and pr.query:
+            return cls._PQ
+        elif pr.params:
+            return cls._P
+        elif pr.query:
+            return cls._Q
+        return cls._
+
+
+# XXX: The entire `class Re_Entry` has a more concise declaration in
+#      Python >=3.7.  The following tedium is required for Python 3.5 support.
+# XXX: type annotations for NamedTuple were introduced in Python 3.6 (and cannot
+#      be used here).
+
+__Re_EntryBase = NamedTuple(
+    '__Re_EntryBase',
+    [
+        ('from_', Re_From),
+        ('to', Re_To),
+        ('user', Re_User),
+        ('date', datetime.datetime),
+        ('from_pr', ParseResult),  # ParseResult of from_
+        ('to_pr', ParseResult),    # ParseResult if to
+        ('etype', Re_EntryType),
+    ]
+)
+
+# XXX: setting default values for NamedTuple in Python <3.7 is also tedious.
+#      Copied from https://stackoverflow.com/a/18348004/471376
+
+__Re_EntryBase.__new__.__defaults__ = (  # type: ignore
+    None,  # from_
+    None,  # to
+    USER_DEFAULT,  # user
+    DATETIME_START,  # date
+    None,  # from_pr
+    None,  # to_pr
+    None,  # etype
+)
+
+
+class Re_Entry(__Re_EntryBase):
+    """
+    Redirect Entry
+    represents a --from-to CLI argument or one line from a redirects file
+    """
+    def __new__(cls, *args, **kwargs):
+        """initialize `from_pr` `to_pr` based on `from_` and `to`"""
+
+        # XXX: A tedious way to initialize default arguments that are based on
+        #      other arguments. Does not check for all possible combinations of
+        #      passed initializer arguments.
+        #      Added to ensure correctness and to simplify pytest code.
+        #
+        #      Attributes of NamedTuple can not be modified after
+        #      `super().__new__(…)`. And there is no typing.NamedList built-in
+        #      which would allow such.
+        #      Overriding via `@property def from_pr(self):` does not allow
+        #      indexing among other subtle behavior differences.
+        #      So settle on this somewhat ugly but workable solution.
+        #
+        from_ = 'from_'
+        from_i = 0  # `from_` index
+        from_pr = 'from_pr'
+        from_val = None
+        to = 'to'
+        toi = 1  # `to` index
+        to_pr = 'to_pr'
+        etype = 'etype'
+        etypei = 6  # `etype` index
+
+        # set `from_pr` if not passed
+        if len(args) < 5 and from_pr not in kwargs:
+            if from_ in kwargs:
+                kwargs[from_pr] = parse.urlparse(kwargs[from_])
+                from_val = kwargs[from_]
+            elif from_i < len(args):
+                kwargs[from_pr] = parse.urlparse(args[from_i])
+                from_val = args[from_i]
+        # set `to_pr` if not passed
+        if len(args) < 6 and to_pr not in kwargs:
+            if to in kwargs:
+                kwargs[to_pr] = parse.urlparse(kwargs[to])
+            elif toi < len(args):
+                kwargs[to_pr] = parse.urlparse(args[toi])
+        # set `etype` if not passed
+        if len(args) < etypei + 1 and etype not in kwargs:
+            if not from_val:
+                if from_ in kwargs:
+                    from_val = kwargs[from_]
+                elif from_i < len(args):
+                    from_val = args[from_i]
+            if from_val is not None:
+                kwargs[etype] = Re_EntryType.getEntryType_From(from_val)
+
+        instance = super().__new__(cls, *args, **kwargs)
+        # self-check
+        if instance.from_ is None:
+            raise ValueError('Failed to set from_')
+        if instance.to is None:
+            raise ValueError('Failed to set *to*')
+        if instance.from_pr is None:
+            raise ValueError('Failed to set from_pr')
+        if instance.to_pr is None:
+            raise ValueError('Failed to set to_pr')
+        if instance.etype is None:
+            raise ValueError('Failed to set etype')
+
+        return instance
+
+
+# class Re_EntrySuite(MutableMapping):
+#     """constrained mapping of Re_EntryType to Re_Entry"""
+#
+#     KEYS = [x for x in Re_EntryType]  # type: typing.List[Re_EntryType]
+#
+#     def __init__(self,
+#                  iterable: typing.Optional[
+#                      typing.Iterable[
+#                          typing.Tuple[Re_EntryType, Re_Entry]
+#                      ]
+#                  ] = None
+#                  ):
+#         self._map = defaultdict(None)
+#         if iterable is None:
+#             return
+#         for kv in iterable:
+#             self.__checkkey(kv[0])
+#             self._map[kv[0]] = kv[1]
+#
+#     def __checkkey(self, key):
+#         """check key is valid, raise if not"""
+#         if key not in self.KEYS:
+#             raise KeyError('Given key "%s" which is not in allowed keys %s'
+#                            % (key, self.KEYS))
+#
+#     def __getitem__(self, key):
+#         self.__checkkey(key)
+#         return self._map[key]
+#
+#     def __setitem__(self, key, value):
+#         self.__checkkey(key)
+#         self._map[key] = value
+#
+#     def __delitem__(self, key):
+#         self.__checkkey(key)
+#         del self._map[key]
+#
+#     def __iter__(self):
+#         return iter(self._map.keys())
+#
+#     def __len__(self):
+#         return len(self._map.keys())
+#
+#     def __bool__(self):
+#         for key in self._map.keys():
+#             if self._map[key]:
+#                 return True
+#         return False
+#
+#     def __repr__(self):
+#         s_ = '{'
+#         for key in self:
+#             s_ += str(key) + ': ' + str(self._map[key]) + ','
+#         s_ += '}'
+#         return s_
+#
+#
+# Re_EntryValue = Re_EntrySuite
+
+Re_Entry_Dict = typing.NewType(
+    'Re_Entry_Dict',
+    typing.Dict[Re_EntryKey, Re_Entry]
+)
+
+
+def Re_Entry_Dict_new() -> Re_Entry_Dict:
+    """type annotated empty Re_Entry_Dict"""
+    return Re_Entry_Dict(dict())
+
+
 Re_Field_Delimiter = typing.NewType('Re_Field_Delimiter', str)
 
-# other helpful types
+#
+# other helpful types and type aliases
 # XXX: some get very pedantic because they are for learning's sake.
+#
 
 Path_List = typing.List[pathlib.Path]
 FromTo_List = typing.List[typing.Tuple[str, str]]
@@ -72,52 +405,54 @@ Redirect_Counter = typing.DefaultDict[str, int]
 Redirect_Code_Value = typing.NewType('Redirect_Code_Value', int)
 str_None = typing.Optional[str]
 Path_None = typing.Optional[pathlib.Path]
+Iter_str = typing.Iterable[str]
 htmls = typing.NewType('htmls', str)  # HTML String
 htmls_str = typing.Union[htmls, str]
 
 
 #
-# globals and constants initialization
+# further globals and constants initialization
 #
 
 PROGRAM_NAME = 'goto_http_redirect_server'
 LISTEN_IP = '0.0.0.0'
 LISTEN_PORT = 80
 HOSTNAME = socket.gethostname()
-TIME_START = time.time()
-DATETIME_START = datetime.datetime.fromtimestamp(TIME_START).\
-    replace(microsecond=0)
 
+#
 # RedirectServer class things
-SOCKET_LISTEN_BACKLOG = 30  # eventually passed to socket.listen
-STATUS_PAGE_PATH_DEFAULT = '/status'
-PATH_FAVICON = '/favicon.ico'
-REDIRECT_PATHS_NOT_ALLOWED = (PATH_FAVICON,)
+#
+
+# SOCKET_LISTEN_BACKLOG is eventually passed to socket.listen
+SOCKET_LISTEN_BACKLOG = 30  # type: int
+STATUS_PAGE_PATH_DEFAULT = '/status'  # type: str
+PATH_FAVICON = '/favicon.ico'  # type: str
+REDIRECT_PATHS_NOT_ALLOWED = (PATH_FAVICON,)  # type: typing.Tuple[str]
 # HTTP Status Code used for redirects (among several possible redirect codes)
-REDIRECT_CODE_DEFAULT = http.HTTPStatus.PERMANENT_REDIRECT
-REDIRECT_CODE = REDIRECT_CODE_DEFAULT
+REDIRECT_CODE_DEFAULT = http.HTTPStatus.PERMANENT_REDIRECT  # type: http.HTTPStatus
+REDIRECT_CODE = REDIRECT_CODE_DEFAULT  # type: http.HTTPStatus
 # urlparse-related things
 RE_URI_KEYWORDS = re.compile(r'\${(path|params|query|fragment)}')
-URI_KEYWORDS_REPL = ('path', 'params', 'query', 'fragment')
+URI_KEYWORDS_REPL = ('path', 'params', 'query', 'fragment')  # type: Iter_str
 # signals
-SIGNAL_RELOAD_UNIX = 'SIGUSR1'
-SIGNAL_RELOAD_WINDOWS = 'SIGBREAK'
+SIGNAL_RELOAD_UNIX = 'SIGUSR1'  # type: str
+SIGNAL_RELOAD_WINDOWS = 'SIGBREAK'  # type: str
 # signal to cause --redirects file reload
 try:
     SIGNAL_RELOAD = signal.SIGUSR1  # Unix (not defined on Windows)
 except AttributeError:
     SIGNAL_RELOAD = signal.SIGBREAK  # Windows (not defined on some Unix)
 # redirect file things
-FIELD_DELIMITER_DEFAULT = Re_Field_Delimiter('\t')
-FIELD_DELIMITER_DEFAULT_NAME = 'tab'
+FIELD_DELIMITER_DEFAULT = Re_Field_Delimiter('\t')  # type: Re_Field_Delimiter
+FIELD_DELIMITER_DEFAULT_NAME = 'tab'  # type: str
 FIELD_DELIMITER_DEFAULT_ESCAPED = FIELD_DELIMITER_DEFAULT.\
-    encode('unicode_escape').decode('utf-8')
-REDIRECT_FILE_IGNORE_LINE = '#'
+    encode('unicode_escape').decode('utf-8')  # type: str
+REDIRECT_FILE_IGNORE_LINE = '#'  # type: str
 # logging module initializations (call logging_init to complete)
-LOGGING_FORMAT_DATETIME = '%Y-%m-%d %H:%M:%S'
-LOGGING_FORMAT = '%(asctime)s %(name)s %(levelname)s: %(message)s'
+LOGGING_FORMAT_DATETIME = '%Y-%m-%d %H:%M:%S'  # type: str
+LOGGING_FORMAT = '%(asctime)s %(name)s %(levelname)s: %(message)s'  # type: str
 # importers can override 'log'
-log = logging.getLogger(PROGRAM_NAME)
+log = logging.getLogger(PROGRAM_NAME)  # type: logging.Logger
 # write-once copy of sys.argv
 sys_args = []  # type: typing.List[str]
 
@@ -130,12 +465,12 @@ sys_args = []  # type: typing.List[str]
 Redirect_FromTo_List = []  # type: FromTo_List
 # global list of --redirects files
 Redirect_Files_List = []  # type: Path_List
-reload_do = False
+reload_do = False  # type: bool
 reload_datetime = None  # type: typing.Optional[datetime.datetime]
 redirect_counter = defaultdict(int)  # type: typing.DefaultDict[str, int]
-STATUS_PATH = None
-RELOAD_PATH = None
-NOTE_ADMIN = htmls('')
+STATUS_PATH = None  # type: str_None
+RELOAD_PATH = None  # type: str_None
+NOTE_ADMIN = htmls('')  # type: htmls
 
 
 #
@@ -191,119 +526,6 @@ def datetime_now() -> datetime.datetime:
     Also, microseconds are annoying to print so set to 0.
     """
     return datetime.datetime.now().replace(microsecond=0)
-
-
-def combine_parseresult(pr1: parse.ParseResult, pr2: parse.ParseResult) -> str:
-    """
-    Combine parse.ParseResult parts.
-    A parse.ParseResult example is
-       parse.urlparse('http://host.com/path1;parmA=a,parmB=b?a=A&b=%20B&cc=CCC#FRAG')
-    returns
-        ParseResult(scheme='http', netloc='host.com', path='/path1',
-                    params='parm2', query='a=A&b=%20B&ccc=CCC', fragment='FRAG')
-
-    pr1 is assumed to represent a Re_To supplied at startup-time
-    pr2 is assumed to be an incoming user request
-
-    From pr1 use .scheme, .netloc, .path
-    Prefer .fragment from pr2, then pr1
-    Combine .params, .query
-
-    The RedirectEntry 'To' can use string.Template syntax to replace with URI
-    parts from pr1
-    For example, given RedirectEntry supplied at start-time `pr1`
-       /b	http://bugzilla.corp.local/search/bug.cgi?id=${query}	bob	2019-01-01 11:30:00
-    A user incoming GET request for URL `pr2`
-       'http://goto/b?123
-    processed by `combine_parseresult` would become URL
-       'http://bugzilla.corp.local/search/bug.cgi?id=123'
-
-    Return a URL suitable for HTTP Header 'To'.
-
-    XXX: this function is called for every request. It should be implemented
-         more efficiently.
-    XXX: This functions works fine for 98% of cases, but can get wonky with
-         complicated pr1, pr2, and multiple repeating string.Template
-         replacements.
-    """
-
-    # work from a OrderDict(pr2) instance, used to track what replacements
-    # from pr2 have occurred
-    pr2d = pr2._asdict()
-
-    def ssub(val: str) -> str:
-        """safe substitute val, if successful replacement then pop pr2d[key]"""
-        # shortcut empty string case
-        if not val:
-            return val
-        # shortcut when no Template syntax present
-        if not RE_URI_KEYWORDS.search(val):
-            return val
-        # there are replacements to do
-        remove = dict()
-        for key in URI_KEYWORDS_REPL:
-            repl = pr2d[key] if key in pr2d else key
-            val_old = val
-            val = re.sub(r'\${%s}' % key, repl, val)
-            remove[key] = False
-            if val != val_old:
-                remove[key] = True
-                # pr2d.pop(key)
-            # log.debug('    "%s": "%s" -> "%s"  POP? %s', key, val_old, val, popd)
-        for key, rm in remove.items():
-            if rm and key in pr2d:
-                pr2d.pop(key)
-        return val
-
-    # starting with a copy of pr1 with safe_substitutes
-    pr = dict()
-    for k_, v_ in pr1._asdict().items():
-        pr[k_] = ssub(v_)
-
-    # selectively combine URI parts from pr2d
-    # safe_substitute where appropriate
-    if 'fragment' in pr2d and pr2d['fragment']:
-        pr['fragment'] = pr2d['fragment']
-    if 'params' in pr2d and pr2d['params']:
-        if pr1.params:
-            # XXX: how are URI Object Parameters combined?
-            #      see https://tools.ietf.org/html/rfc1808.html#section-2.1
-            pr['params'] = ssub(pr1.params) + ';' + pr2d['params']
-        else:
-            pr['params'] = pr2d['params']
-    if 'query' in pr2d and pr2d['query']:
-        if pr1.query:
-            pr['query'] = ssub(pr1.query) + '&' + pr2d['query']
-        else:
-            pr['query'] = pr2d['query']
-
-    url = parse.urlunparse(parse.ParseResult(**pr))
-    return url
-
-
-def request_to_ParseResult(path_query: str) -> parse.ParseResult:
-    """create ParseResult from just the path and query"""
-    return parse.urlparse(path_query)
-
-
-def Re_Entry_to_ParseResult(key: Re_EntryKey) -> parse.ParseResult:
-    return request_to_ParseResult(key)
-
-
-def query_match(pr1: parse.ParseResult, pr2: parse.ParseResult) -> bool:
-    """
-    pr1 is assumed to represent a Re_To supplied at startup-time
-    pr2 is assumed to be an incoming user request
-    """
-    return pr1.path == pr2.path
-
-
-def query_match_contains(pr1: parse.ParseResult, redirects: Re_Entry_Dict) \
-        -> bool:
-    for key in redirects.keys():
-        if query_match(pr1, Re_Entry_to_ParseResult(key)):
-            return True
-    return False
 
 
 def logging_init(debug: bool, filename: Path_None) -> None:
@@ -380,7 +602,7 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
          that may change and there is not way to have RedirectServer pass some
          tuple of values to new instances. So RedirectHandler instances hold
          references to class-wide values. Those are set in the
-         redirect_handler_factory.
+         redirect_handler_factory by call to set_c
     """
 
     Header_Server_Host = ('Redirect-Server-Host', HOSTNAME)
@@ -391,8 +613,8 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
     status_code = None  # type: http.HTTPStatus
     status_path = None  # type: str
     reload_path = None  # type: str_None
-    status_path_pr = None  # type: parse.ParseResult
-    reload_path_pr = None  # type: parse.ParseResult
+    status_path_pr = None  # type: ParseResult
+    reload_path_pr = None  # type: ParseResult
     note_admin = None  # type: htmls
 
     @classmethod
@@ -407,8 +629,8 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
         cls.status_code = status_code
         cls.status_path = status_path
         cls.reload_path = reload_path
-        cls.status_path_pr = request_to_ParseResult(cls.status_path)
-        cls.reload_path_pr = request_to_ParseResult(str(cls.reload_path))
+        cls.status_path_pr = parse.urlparse(cls.status_path)
+        cls.reload_path_pr = parse.urlparse(str(cls.reload_path))
         cls.note_admin = note_admin
 
     def __init__(self, *args, **kwargs):
@@ -450,6 +672,158 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(html_docb)
         return
+
+    @staticmethod
+    def combine_parseresult(pr1: ParseResult, pr2: ParseResult) -> str:
+        """
+        Combine ParseResult parts.
+        A ParseResult example is
+           parse.urlparse('http://host.com/path1;parmA=a,parmB=b?a=A&b=%20B&cc=CCC#FRAG')
+        returns
+            ParseResult(scheme='http', netloc='host.com', path='/path1',
+                        params='parm2', query='a=A&b=%20B&ccc=CCC', fragment='FRAG')
+
+        pr1 is assumed to be a Re_To supplied at startup-time or reload-time
+        pr2 is assumed to be an incoming user request
+
+        From pr1 use .scheme, .netloc, .path
+        Prefer .fragment from pr2, then pr1
+        Combine .params, .query
+
+        The RedirectEntry 'To' can use string.Template syntax to replace with
+        URI parts from pr1
+        For example, given RedirectEntry supplied at start-time `pr1`
+           /b	http://bugzilla.corp.local/search/bug.cgi?id=${query}	bob	2019-01-01 11:30:00
+        A user incoming GET request for URL `pr2`
+           'http://goto/b?123
+        processed by `combine_parseresult` would become URL
+           'http://bugzilla.corp.local/search/bug.cgi?id=123'
+
+        Return a URL suitable for HTTP Header 'To'.
+
+        XXX: this function is called for every request. It should be implemented
+             more efficiently.
+        XXX: This functions works fine for 98% of cases, but can get wonky with
+             complicated pr1, pr2, and multiple repeating string.Template
+             replacements.
+        """
+
+        # work from a OrderDict(pr2) instance, used to track what replacements
+        # from pr2 have occurred
+        pr2d = pr2._asdict()
+
+        def ssub(val: str) -> str:
+            """safe subst. val, if successful replacement then pop pr2d[key]"""
+            # shortcut empty string case
+            if not val:
+                return val
+            # shortcut when no Template syntax present
+            if not RE_URI_KEYWORDS.search(val):
+                return val
+            # there are replacements to do
+            remove = dict()
+            for key in URI_KEYWORDS_REPL:
+                repl = pr2d[key] if key in pr2d else key
+                val_old = val
+                val = re.sub(r'\${%s}' % key, repl, val)
+                remove[key] = False
+                if val != val_old:
+                    remove[key] = True
+                    # pr2d.pop(key)
+                # log.debug('    "%s": "%s" -> "%s"  POP? %s', key, val_old, val, popd)
+            for key, rm in remove.items():
+                if rm and key in pr2d:
+                    pr2d.pop(key)
+            return val
+
+        # starting with a copy of pr1 with safe_substitutes
+        pr = dict()
+        for k_, v_ in pr1._asdict().items():
+            pr[k_] = ssub(v_)
+
+        # selectively combine URI parts from pr2d
+        # safe_substitute where appropriate
+        if 'fragment' in pr2d and pr2d['fragment']:
+            pr['fragment'] = pr2d['fragment']
+        if 'params' in pr2d and pr2d['params']:
+            if pr1.params:
+                # XXX: how are URI Object Parameters combined?
+                #      see https://tools.ietf.org/html/rfc1808.html#section-2.1
+                pr['params'] = ssub(pr1.params) + ';' + pr2d['params']
+            else:
+                pr['params'] = pr2d['params']
+        if 'query' in pr2d and pr2d['query']:
+            if pr1.query:
+                pr['query'] = ssub(pr1.query) + '&' + pr2d['query']
+            else:
+                pr['query'] = pr2d['query']
+
+        url = parse.urlunparse(ParseResult(**pr))
+        return url
+
+    @staticmethod
+    def query_match(pr1: ParseResult, pr2: ParseResult) -> bool:
+        """
+        pr1 was supplied at startup-time or reload-time
+        pr2 is a ppq incoming user request: path + parameters + query
+        """
+        # TODO: how should this interact with path required modifier?
+        return pr1.path == pr2.path
+
+    @staticmethod
+    def query_match_finder(ppq: str,
+                           ppqpr: ParseResult,
+                           redirects: Re_Entry_Dict) \
+            -> typing.Optional[Re_Entry]:
+        """
+        An incoming query can have multiple matches within redirects. Return the
+        required request matching entry.
+        For example, given incoming ppq '/foo?a=1' and redirects
+            {
+                '/foo': …
+                '/foo?': …
+                '/foo;': …
+            }
+        This could match keys '/foo' and '/foo?' (not '/foo;'). This will return
+        the entry for required request match of '/foo?'.
+
+        :param ppq: incoming user request
+        :param ppqpr: same incoming user request as ParseResult
+        :param redirects: loaded redirect entries
+        """
+        path = ppqpr.path
+        keys = []
+        keyt = []
+        ppqt = Re_EntryType.getEntryType_ParseResult(ppq, ppqpr)
+        # search for all possible entry based on path;
+        # e.g.
+        #     '/foo', '/foo;', '/foo;?', '/foo?'
+
+        # search for exact match, accumulate possible matches as it goes
+        for key in Re_EntryType.getEntryKeys(typing.cast(Re_From, path)):
+            # XXX: Disable Path Required Request Modifier
+            # if ppqt in (Re_EntryType.Paths):
+            #     key = key.split('/')[:1].join('')
+            if key not in redirects:
+                continue
+            entry = redirects[key]
+            if entry.etype == ppqt:
+                return entry  # shortcut remaining matching
+            keys.append(key)
+            keyt.append(entry.etype)
+
+        # nothing is a possible match
+        if not keys:
+            return None
+
+        # search for inexact but appropriate type match
+        for typ in Re_EntryType.getEntryTypes_fallback(ppqt):
+            if typ in keyt:
+                return redirects[keys[keyt.index(typ)]]
+
+        # XXX: no fallback was found yet there were fallback keys? concerning.
+        log.error('Expected to find fallback type for type %s', ppqt)
+        return None
 
     def do_GET_status(self, note_admin: htmls) -> None:
         """dump status information about this server instance"""
@@ -592,14 +966,16 @@ Reload request accepted at {esc_datetime}.
         reload_do = True
         return
 
-    def do_GET_redirect_NOT_FOUND(self, parseresult: parse.ParseResult) -> None:
+    def do_GET_redirect_NOT_FOUND(self,
+                                  ppq: str,
+                                  ppqpr: ParseResult) -> None:
         """a Redirect request was not found, return some HTML to the user"""
 
         self.send_response(http.HTTPStatus.NOT_FOUND)
         self.send_header(*self.Header_Server_Host)
         self.send_header(*self.Header_Server_Version)
-        esc_title = html_escape("Not Found - '%s'" % parseresult.path[:64])
-        esc_path = html_escape(parseresult.path)
+        esc_title = html_escape("Not Found - '%s'" % ppqpr.path[:64])
+        esc_ppq = html_escape(ppq)
         html_doc = htmls("""\
 <!DOCTYPE html>
 <html lang="en">
@@ -608,12 +984,12 @@ Reload request accepted at {esc_datetime}.
 <title>{esc_title}</title>
 </head>
 <body>
-Redirect Path not found: <code>{esc_path}</code>
+Redirect Path not found: <code>{esc_ppq}</code>
 </body>
 </html>\
 """
         .format(esc_title=esc_title,
-                esc_path=esc_path)
+                esc_ppq=esc_ppq)
         )
         self._write_html_doc(html_doc)
         return
@@ -632,50 +1008,49 @@ Redirect Path not found: <code>{esc_path}</code>
         self.end_headers()
         return
 
-    def do_VERB_redirect(self,
-                         parseresult: parse.ParseResult,
-                         redirects_: Re_Entry_Dict) -> None:
+    def _do_VERB_redirect(self,
+                          ppq: str,
+                          ppqpr: ParseResult,
+                          redirects_: Re_Entry_Dict) -> None:
         """
         handle the HTTP Redirect Request (the entire purpose of this
         script).  Used for GET and HEAD requests.
         HEAD requests must not have a body (among many other differences
-        in HEAD and GET behavior).
+        in GET and HEAD behavior).
         """
-
-        if not query_match_contains(parseresult, redirects_):
+        entry = RedirectHandler.query_match_finder(ppq, ppqpr, redirects_)
+        if entry is None:
             self.log_message(
-                'no redirect found for (%s), returning %s (%s)',
-                parseresult.path,
+                'no redirect found for incoming (%s), returning %s (%s)',
+                ppq,
                 int(http.HTTPStatus.NOT_FOUND),
                 http.HTTPStatus.NOT_FOUND.phrase,
                 loglevel=logging.INFO)
             cmd = self.command.upper()
             if cmd == 'GET':
-                return self.do_GET_redirect_NOT_FOUND(parseresult)
+                return self.do_GET_redirect_NOT_FOUND(ppq, ppqpr)
             elif cmd == 'HEAD':
                 return self.do_HEAD_redirect_NOT_FOUND()
             else:
                 log.error('Unhandled command "%s"', cmd)
                 return
 
-        key = Re_EntryKey(Re_From(parseresult.path))
         # merge RedirectEntry URI parts with incoming requested URI parts
-        to_ = request_to_ParseResult(redirects_[key][0])
-        to = combine_parseresult(to_, parseresult)
-        user = redirects_[key][1]
-        dt = redirects_[key][2]
+        to = self.combine_parseresult(entry.to_pr, ppqpr)
+        user = entry.user
+        dt = entry.date
 
         self.log_message('redirect found (%s) → (%s), returning %s (%s)',
-                         key, to,
+                         ppqpr.path, to,
                          int(self.status_code), self.status_code.phrase,
                          loglevel=logging.INFO)
 
         self.send_response(self.status_code)
-        # The 'Location' Header is used by browsers for HTTP 30X Redirects
-        # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Location
         self.send_header(*self.Header_Server_Host)
         self.send_header(*self.Header_Server_Version)
-        # the most important statement in this program
+        # The 'Location' Header is used by browsers for HTTP 30X Redirects
+        # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Location
+        # The most important statement in this program.
         self.send_header('Location', to)
         try:
             self.send_header('Redirect-Created-By', user)
@@ -688,7 +1063,7 @@ Redirect Path not found: <code>{esc_path}</code>
         #       note with a hyperlink to the new URI(s)
         self.end_headers()
         # Do Not Write HTTP Content
-        count_key = '(%s) → (%s)' % (parseresult.path, to)
+        count_key = '(%s) → (%s)' % (ppqpr.path, to)
         redirect_counter[count_key] += 1
         return
 
@@ -712,19 +1087,21 @@ Redirect Path not found: <code>{esc_path}</code>
         baseclass invokes per HTTP GET Request (request entrypoint)
 
         XXX: self.path in baseclass is poorly named. It is a combination of path
-             and query
+             query, and parameters.
+        NOTE: Fragments are often dropped by clients.
         """
         self._do_VERB_log()
 
-        parseresult = request_to_ParseResult(self.path)
-        if query_match(self.status_path_pr, parseresult):
+        ppq = self.path
+        ppqpr = to_ParseResult(ppq)
+        if self.query_match(self.status_path_pr, ppqpr):
             self.do_GET_status(self.note_admin)
             return
-        elif query_match(self.reload_path_pr, parseresult):
+        elif self.query_match(self.reload_path_pr, ppqpr):
             self.do_GET_reload()
             return
 
-        self.do_VERB_redirect(parseresult, self.redirects)
+        self._do_VERB_redirect(ppq, ppqpr, self.redirects)
         return
 
     def do_HEAD(self) -> None:
@@ -732,19 +1109,21 @@ Redirect Path not found: <code>{esc_path}</code>
         baseclass invokes per HTTP HEAD Request (request entrypoint)
 
         XXX: self.path in baseclass is poorly named. It is a combination of path
-             and query
+             query, and parameters.
+        NOTE: Fragments are often dropped by clients.
         """
         self._do_VERB_log()
 
-        parseresult = request_to_ParseResult(self.path)
-        if query_match(self.status_path_pr, parseresult):
+        ppq = self.path
+        ppqpr = to_ParseResult(ppq)
+        if self.query_match(self.status_path_pr, ppqpr):
             self.do_HEAD_nothing()
             return
-        elif query_match(self.reload_path_pr, parseresult):
+        elif self.query_match(self.reload_path_pr, ppqpr):
             self.do_HEAD_nothing()
             return
 
-        self.do_VERB_redirect(parseresult, self.redirects)
+        self._do_VERB_redirect(ppq, ppqpr, self.redirects)
         return
 
 
@@ -762,9 +1141,8 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
     :return: RedirectHandler type: request handler class type for
              RedirectServer.RequestHandlerClass
     """
-
     log.debug('using redirect dictionary (0x%08x) with %s entries:\n%s',
-              id(redirects), len(redirects.keys()),
+              id(redirects), len(redirects),
               StrDelay(pprint.pformat, redirects, indent=2))
 
     rh = RedirectHandler
@@ -773,126 +1151,149 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
     return rh
 
 
-def load_redirects_fromto(from_to: FromTo_List) -> Re_Entry_Dict:
-    """
-    create Re_Entry for each --from-to passed
-    :return: Re_Entry_Dict
-    """
+class RedirectsLoader(object):
+    """a namespace for functions that load and initialize Redirect Entries"""
 
-    user = getpass.getuser()
-    now = datetime_now()
-    entrys = Re_Entry_Dict({})
-    for ft in from_to:
-        entrys[Re_EntryKey(Re_From(ft[0]))] = \
-            Re_EntryValue((Re_To(ft[1]), Re_User(user), Re_Date(now),))
-    return entrys
+    @staticmethod
+    def load_redirects_fromto(from_to: FromTo_List) -> Re_Entry_Dict:
+        """
+        create Re_Entry for each --from-to passed
+        :return: Re_Entry_Dict
+        """
 
-
-def load_redirects_files(redirects_files: Path_List,
-                         field_delimiter: Re_Field_Delimiter) \
-        -> Re_Entry_Dict:
-    """
-    :param redirects_files: list of file paths to process for Re_Entry
-    :param field_delimiter: passed to csv.reader keyword delimiter
-    :return: Re_Entry_Dict of file line items converted to Re_Entry
-    """
-
-    entrys = Re_Entry_Dict({})
-
-    # create Entry for each line in passed redirects_files
-    for rfilen in redirects_files:
-        try:
-            log.info('Process File (%s)', rfilen)
-            with open(str(rfilen), 'r', encoding='utf-8') as rfile:
-                csvr = csv.reader(rfile, delimiter=field_delimiter)
-                for row in csvr:
-                    try:
-                        log.debug('File Line (%s:%s):%s',
-                                  rfilen, csvr.line_num, row)
-                        if not row:  # skip empty row
-                            continue
-                        if row[0].startswith(REDIRECT_FILE_IGNORE_LINE):
-                            # skip rows starting with such
-                            continue
-                        from_path = row[0]
-                        to_url = row[1]
-                        user_added = row[2]
-                        date_added = row[3]
-                        # ignore remaining fields
-                        dt = fromisoformat(date_added)
-                        entrys[Re_EntryKey(Re_From(from_path))] = \
-                            Re_EntryValue((
-                                Re_To(to_url),
-                                Re_User(user_added),
-                                Re_Date(dt),)
-                        )
-                    except Exception:
-                        log.exception('Error processing row %d of file %s',
-                                      csvr.line_num, rfilen)
-        except Exception:
-            log.exception('Error processing file %s', rfilen)
-
-    return entrys
-
-
-def clean_redirects(entrys_files: Re_Entry_Dict) -> Re_Entry_Dict:
-    """remove entries with To paths that are reserved or cannot be encoded"""
-
-    # TODO: process re_entry for circular loops of redirects, either
-    #       break those loops or log.warning
-    #       e.g. given redirects '/a' → '/b' and '/b' → '/a',
-    #       the browser will (in theory) redirect forever.
-    #       (browsers I tested force stopped the redirect loop; Edge, Chrome).
-
-    for path in REDIRECT_PATHS_NOT_ALLOWED:
-        re_key = Re_EntryKey(Re_From(path))
-        if re_key in entrys_files.keys():
-            log.warning(
-                'Removing reserved From value "%s" from redirect entries.',
-                path
+        user = USER_DEFAULT
+        now = datetime_now()
+        entrys = Re_Entry_Dict_new()
+        for ft in from_to:
+            from_ = Re_From(ft[0])
+            to_ = Re_To(ft[1])
+            key = Re_From_to_Re_EntryKey(from_)
+            typ = Re_EntryType.getEntryType_From(from_)
+            val = Re_Entry(
+                from_,
+                to_,
+                Re_User(user),
+                Re_Date(now),
+                etype=typ,
             )
-            entrys_files.pop(re_key)
+            entrys[key] = val
+        return entrys
 
-    # check for To "Location" Header values that will fail to encode
-    remove = []
-    for re_key in entrys_files.keys():
-        # test "Location" header value before send_response(status_code)
-        to = entrys_files[re_key][0]
-        try:
-            # this is done in standard library http/server.py
-            # method BaseServer.send_header
-            to.encode('latin-1', 'strict')
-        except UnicodeEncodeError:
+    @staticmethod
+    def load_redirects_files(redirects_files: Path_List,
+                             field_delimiter: Re_Field_Delimiter) \
+            -> Re_Entry_Dict:
+        """
+        :param redirects_files: list of file paths to process for Re_Entry
+        :param field_delimiter: passed to csv.reader keyword delimiter
+        :return: Re_Entry_Dict of file line items converted to Re_Entry
+        """
+
+        entrys = Re_Entry_Dict_new()
+
+        # create Entry for each line in passed redirects_files
+        for rfilen in redirects_files:
+            try:
+                log.info('Process File (%s)', rfilen)
+                with open(str(rfilen), 'r', encoding='utf-8') as rfile:
+                    csvr = csv.reader(rfile, delimiter=field_delimiter)
+                    for row in csvr:
+                        try:
+                            log.debug('File Line (%s:%s):%s',
+                                      rfilen, csvr.line_num, row)
+                            if not row:  # skip empty row
+                                continue
+                            if row[0].startswith(REDIRECT_FILE_IGNORE_LINE):
+                                # skip rows starting with such
+                                continue
+                            from_ = Re_From(row[0])
+                            to_ = Re_To(row[1])
+                            user = Re_User(row[2])
+                            date = row[3]
+                            # ignore any remaining fields in row
+                            dt = fromisoformat(date)
+                            key = Re_From_to_Re_EntryKey(from_)
+                            typ = Re_EntryType.getEntryType_From(from_)
+                            val = Re_Entry(
+                                from_,
+                                to_,
+                                user,
+                                Re_Date(dt),
+                                etype=typ,
+                            )
+                            entrys[key] = val
+                        except Exception:
+                            log.exception('Error processing row %d of file %s',
+                                          csvr.line_num, rfilen)
+            except Exception:
+                log.exception('Error processing file %s', rfilen)
+
+        return entrys
+
+    @staticmethod
+    def clean_redirects(entrys: Re_Entry_Dict) -> Re_Entry_Dict:
+        """remove entries with To paths that are reserved or cannot encode"""
+
+        # TODO: process re_entry for circular loops of redirects, either
+        #       break those loops or log.warning
+        #       e.g. given redirects '/a' → '/b' and '/b' → '/a',
+        #       the browser will (in theory) redirect forever.
+        #       (browsers tested force stopped the redirect loop; Edge, Chrome).
+
+        for path in REDIRECT_PATHS_NOT_ALLOWED:
+            key = Re_From_to_Re_EntryKey(Re_From(path))
+            if key in entrys.keys():
+                log.warning(
+                    'Removing reserved From value "%s" from redirect entries.',
+                    path
+                )
+                entrys.pop(key)
+
+        # check for To "Location" Header values that will fail to encode
+        remove = []
+        encoding = 'latin-1'
+        for key in entrys.keys():
+            # test "Location" header value before send_response(status_code)
+            to = entrys[key].to
+            try:
+                # this is done in standard library http/server.py
+                # method BaseServer.send_header
+                # https://github.com/python/cpython/blob/5c02a39a0b31a330e06b4d6f44835afb205dc7cc/Lib/http/server.py#L515-L516
+                to.encode(encoding, 'strict')
+            except UnicodeEncodeError:
+                remove.append(key)
+        for key in remove:
+            to = entrys[key].to
             log.warning(
-                'Removing To "Location" value "%s"; it fails encoding to "latin-1"',
-                to
+                'Removing To "Location" value "%s"; it fails encoding to'
+                ' "%s"', to, encoding
             )
-            remove.append(re_key)
-    for re_key in remove:
-        entrys_files.pop(re_key)
+            del entrys[key]
 
-    return entrys_files
+        return entrys
 
+    @staticmethod
+    def load_redirects(from_to: FromTo_List,
+                       redirects_files: Path_List,
+                       field_delimiter: Re_Field_Delimiter) \
+            -> Re_Entry_Dict:
+        """
+        load (or reload) all redirect information, process into Re_EntryList
+        Remove bad entries.
+        :param from_to: list --from-to passed redirects for Re_Entry
+        :param redirects_files: list of files to process for Re_Entry
+        :param field_delimiter: field delimiter within passed redirects_files
+        :return: Re_Entry_Dict: all processed information
+        """
+        entrys_fromto = RedirectsLoader.load_redirects_fromto(from_to)
+        entrys_files = RedirectsLoader.load_redirects_files(redirects_files,
+                                                            field_delimiter)
+        # --from-to passed entries override same entries from files
+        entrys_files.update(entrys_fromto)
 
-def load_redirects(from_to: FromTo_List,
-                   redirects_files: Path_List,
-                   field_delimiter: Re_Field_Delimiter) \
-        -> Re_Entry_Dict:
-    """
-    load (or reload) all redirect information, process into Re_EntryList
-    Remove bad entries.
-    :param from_to: list --from-to passed redirects for Re_Entry
-    :param redirects_files: list of files to process for Re_Entry
-    :param field_delimiter: field delimiter within passed redirects_files
-    :return: Re_Entry_Dict: all processed information
-    """
-    entrys_fromto = load_redirects_fromto(from_to)
-    entrys_files = load_redirects_files(redirects_files, field_delimiter)
-    entrys_files.update(entrys_fromto)
+        entrys_files = RedirectsLoader.clean_redirects(entrys_files)
 
-    entrys_files = clean_redirects(entrys_files)
-
-    return entrys_files
+        return entrys_files
 
 
 class RedirectServer(socketserver.ThreadingTCPServer):
@@ -948,9 +1349,11 @@ class RedirectServer(socketserver.ThreadingTCPServer):
         reload_do = False
         global Redirect_FromTo_List
         global Redirect_Files_List
-        entrys = load_redirects(Redirect_FromTo_List,
-                                Redirect_Files_List,
-                                self.field_delimiter)
+        entrys = RedirectsLoader.load_redirects(
+            Redirect_FromTo_List,
+            Redirect_Files_List,
+            self.field_delimiter
+        )
         global STATUS_PATH
         global reload_datetime
         global RELOAD_PATH
@@ -1152,11 +1555,11 @@ Redirect Entry Template Syntax ("dynamic" URLs):
 
   First, given the URL
 
-     http://host.com/path;parm?a=A&b=B#frag
+     http://host.com/pa/th;parm?a=A&b=B#frag
 
   the URI parts that form a urllib.urlparse ParseResult class would be:
 
-    ParseResult(scheme='http', netloc='host.com', path='/path',
+    ParseResult(scheme='http', netloc='host.com', path='/pa/th',
                 params='parm', query='a=A&b=B', fragment='frag')
 
   So then given redirect entry:
@@ -1171,6 +1574,58 @@ Redirect Entry Template Syntax ("dynamic" URLs):
   URL would become:
 
     http://bug-tracker.mycorp.local/view.cgi?id=123
+
+Redirect Entry Required Request Modifiers:
+
+  Ending the Redirect Entry 'From' field with various URI separators allows
+  preferences for which Redirect Entry to use. The purpose is to allow
+  preferring a different Redirect Entry depending upon the users request.
+
+  Given redirect entries:
+
+    /b?{fd}http://bug-tracker.mycorp.local/view.cgi?id=${query}{fd}bob{fd}2019-09-07 12:00:00
+    /b{fd}http://bug-tracker.mycorp.local/main{fd}bob{fd}2019-09-07 12:00:00
+
+  and the incoming GET or HEAD request:
+
+    http://goto/b?123
+
+  This will choose the first Redirect Entry and return 'Location' header
+
+    http://bug-tracker.mycorp.local/view.cgi?id=123
+
+  Whereas the incoming GET or HEAD request:
+
+    http://goto/b
+
+  This will choose the second Redirect Entry and return 'Location' header
+
+    http://bug-tracker.mycorp.local/main
+
+  The example combination sends a basic request for '/b' to a "main" page and a
+  particular query request '/b?123' to a particular query path.
+  Failed matches will "fallback" to the basic Redirect Entry, e.g. the Entry
+  without any Required Request Modifiers.
+
+  A Redirect Entry with Required Request Modifier will not match a request
+  without such a modifier.
+
+  Given redirect entries:
+
+    /b?{fd}http://bug-tracker.mycorp.local/view.cgi?id=${query}{fd}bob{fd}2019-09-07 12:00:00
+
+  and the incoming GET or HEAD request:
+
+    http://goto/b
+
+  will return 404 NOT FOUND.
+
+  Required Request Modifiers must be at the end of the 'From' field string.
+  Required Request Modifiers strings are:
+
+     ';'  for user requests with a parameter.
+     '?'  for user requests with a query.
+     ';?' for user requests with a parameter and a query.
 
 About Redirect Files:
 
@@ -1277,9 +1732,11 @@ def main() -> None:
     redirects_files_ = [pathlib.Path(x) for x in redirects_files]
     Redirect_Files_List = redirects_files_  # set once
     # load the redirect entries from various sources
-    entry_list = load_redirects(Redirect_FromTo_List,
-                                Redirect_Files_List,
-                                field_delimiter)
+    entry_list = RedirectsLoader.load_redirects(
+        Redirect_FromTo_List,
+        Redirect_Files_List,
+        field_delimiter
+    )
     global reload_datetime
     reload_datetime = datetime_now()
 

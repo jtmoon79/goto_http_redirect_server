@@ -182,9 +182,6 @@ No service downtime!
 
     The "Go To" HTTP Redirect Server for sharing dynamic shortcut URLs on your network.
 
-    Modules used are available within the standard CPython distribution.
-    Written for Python 3.7 but hacked to run with at least Python 3.5.2.
-
     HTTP 308 Permanent Redirect reply server. Load this server with redirects of "from path" and
     "to URL" and let it run indefinitely. Reload the running server by signaling the
     process or HTTP requesting the RELOAD_PATH.
@@ -283,11 +280,11 @@ No service downtime!
 
       First, given the URL
 
-         http://host.com/path;parm?a=A&b=B#frag
+         http://host.com/pa/th;parm?a=A&b=B#frag
 
       the URI parts that form a urllib.urlparse ParseResult class would be:
 
-        ParseResult(scheme='http', netloc='host.com', path='/path',
+        ParseResult(scheme='http', netloc='host.com', path='/pa/th',
                     params='parm', query='a=A&b=B', fragment='frag')
 
       So then given redirect entry:
@@ -302,6 +299,58 @@ No service downtime!
       URL would become:
 
         http://bug-tracker.mycorp.local/view.cgi?id=123
+
+    Redirect Entry Required Request Modifiers:
+
+      Ending the Redirect Entry 'From' field with various URI separators allows
+      preferences for which Redirect Entry to use. The purpose is to allow
+      preferring a different Redirect Entry depending upon the users request.
+
+      Given redirect entries:
+
+        /b? http://bug-tracker.mycorp.local/view.cgi?id=${query}    bob     2019-09-07 12:00:00
+        /b  http://bug-tracker.mycorp.local/main    bob     2019-09-07 12:00:00
+
+      and the incoming GET or HEAD request:
+
+        http://goto/b?123
+
+      This will choose the first Redirect Entry and return 'Location' header
+
+        http://bug-tracker.mycorp.local/view.cgi?id=123
+
+      Whereas the incoming GET or HEAD request:
+
+        http://goto/b
+
+      This will choose the second Redirect Entry and return 'Location' header
+
+        http://bug-tracker.mycorp.local/main
+
+      The example combination sends a basic request for '/b' to a "main" page and a
+      particular query request '/b?123' to a particular query path.
+      Failed matches will "fallback" to the basic Redirect Entry, e.g. the Entry
+      without any Required Request Modifiers.
+
+      A Redirect Entry with Required Request Modifier will not match a request
+      without such a modifier.
+
+      Given redirect entries:
+
+        /b? http://bug-tracker.mycorp.local/view.cgi?id=${query}    bob     2019-09-07 12:00:00
+
+      and the incoming GET or HEAD request:
+
+        http://goto/b
+
+      will return 404 NOT FOUND.
+
+      Required Request Modifiers must be at the end of the 'From' field string.
+      Required Request Modifiers strings are:
+
+         ';'  for user requests with a parameter.
+         '?'  for user requests with a query.
+         ';?' for user requests with a parameter and a query.
 
     About Redirect Files:
 
@@ -324,7 +373,12 @@ No service downtime!
       Options --status-path and --reload-path may be passed paths to obscure access
       from unauthorized users. e.g.
 
-          --status-path '/449605d1-dcc2-4ba4-aaa0-5c3b78c7d2ea'
+          --status-path '/e8278654-a6c2-418e-8b7b-4a657ba86c36'
+
+    About this program:
+
+      Modules used are available within the standard CPython distribution.
+      Written for Python 3.7 but hacked to run with at least Python 3.5.2.
 
 ----
 

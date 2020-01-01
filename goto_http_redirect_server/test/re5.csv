@@ -4,3 +4,32 @@
 /i	http://i.hh/search/bug=${query}&filter=123	bob	2000-01-01 00:00:00
 /j	http://j.hh/search/bug=${fragment}&filter=123	bob	2000-01-01 00:00:00
 /k	http://k.k/search/bug=${q}&filter=123	bob	2000-01-01 00:00:00
+
+# all different modifier types
+/m	http://M._/index	bob	2000-01-01 00:00:00
+/m?	http://M._Q/search/bug=${query}	bob	2000-01-01 00:00:00
+/m;	http://M._P/index;${params}	bob	2000-01-01 00:00:00
+/m;?	http://M._PQ/search;${params}/bug=${query}	bob	2000-01-01 00:00:00
+
+# all different modifier types
+/n	http://_.n/	bob	2000-01-01 00:00:00
+/n?	http://_Q.n/	bob	2000-01-01 00:00:00
+/n;	http://_P.n/	bob	2000-01-01 00:00:00
+/n;?	http://_PQ.n/	bob	2000-01-01 00:00:00
+/n/	http://P.n/	bob	2000-01-01 00:00:00
+/n/?	http://PQ.n/	bob	2000-01-01 00:00:00
+/n/;	http://PP.n/	bob	2000-01-01 00:00:00
+/n/;?	http://PPQ.n/	bob	2000-01-01 00:00:00
+
+# some different modifier types
+/o?	http://_Q.o/	bob	2000-01-01 00:00:00
+/o;	http://_P.o/	bob	2000-01-01 00:00:00
+/o;?	http://_PQ.o/	bob	2000-01-01 00:00:00
+
+# some different modifier types
+/p	http://_.p/	bob	2000-01-01 00:00:00
+/p?	http://_Q.p/	bob	2000-01-01 00:00:00
+
+# some different modifier types
+/q	http://_.p/	bob	2000-01-01 00:00:00
+/q;?	http://_PQ.q/	bob	2000-01-01 00:00:00
