@@ -56,6 +56,7 @@ On server running `goto_http_redirect_server`
    ```bash
    systemctl restart goto_http_redirect_server.service
    ```
+   **TODO:** this step should reference wheel package `systemd_install`.
 
 3. check status
    ```bash
