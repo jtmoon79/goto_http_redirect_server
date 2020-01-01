@@ -302,7 +302,7 @@ No service downtime!
 
     Redirect Entry Required Request Modifiers:
 
-      Ending the Redirect Entry 'From' field with various URI separators allows
+      Ending the Redirect Entry "from path" field with various URI separators allows
       preferences for which Redirect Entry to use. The purpose is to allow
       preferring a different Redirect Entry depending upon the users request.
 
@@ -327,8 +327,8 @@ No service downtime!
 
         http://bug-tracker.mycorp.local/main
 
-      The example combination sends a basic request for '/b' to a "main" page and a
-      particular query request '/b?123' to a particular query path.
+      The example combination sends a basic request for '/b' to some static page and
+      a particular query request '/b?123' to a particular query path.
       Failed matches will "fallback" to the basic Redirect Entry, e.g. the Entry
       without any Required Request Modifiers.
 
@@ -345,7 +345,7 @@ No service downtime!
 
       will return 404 NOT FOUND.
 
-      Required Request Modifiers must be at the end of the 'From' field string.
+      Required Request Modifiers must be at the end of the "from path" field string.
       Required Request Modifiers strings are:
 
          ';'  for user requests with a parameter.
@@ -373,7 +373,7 @@ No service downtime!
       Options --status-path and --reload-path may be passed paths to obscure access
       from unauthorized users. e.g.
 
-          --status-path '/e8278654-a6c2-418e-8b7b-4a657ba86c36'
+          --status-path '/b6952f24-a133-4eb4-babb-39515343a66a'
 
     About this program:
 

@@ -1577,7 +1577,7 @@ Redirect Entry Template Syntax ("dynamic" URLs):
 
 Redirect Entry Required Request Modifiers:
 
-  Ending the Redirect Entry 'From' field with various URI separators allows
+  Ending the Redirect Entry "from path" field with various URI separators allows
   preferences for which Redirect Entry to use. The purpose is to allow
   preferring a different Redirect Entry depending upon the users request.
 
@@ -1602,8 +1602,8 @@ Redirect Entry Required Request Modifiers:
 
     http://bug-tracker.mycorp.local/main
 
-  The example combination sends a basic request for '/b' to a "main" page and a
-  particular query request '/b?123' to a particular query path.
+  The example combination sends a basic request for '/b' to some static page and
+  a particular query request '/b?123' to a particular query path.
   Failed matches will "fallback" to the basic Redirect Entry, e.g. the Entry
   without any Required Request Modifiers.
 
@@ -1620,7 +1620,7 @@ Redirect Entry Required Request Modifiers:
 
   will return 404 NOT FOUND.
 
-  Required Request Modifiers must be at the end of the 'From' field string.
+  Required Request Modifiers must be at the end of the "from path" field string.
   Required Request Modifiers strings are:
 
      ';'  for user requests with a parameter.
