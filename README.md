@@ -234,7 +234,7 @@ No service downtime!
                             sys.stderr.
       --debug               Set logging level to DEBUG. Default logging level is
                             INFO.
-      --version             Print "goto_http_redirect_server 0.7.8" and exit.
+      --version             Print "goto_http_redirect_server 1.0.0" and exit.
       -?, -h, --help        Print this help message and exit.
 
     About Redirect Entries:
@@ -373,7 +373,7 @@ No service downtime!
       Options --status-path and --reload-path may be passed paths to obscure access
       from unauthorized users. e.g.
 
-          --status-path '/b6952f24-a133-4eb4-babb-39515343a66a'
+          --status-path '/bde2e9eb-4632-4acb-b935-f96bf62e9df8'
 
     About this program:
 

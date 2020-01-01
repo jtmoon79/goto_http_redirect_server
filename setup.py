@@ -236,7 +236,7 @@ setup(
     },
     # see https://pypi.org/classifiers/
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'Environment :: Console',
         'Operating System :: OS Independent',
         'Natural Language :: English',
