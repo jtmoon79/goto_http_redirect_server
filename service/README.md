@@ -111,6 +111,9 @@ Setup the low privilege port for user `nobody`:
     chgrp nogroup /etc/authbind/byport/80
     chown nobody /etc/authbind/byport/80
 
+The systemd service configuration `/etc/goto_http_redirect_server.conf` can
+be modified to pass necessary options to `/etc/goto_http_redirect_server.sh`.
+
 ## Notes
 
 Tested on multiple platforms in [Azure Pipelines](../.azure-pipelines/azure-pipelines.yml).
