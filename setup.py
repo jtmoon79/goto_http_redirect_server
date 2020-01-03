@@ -201,6 +201,8 @@ setup(
     install_requires=[],
     setup_requires=['wheel'],
     extras_require={
+        # install these locally with command:
+        #     python -m pip install --user -e '.[development]'
         'development': [
             'flake8',
             'mypy',
@@ -209,7 +211,7 @@ setup(
             'pytest-timeout',
             'yamllint',
         ],
-        # parts of 'development' for faster `pip install` in CI
+        # subsets of 'development' for faster `pip install` in CI stages
         'development-flake8': [
             'flake8',
         ],

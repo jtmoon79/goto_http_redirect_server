@@ -255,6 +255,7 @@ __Re_EntryBase.__new__.__defaults__ = (  # type: ignore
 class Re_Entry(__Re_EntryBase):
     """
     Redirect Entry
+
     represents a --from-to CLI argument or one line from a redirects file
     """
     def __new__(cls, *args, **kwargs):
@@ -523,6 +524,7 @@ def html_a(href: str, text: str_None = None) -> htmls:
 def datetime_now() -> datetime.datetime:
     """
     Wrap datetime.now so pytests can override it.
+
     Also, microseconds are annoying to print so set to 0.
     """
     return datetime.datetime.now().replace(microsecond=0)
@@ -550,6 +552,7 @@ def logging_init(debug: bool, filename: Path_None) -> None:
 def print_debug(message: str, end: str = '\n', file=sys.stderr) -> None:
     """
     Helper for printing (preferably to stderr) and checking logging.DEBUG.
+
     Sometimes a full logging message is too much.
     """
     if log.level <= logging.DEBUG:
@@ -561,6 +564,7 @@ def print_debug(message: str, end: str = '\n', file=sys.stderr) -> None:
 def fromisoformat(dts: str) -> datetime.datetime:
     """
     Call datetime.datetime.fromisoformat on input string.
+
     ISO 8901 Date Time format looks like
     '2019-07-01 01:20:33' or '2019-07-01T01:20:33'
 
@@ -677,6 +681,7 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
     def combine_parseresult(pr1: ParseResult, pr2: ParseResult) -> str:
         """
         Combine ParseResult parts.
+
         A ParseResult example is
            parse.urlparse('http://host.com/path1;parmA=a,parmB=b?a=A&b=%20B&cc=CCC#FRAG')
         returns
@@ -764,8 +769,8 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
     @staticmethod
     def query_match(pr1: ParseResult, pr2: ParseResult) -> bool:
         """
-        pr1 was supplied at startup-time or reload-time
-        pr2 is a ppq incoming user request: path + parameters + query
+        :param pr1: was supplied at startup-time or reload-time
+        :param pr2: is a ppq incoming user request: path + parameters + query
         """
         # TODO: how should this interact with path required modifier?
         return pr1.path == pr2.path
@@ -778,6 +783,7 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
         """
         An incoming query can have multiple matches within redirects. Return the
         required request matching entry.
+
         For example, given incoming ppq '/foo?a=1' and redirects
             {
                 '/foo': …
@@ -1280,6 +1286,7 @@ class RedirectsLoader(object):
         """
         load (or reload) all redirect information, process into Re_EntryList
         Remove bad entries.
+
         :param from_to: list --from-to passed redirects for Re_Entry
         :param redirects_files: list of files to process for Re_Entry
         :param field_delimiter: field delimiter within passed redirects_files
@@ -1772,6 +1779,7 @@ def main() -> None:
     do_shutdown = False  # flag between threads MainThread and shutdown_thread
 
     def shutdown_server(redirect_server_: RedirectServer, shutdown_: int):
+        """Thread entry point"""
         log.debug('Server will shutdown in %s seconds', shutdown_)
         start = time.time()
         while time.time() - start < shutdown_:
