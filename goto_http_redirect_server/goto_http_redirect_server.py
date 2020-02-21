@@ -420,6 +420,38 @@ LISTEN_IP = '0.0.0.0'
 LISTEN_PORT = 80
 HOSTNAME = socket.gethostname()
 
+# default CSS for various <html>
+CSS = htmls(
+    """\
+body {
+  background-color: #2F4F4F; /* DarkSlateGray; */
+  color: #FAEBD7; /* AntiqueWhite; */
+  font-family: monospace;
+}
+@media screen and (prefers-color-scheme: light) {
+  body {
+    background-color: white;
+    color: black;
+  }
+}
+
+table td {
+  border-collapse: collapse;
+  border: 1px dashed;
+  padding: 1px;
+}
+.ar {
+  text-align: right;
+}
+tbody tr:nth-child(odd) {
+  background-color: #778899; /* LightSlateGray; */
+}
+tbody tr:nth-child(even) {
+  background-color: #708090; /* SlateGray; */
+}
+"""
+)
+
 #
 # RedirectServer class things
 #
@@ -435,6 +467,7 @@ REDIRECT_CODE = REDIRECT_CODE_DEFAULT  # type: http.HTTPStatus
 # urlparse-related things
 RE_URI_KEYWORDS = re.compile(r'\${(path|params|query|fragment)}')
 URI_KEYWORDS_REPL = ('path', 'params', 'query', 'fragment')  # type: Iter_str
+
 # signals
 SIGNAL_RELOAD_UNIX = 'SIGUSR1'  # type: str
 SIGNAL_RELOAD_WINDOWS = 'SIGBREAK'  # type: str
@@ -443,17 +476,20 @@ try:
     SIGNAL_RELOAD = signal.SIGUSR1  # Unix (not defined on Windows)
 except AttributeError:
     SIGNAL_RELOAD = signal.SIGBREAK  # Windows (not defined on some Unix)
+
 # redirect file things
 FIELD_DELIMITER_DEFAULT = Re_Field_Delimiter('\t')  # type: Re_Field_Delimiter
 FIELD_DELIMITER_DEFAULT_NAME = 'tab'  # type: str
 FIELD_DELIMITER_DEFAULT_ESCAPED = FIELD_DELIMITER_DEFAULT.\
     encode('unicode_escape').decode('utf-8')  # type: str
 REDIRECT_FILE_IGNORE_LINE = '#'  # type: str
+
 # logging module initializations (call logging_init to complete)
 LOGGING_FORMAT_DATETIME = '%Y-%m-%d %H:%M:%S'  # type: str
 LOGGING_FORMAT = '%(asctime)s %(name)s %(levelname)s: %(message)s'  # type: str
 # importers can override 'log'
 log = logging.getLogger(PROGRAM_NAME)  # type: logging.Logger
+
 # write-once copy of sys.argv
 sys_args = []  # type: typing.List[str]
 
@@ -863,8 +899,6 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
                start_datetime, datetime.timedelta(seconds=uptime),
                int(self.status_code), self.status_code.phrase,)
         )
-        esc_reload_datetime = he(cast(datetime.datetime, reload_datetime)
-                                 .isoformat())
 
         def obj_to_html(obj, sort_keys=False) -> htmls:
             """Convert an object to html"""
@@ -887,11 +921,44 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
             s_ += he('\n}')  # type: ignore
             return s_
 
+        def redirects_to_html_table(rd: Re_Entry_Dict, reload_datetime) \
+                -> htmls:
+            """Convert Re_Entry_Dict into linkable html table"""
+            h = htmls
+            esc_reload_datetime = he(cast(datetime.datetime, reload_datetime)
+                                     .isoformat())
+            s_ = h("""\
+<table>
+    <caption>Currently Loaded Redirects (last reload {esc_reload_datetime})</caption>
+    <thead>
+        <tr>
+            <th scope="col">From</th><th scope="col">To</th><th scope="col" class="ar">Entry User</th><th scope="col">Entry datetime</th>
+        </tr>
+    </thead>
+    <tbody>
+""".format(esc_reload_datetime=he(str(reload_datetime))))
+            for key in rd.keys():
+                val = rd[key]
+                s_ += """\
+        <tr>
+            <td>{from_}</td><td>{to_}</td><td class="ar">{user}</td><td>{date}</td>
+        </tr>
+"""\
+                    .format(from_=html_a(val.from_),  # type: ignore
+                            to_=he(val.to),        # type: ignore
+                            user=he(val.user),       # type: ignore
+                            date=he(str(val.date)),       # type: ignore
+                            )
+            s_ += h("""\
+    </tbody>
+</table>""")  # type: ignore
+            return s_
+
         esc_reload_info = he(
             ' (process signal %d (%s))' % (SIGNAL_RELOAD, SIGNAL_RELOAD)
         )
         esc_redirects_counter = obj_to_html(redirect_counter)
-        esc_redirects = redirects_to_html(self.redirects)
+        esc_redirects = redirects_to_html_table(self.redirects, reload_datetime)
         esc_files = obj_to_html(Redirect_Files_List)
         if note_admin:
             note_admin = htmls('\n    <div>\n') + note_admin + htmls('\n    </div>\n')  # type: ignore
@@ -899,15 +966,21 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<title>{esc_title}</title>
+    <meta charset="utf-8" />
+    <title>{esc_title}</title>
+    <style type="text/css">
+{css}
+    </style>
 </head>
 <body>
 <!-- begin status-page-file note -->{note}<!-- end status-page-file note -->
 <div>
-    <h3>Process Information:</h3>
+{esc_redirects}
+</div>
+<div>
+    <h3>Redirect Files Searched During an Reload{esc_reload_info}:</h3>
     <pre>
-{esc_overall}
+{esc_files}
     </pre>
 </div>
 <div>
@@ -916,29 +989,22 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
     <pre>
 {esc_redirects_counter}
     </pre>
-    <h3>Currently Loaded Redirects:</h3>
-    Last Reload Time {esc_reload_datetime}
+    <h3>Process Information:</h3>
     <pre>
-{esc_redirects}
-    </pre>
-</div>
-<div>
-    <h3>Redirect Files Searched During an Reload{esc_reload_info}:</h3>
-    <pre>
-{esc_files}
+{esc_overall}
     </pre>
 </div>
 </body>
 </html>\
 """
             .format(esc_title=esc_title,
-                    esc_overall=esc_overall,
+                    css=CSS,
                     note=note_admin,
-                    esc_redirects_counter=esc_redirects_counter,
-                    esc_reload_datetime=esc_reload_datetime,
                     esc_redirects=esc_redirects,
                     esc_reload_info=esc_reload_info,
-                    esc_files=esc_files)
+                    esc_files=esc_files,
+                    esc_redirects_counter=esc_redirects_counter,
+                    esc_overall=esc_overall)
         )
         self._write_html_doc(html_doc)
         return
@@ -959,13 +1025,18 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
 <head>
 <meta charset="utf-8"/>
 <title>{esc_title}</title>
+<style type="text/css">
+{css}
+</style>
 </head>
 <body>
 Reload request accepted at {esc_datetime}.
 </body>
 </html>\
 """
-            .format(esc_title=esc_title, esc_datetime=esc_datetime)
+            .format(esc_title=esc_title,
+                    css=CSS,
+                    esc_datetime=esc_datetime)
         )
         self._write_html_doc(html_doc)
         global reload_do
@@ -988,6 +1059,9 @@ Reload request accepted at {esc_datetime}.
 <head>
 <meta charset="utf-8"/>
 <title>{esc_title}</title>
+<style type="text/css">
+{css}
+</style>
 </head>
 <body>
 Redirect Path not found: <code>{esc_ppq}</code>
@@ -995,6 +1069,7 @@ Redirect Path not found: <code>{esc_ppq}</code>
 </html>\
 """
         .format(esc_title=esc_title,
+                css=CSS,
                 esc_ppq=esc_ppq)
         )
         self._write_html_doc(html_doc)
