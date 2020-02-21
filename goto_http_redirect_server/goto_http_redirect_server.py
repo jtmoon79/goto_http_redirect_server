@@ -907,29 +907,14 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
             return he(
                 json.dumps(obj, indent=2, ensure_ascii=False,
                            sort_keys=sort_keys, default=str)
-                # pprint.pformat(obj)
             )
 
-        def redirects_to_html(rd: Re_Entry_Dict) -> htmls:
-            """Convert Re_Entry_Dict linkable html"""
-            s_ = he('{\n')
-            for key in rd.keys():
-                val = rd[key]
-                s_ += he('  "') + html_a(key) + he('": [\n')  # type: ignore
-                s_ += he('    "') + html_a(val[0]) + he('",\n')  # type: ignore
-                s_ += he('    "%s",\n' % val[1])  # type: ignore
-                s_ += he('    "%s"\n' % val[2])  # type: ignore
-                s_ += he('  ]\n')  # type: ignore
-            s_ += he('\n}')  # type: ignore
-            return s_
-
-        def redirects_to_html_table(rd: Re_Entry_Dict, reload_datetime) \
+        def redirects_to_html_table(rd: Re_Entry_Dict, reload_datetime_) \
                 -> htmls:
             """Convert Re_Entry_Dict into linkable html table"""
-            h = htmls
-            esc_reload_datetime = he(cast(datetime.datetime, reload_datetime)
+            esc_reload_datetime = he(cast(datetime.datetime, reload_datetime_)
                                      .isoformat())
-            s_ = h("""\
+            s_ = """\
 <table>
     <caption>Currently Loaded Redirects (last reload {esc_reload_datetime})</caption>
     <thead>
@@ -938,7 +923,7 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
         </tr>
     </thead>
     <tbody>
-""".format(esc_reload_datetime=he(str(reload_datetime))))
+""".format(esc_reload_datetime=esc_reload_datetime)
             for key in rd.keys():
                 val = rd[key]
                 s_ += """\
@@ -946,15 +931,15 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
             <td>{from_}</td><td>{to_}</td><td class="ar">{user}</td><td>{date}</td>
         </tr>
 """\
-                    .format(from_=html_a(val.from_),  # type: ignore
-                            to_=he(val.to),        # type: ignore
-                            user=he(val.user),       # type: ignore
-                            date=he(str(val.date)),       # type: ignore
+                    .format(from_=html_a(val.from_),
+                            to_=he(val.to),
+                            user=he(val.user),
+                            date=he(str(val.date)),
                             )
-            s_ += h("""\
+            s_ += """\
     </tbody>
-</table>""")  # type: ignore
-            return s_
+</table>"""
+            return htmls(s_)
 
         esc_reload_info = he(
             ' (process signal %d (%s))' % (SIGNAL_RELOAD, SIGNAL_RELOAD)
