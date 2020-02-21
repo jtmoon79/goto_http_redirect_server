@@ -736,11 +736,11 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
         The RedirectEntry 'To' can use string.Template syntax to replace with
         URI parts from pr1
         For example, given RedirectEntry supplied at start-time `pr1`
-           /b	http://bugzilla.corp.local/search/bug.cgi?id=${query}	bob	2019-01-01 11:30:00
+           /b	http://bug-tracker.megacorp.local/search/bug.cgi?id=${query}	bob	2019-01-01 11:30:00
         A user incoming GET request for URL `pr2`
            'http://goto/b?123
         processed by `combine_parseresult` would become URL
-           'http://bugzilla.corp.local/search/bug.cgi?id=123'
+           'http://bug-tracker.megacorp.local/search/bug.cgi?id=123'
 
         Return a URL suitable for HTTP Header 'To'.
 
@@ -1507,7 +1507,7 @@ process or HTTP requesting the RELOAD_PATH.
                         action='append',
                         help='A single redirect entry of "from path" and'
                              ' "to URL" fields. For example,'
-                             ' --from-to "/hr" "http://human-resources.mycorp.local/login"',
+                             ' --from-to "/hr" "http://human-resources.megacorp.local/login"',
                         default=list())
 
     pgroup = parser.add_argument_group(title='Network Options')
@@ -1595,7 +1595,7 @@ About Redirect Entries:
   "from path", "to URL", "added by user", "added on datetime".
   For example,
 
-    /hr{fd}http://human-resources.mycorp.local/login{fd}bob{fd}2019-09-07 12:00:00
+    /hr{fd}http://human-resources.megacorp.local/login{fd}bob{fd}2019-09-07 12:00:00
 
   The last two fields, "added by user" and "added on datetime", are intended
   for record-keeping within an organization.
@@ -1607,7 +1607,7 @@ About Redirect Entries:
   A redirect will combine the various incoming URI parts.
   For example, given redirect entry:
 
-    /b{fd}http://bug-tracker.mycorp.local/view.cgi{fd}bob{fd}2019-09-07 12:00:00
+    /b{fd}http://bug-tracker.megacorp.local/view.cgi{fd}bob{fd}2019-09-07 12:00:00
 
   And incoming GET or HEAD request:
 
@@ -1615,7 +1615,7 @@ About Redirect Entries:
 
   will result in a redirect URL:
 
-    http://bug-tracker.mycorp.local/view.cgi?id=123
+    http://bug-tracker.megacorp.local/view.cgi?id=123
 
 Redirect Entry Template Syntax ("dynamic" URLs):
 
@@ -1633,7 +1633,7 @@ Redirect Entry Template Syntax ("dynamic" URLs):
 
   So then given redirect entry:
 
-    /b{fd}http://bug-tracker.mycorp.local/view.cgi?id=${query}{fd}bob{fd}2019-09-07 12:00:00
+    /b{fd}http://bug-tracker.megacorp.local/view.cgi?id=${query}{fd}bob{fd}2019-09-07 12:00:00
 
   and the incoming GET or HEAD request:
 
@@ -1642,7 +1642,7 @@ Redirect Entry Template Syntax ("dynamic" URLs):
   Substring '123' is the 'query' part of the ParseResult. The resultant redirect
   URL would become:
 
-    http://bug-tracker.mycorp.local/view.cgi?id=123
+    http://bug-tracker.megacorp.local/view.cgi?id=123
 
 Redirect Entry Required Request Modifiers:
 
@@ -1652,8 +1652,8 @@ Redirect Entry Required Request Modifiers:
 
   Given redirect entries:
 
-    /b?{fd}http://bug-tracker.mycorp.local/view.cgi?id=${query}{fd}bob{fd}2019-09-07 12:00:00
-    /b{fd}http://bug-tracker.mycorp.local/main{fd}bob{fd}2019-09-07 12:00:00
+    /b?{fd}http://bug-tracker.megacorp.local/view.cgi?id=${query}{fd}bob{fd}2019-09-07 12:00:00
+    /b{fd}http://bug-tracker.megacorp.local/main{fd}bob{fd}2019-09-07 12:00:00
 
   and the incoming GET or HEAD request:
 
@@ -1661,7 +1661,7 @@ Redirect Entry Required Request Modifiers:
 
   This will choose the first Redirect Entry and return 'Location' header
 
-    http://bug-tracker.mycorp.local/view.cgi?id=123
+    http://bug-tracker.megacorp.local/view.cgi?id=123
 
   Whereas the incoming GET or HEAD request:
 
@@ -1669,7 +1669,7 @@ Redirect Entry Required Request Modifiers:
 
   This will choose the second Redirect Entry and return 'Location' header
 
-    http://bug-tracker.mycorp.local/main
+    http://bug-tracker.megacorp.local/main
 
   The example combination sends a basic request for '/b' to some static page and
   a particular query request '/b?123' to a particular query path.
@@ -1681,7 +1681,7 @@ Redirect Entry Required Request Modifiers:
 
   Given redirect entries:
 
-    /b?{fd}http://bug-tracker.mycorp.local/view.cgi?id=${query}{fd}bob{fd}2019-09-07 12:00:00
+    /b?{fd}http://bug-tracker.megacorp.local/view.cgi?id=${query}{fd}bob{fd}2019-09-07 12:00:00
 
   and the incoming GET or HEAD request:
 

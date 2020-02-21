@@ -39,8 +39,8 @@ Trivial to install and run.  Only uses Python built-in modules.  Super handy �
    Fields are "_from path_", "_to URL_", "_added by user_", and "_added on datetime_".<br />
    For example, given a file `./redirects1.csv`
 
-       /bug	https://bugtracker.mycorp.local/view.cgi=${query}	alice	2019-08-10 00:05:10
-       /hr	http://human-resources.mycorp.local/login	bob	2018-07-11 22:15:10
+       /bug	https://bugtracker.megacorp.local/view.cgi=${query}	alice	2019-08-10 00:05:10
+       /hr	http://human-resources.megacorp.local/login	bob	2018-07-11 22:15:10
        /aws	https://us-west-2.console.aws.amazon.com/console/home?region=us-west-2#	carl	2019-01-05 12:35:10
 
 2. Install (pick one)
@@ -98,7 +98,7 @@ From your browser, browse to a redirect path!  For example, given a network host
 `goto` running `goto_http_redirect_server` on port `80`, and given the
 example redirects file `./redirects1.csv` above, then<br />
 in your browser, type **`goto/hr⏎`**. Your browser will end up at
-**`http://human-resources.mycorp.local/login`** 😆‼<br />
+**`http://human-resources.megacorp.local/login`** 😆‼<br />
 Try  **`goto/bug?456⏎`**… shows bug 456 😝❗❗
 
 ## Gotchas
@@ -196,7 +196,7 @@ No service downtime!
                             datetime" separated by the FIELD_DELIMITER character.
       --from-to from to     A single redirect entry of "from path" and "to URL"
                             fields. For example, --from-to "/hr" "http://human-
-                            resources.mycorp.local/login"
+                            resources.megacorp.local/login"
 
     Network Options:
       --ip IP, -i IP        IP interface to listen on. Default is 0.0.0.0 .
@@ -251,7 +251,7 @@ No service downtime!
       "from path", "to URL", "added by user", "added on datetime".
       For example,
 
-        /hr http://human-resources.mycorp.local/login       bob     2019-09-07 12:00:00
+        /hr http://human-resources.megacorp.local/login     bob     2019-09-07 12:00:00
 
       The last two fields, "added by user" and "added on datetime", are intended
       for record-keeping within an organization.
@@ -263,7 +263,7 @@ No service downtime!
       A redirect will combine the various incoming URI parts.
       For example, given redirect entry:
 
-        /b  http://bug-tracker.mycorp.local/view.cgi        bob     2019-09-07 12:00:00
+        /b  http://bug-tracker.megacorp.local/view.cgi      bob     2019-09-07 12:00:00
 
       And incoming GET or HEAD request:
 
@@ -271,7 +271,7 @@ No service downtime!
 
       will result in a redirect URL:
 
-        http://bug-tracker.mycorp.local/view.cgi?id=123
+        http://bug-tracker.megacorp.local/view.cgi?id=123
 
     Redirect Entry Template Syntax ("dynamic" URLs):
 
@@ -289,7 +289,7 @@ No service downtime!
 
       So then given redirect entry:
 
-        /b  http://bug-tracker.mycorp.local/view.cgi?id=${query}    bob     2019-09-07 12:00:00
+        /b  http://bug-tracker.megacorp.local/view.cgi?id=${query}  bob     2019-09-07 12:00:00
 
       and the incoming GET or HEAD request:
 
@@ -298,7 +298,7 @@ No service downtime!
       Substring '123' is the 'query' part of the ParseResult. The resultant redirect
       URL would become:
 
-        http://bug-tracker.mycorp.local/view.cgi?id=123
+        http://bug-tracker.megacorp.local/view.cgi?id=123
 
     Redirect Entry Required Request Modifiers:
 
@@ -308,8 +308,8 @@ No service downtime!
 
       Given redirect entries:
 
-        /b? http://bug-tracker.mycorp.local/view.cgi?id=${query}    bob     2019-09-07 12:00:00
-        /b  http://bug-tracker.mycorp.local/main    bob     2019-09-07 12:00:00
+        /b? http://bug-tracker.megacorp.local/view.cgi?id=${query}  bob     2019-09-07 12:00:00
+        /b  http://bug-tracker.megacorp.local/main  bob     2019-09-07 12:00:00
 
       and the incoming GET or HEAD request:
 
@@ -317,7 +317,7 @@ No service downtime!
 
       This will choose the first Redirect Entry and return 'Location' header
 
-        http://bug-tracker.mycorp.local/view.cgi?id=123
+        http://bug-tracker.megacorp.local/view.cgi?id=123
 
       Whereas the incoming GET or HEAD request:
 
@@ -325,7 +325,7 @@ No service downtime!
 
       This will choose the second Redirect Entry and return 'Location' header
 
-        http://bug-tracker.mycorp.local/main
+        http://bug-tracker.megacorp.local/main
 
       The example combination sends a basic request for '/b' to some static page and
       a particular query request '/b?123' to a particular query path.
@@ -337,7 +337,7 @@ No service downtime!
 
       Given redirect entries:
 
-        /b? http://bug-tracker.mycorp.local/view.cgi?id=${query}    bob     2019-09-07 12:00:00
+        /b? http://bug-tracker.megacorp.local/view.cgi?id=${query}  bob     2019-09-07 12:00:00
 
       and the incoming GET or HEAD request:
 
@@ -362,7 +362,7 @@ No service downtime!
       a reload of any files passed via --redirects.  This allows live updating of
       redirect information without disrupting the running server process.
       On Unix, the signal is SIGUSR1.  On Windows, the signal is SIGBREAK.
-      On this system, the signal is Signals.SIGBREAK (21).
+      On this system, the signal is Signals.SIGUSR1 (10).
       On Unix, use program `kill`.  On Windows, use program `windows-kill.exe`.
 
       A reload of redirect files may also be requested via passed URL path
@@ -373,7 +373,7 @@ No service downtime!
       Options --status-path and --reload-path may be passed paths to obscure access
       from unauthorized users. e.g.
 
-          --status-path '/bde2e9eb-4632-4acb-b935-f96bf62e9df8'
+          --status-path '/76d90f4a-3b68-42c2-9e2a-1b2ecb282be2'
 
     About this program:
 
