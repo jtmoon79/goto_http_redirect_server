@@ -645,9 +645,17 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
          redirect_handler_factory by call to set_c
     """
 
+    # override BaseHTTPRequestHandler.protocol_version to enable HTTP/1.1
+    # behavior (because HTTP/1.0 is so old)
+    # https://github.com/python/cpython/blob/5c02a39a0b31a330e06b4d6f44835afb205dc7cc/Lib/http/server.py#L613-L615
+    protocol_version = "HTTP/1.1"
+
     Header_Server_Host = ('Redirect-Server-Host', HOSTNAME)
     Header_Server_Version = ('Redirect-Server-Version', __version__)
+    # see https://tools.ietf.org/html/rfc2616#page-124
     Header_ContentType_html = ('Content-Type', 'text/html; charset=utf-8')
+    # see https://tools.ietf.org/html/rfc2616#section-14.10
+    Header_Connection_close = ('Connection', 'close')
     __count = 0
 
     redirects = None  # type: Re_Entry_Dict
@@ -709,8 +717,11 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
         html_docb = bytes(html_doc,
                           encoding='utf-8',
                           errors='xmlcharrefreplace')
+        self.send_header(*self.Header_Server_Host)
+        self.send_header(*self.Header_Server_Version)
         self.send_header('Content-Length', str(len(html_docb)))
-        self.send_header(*RedirectHandler.Header_ContentType_html)
+        self.send_header(*self.Header_ContentType_html)
+        self.send_header(*self.Header_Connection_close)
         self.end_headers()
         self.wfile.write(html_docb)
         return
@@ -877,8 +888,6 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
                          int(http_sc), http_sc.phrase,
                          loglevel=logging.INFO)
         self.send_response(http_sc)
-        self.send_header(*self.Header_Server_Host)
-        self.send_header(*self.Header_Server_Version)
         he = html_escape  # abbreviate
 
         # create the html body
@@ -1003,8 +1012,6 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
                          loglevel=logging.INFO)
         esc_datetime = html_escape(datetime_now().isoformat())
         self.send_response(http_sc)
-        self.send_header(*self.Header_Server_Host)
-        self.send_header(*self.Header_Server_Version)
         esc_title = html_escape('%s reload' % PROGRAM_NAME)
         html_doc = htmls("""\
 <!DOCTYPE html>
@@ -1036,8 +1043,6 @@ Reload request accepted at {esc_datetime}.
         """a Redirect request was not found, return some HTML to the user"""
 
         self.send_response(http.HTTPStatus.NOT_FOUND)
-        self.send_header(*self.Header_Server_Host)
-        self.send_header(*self.Header_Server_Version)
         esc_title = html_escape("Not Found - '%s'" % ppqpr.path[:64])
         esc_ppq = html_escape(ppq)
         html_doc = htmls("""\
@@ -1066,6 +1071,8 @@ Redirect Path not found: <code>{esc_ppq}</code>
         self.send_response(http.HTTPStatus.NOT_FOUND)
         self.send_header(*self.Header_Server_Host)
         self.send_header(*self.Header_Server_Version)
+        self.send_header(*self.Header_ContentType_html)  # https://tools.ietf.org/html/rfc2616#page-124
+        self.send_header(*self.Header_Connection_close)
         self.end_headers()
         return
 
@@ -1073,6 +1080,8 @@ Redirect Path not found: <code>{esc_ppq}</code>
         self.send_response(http.HTTPStatus.FOUND)
         self.send_header(*self.Header_Server_Host)
         self.send_header(*self.Header_Server_Version)
+        self.send_header(*self.Header_ContentType_html)  # https://tools.ietf.org/html/rfc2616#page-124
+        self.send_header(*self.Header_Connection_close)
         self.end_headers()
         return
 
@@ -1126,6 +1135,7 @@ Redirect Path not found: <code>{esc_ppq}</code>
             log.exception('header "Redirect-Created-By" set to fallback')
             self.send_header('Redirect-Created-By', 'Error Encoding User')
         self.send_header('Redirect-Created-Date', dt.isoformat())
+        self.send_header(*self.Header_Connection_close)
         # TODO: https://tools.ietf.org/html/rfc2616#section-10.3.2
         #       the entity of the response SHOULD contain a short hypertext
         #       note with a hyperlink to the new URI(s)
