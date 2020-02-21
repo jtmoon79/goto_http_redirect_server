@@ -647,6 +647,7 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
 
     Header_Server_Host = ('Redirect-Server-Host', HOSTNAME)
     Header_Server_Version = ('Redirect-Server-Version', __version__)
+    Header_ContentType_html = ('Content-Type', 'text/html; charset=utf-8')
     __count = 0
 
     redirects = None  # type: Re_Entry_Dict
@@ -709,6 +710,7 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
                           encoding='utf-8',
                           errors='xmlcharrefreplace')
         self.send_header('Content-Length', str(len(html_docb)))
+        self.send_header(*RedirectHandler.Header_ContentType_html)
         self.end_headers()
         self.wfile.write(html_docb)
         return
