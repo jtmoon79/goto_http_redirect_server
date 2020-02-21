@@ -457,7 +457,7 @@ tbody tr:nth-child(even) {
 #
 
 # SOCKET_LISTEN_BACKLOG is eventually passed to socket.listen
-SOCKET_LISTEN_BACKLOG = 30  # type: int
+SOCKET_LISTEN_BACKLOG = 31  # type: int
 STATUS_PAGE_PATH_DEFAULT = '/status'  # type: str
 PATH_FAVICON = '/favicon.ico'  # type: str
 REDIRECT_PATHS_NOT_ALLOWED = (PATH_FAVICON,)  # type: typing.Tuple[str]
