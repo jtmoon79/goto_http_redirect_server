@@ -997,7 +997,7 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
         if note_admin:
             note_admin = htmls('\n    <div>\n') + note_admin + htmls('\n    </div>\n')  # type: ignore
         html_doc = htmls(
-r"""<!DOCTYPE html>
+            r"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -1058,8 +1058,8 @@ r"""<!DOCTYPE html>
         esc_datetime = html_escape(datetime_now().isoformat())
         self.send_response(http_sc)
         esc_title = html_escape('%s reload' % PROGRAM_NAME)
-        html_doc = htmls("""\
-<!DOCTYPE html>
+        html_doc = htmls(
+            r"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
@@ -1077,7 +1077,8 @@ Reload request accepted at {esc_datetime}.
 """
             .format(esc_title=esc_title,
                     css=CSS,
-                    esc_datetime=esc_datetime)
+                    esc_datetime=esc_datetime
+                    )
         )
         self._write_html_doc(html_doc)
         global reload_do
