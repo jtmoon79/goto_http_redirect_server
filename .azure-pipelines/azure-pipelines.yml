@@ -150,8 +150,7 @@ stages:
               script: |
                 set -eux
                 python --version
-                python -m pip --version
-                python -m pip install --verbose --user -e '.[development-pytest]'
+                python -m pip install --user -e '.[development-pytest]'
                 python -m pip list --disable-pip-version-check --no-index -vvv
                 chmod -v +x -- ./tools/pytest.sh
                 ./tools/pytest.sh
