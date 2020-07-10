@@ -462,7 +462,7 @@ tbody tr:nth-child(even) {
 #   (http://archive.ph/lvhUC)
 #   project file LICENSE-www.kryogenix.org
 # Code in this project, goto_http_redirect_server, is licensed under the
-# terms of Apache License version 2.0 outlined in file "LICENSE". The Javascript
+# terms of MIT License version outlined in file "LICENSE". The Javascript
 # code copied from www.kryogenix.org is not subject that license.
 # The Javascript code copied from www.kryogenix.org is subject to the
 # "The MIT Licence, for code from kryogenix.org" license.

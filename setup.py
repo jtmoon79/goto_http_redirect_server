@@ -197,7 +197,7 @@ setup(
     description=__doc__.splitlines()[0],
     long_description_content_type='text/markdown',
     long_description=long_description,
-    license='Apache License 2.0 (Apache-2.0)',
+    license='MIT License',
     install_requires=[],
     setup_requires=['wheel'],
     extras_require={
@@ -242,7 +242,7 @@ setup(
         'Environment :: Console',
         'Operating System :: OS Independent',
         'Natural Language :: English',
-        'License :: OSI Approved :: Apache Software License',
+        'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3.5',
         'Topic :: Internet :: WWW/HTTP :: HTTP Servers'
     ],
