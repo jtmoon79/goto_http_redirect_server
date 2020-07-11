@@ -510,7 +510,6 @@ URI_KEYWORDS_REPL = ('path', 'params', 'query', 'fragment')  # type: Iter_str
 SIGNAL_RELOAD_UNIX = 'SIGUSR1'  # type: str
 SIGNAL_RELOAD_WINDOWS = 'SIGBREAK'  # type: str
 # signal to cause --redirects file reload
-_ = signal.SIGUSR1
 try:
     # Unix (not defined on Windows)
     SIGNAL_RELOAD = signal.SIGUSR1
