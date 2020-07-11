@@ -125,6 +125,7 @@ stages:
                 python -m pip install --user -e '.[development-mypy]'
                 python -m pip list --disable-pip-version-check --no-index -vvv
                 chmod -v +x -- "${GOTO_PATH_MYPY}"
+                python -c "import signal, pprint; pprint.pprint(dir(signal));"
                 "${GOTO_PATH_MYPY}"
       - job: job_pytest
         displayName: 'job: «pytest»'
