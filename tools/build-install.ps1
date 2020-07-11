@@ -32,8 +32,10 @@ function Get-Command-Safely {
 
 #
 # make a good effort to get the path to the local python 3 installation
+# if $PTYHON is set, assume it's the PYTHON interpreter
 #
-Foreach ($pythonpath in @("$env:PYTHON",  # if $PTYHON is set, assume it's the PYTHON interpreter
+Foreach ($pythonpath in @("$PYTHON",
+                          "$env:PYTHON",
                           'python3.7',
                           'python3.7.exe',
                           'C:\Windows\py.exe',
@@ -88,13 +90,16 @@ if (-not (Test-Path-Safely $cv_whl)) {
 & $PYTHON -m twine check $cv_whl
 if ($LASTEXITCODE) { exit $LASTEXITCODE }
 
+#
 # install the wheel (must be done outside the project directory)
+#
+
+# add user.site to $env:PATH so it runs and avoids PATH warning
+.\tools\ci\PATH-add-pip-site.ps1
+
 Push-Location ..
 
-& $PYTHON -m pip install -v $cv_whl
-if ($LASTEXITCODE) { exit $LASTEXITCODE }
-
-& $PACKAGE_NAME --version
+& $PYTHON -m pip install --force-reinstall --user --disable-pip-version-check -v $cv_whl
 if ($LASTEXITCODE) { exit $LASTEXITCODE }
 
 #
@@ -116,12 +121,12 @@ if ($LASTEXITCODE) { exit $LASTEXITCODE }
 Write-Host "
 To uninstall remaining package:
 
-        $PYTHON -m pip uninstall -y '$PACKAGE_NAME'
+        & `$PYTHON -m pip uninstall -y '$PACKAGE_NAME'
 "
 
 Write-Host "Success!
 
 To upload to pypi:
 
-    $PYTHON -m twine upload --verbose $cv_whl
+        & `$PYTHON -m twine upload --verbose $cv_whl
 "

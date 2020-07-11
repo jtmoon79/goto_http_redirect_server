@@ -104,7 +104,7 @@ fi
         user_arg=''
     fi
     set -x
-    ${PYTHON} -m pip install ${user_arg} --verbose "${cv_whl}"
+    ${PYTHON} -m pip install --disable-pip-version-check ${user_arg} --verbose "${cv_whl}"
 )
 
 # make sure to attempt uninstall if asked
