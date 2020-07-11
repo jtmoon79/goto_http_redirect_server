@@ -512,9 +512,11 @@ SIGNAL_RELOAD_WINDOWS = 'SIGBREAK'  # type: str
 # signal to cause --redirects file reload
 _ = signal.SIGUSR1
 try:
-    SIGNAL_RELOAD = signal.SIGUSR1  # Unix (not defined on Windows)
+    # Unix (not defined on Windows)
+    SIGNAL_RELOAD = signal.SIGUSR1
 except AttributeError:
-    SIGNAL_RELOAD = signal.SIGBREAK  # Windows (not defined on some Unix)
+    # Windows (not defined on some Unix)
+    SIGNAL_RELOAD = signal.SIGBREAK  # type: ignore # in Unix, mypy attempts import and fails
 
 # redirect file things
 FIELD_DELIMITER_DEFAULT = Re_Field_Delimiter('\t')  # type: Re_Field_Delimiter
