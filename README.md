@@ -86,6 +86,10 @@ Trivial to install and run.  Only uses Python built-in modules.  Super handy ðŸ˜
 
         goto_http_redirect_server --redirects ./redirects1.csv
 
+    or run as a module
+
+        python -m goto_http_redirect_server --redirects ./redirects1.csv
+
     Requires at least Python version 3.5.2.
 
 ## Install systemd Service
