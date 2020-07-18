@@ -251,6 +251,8 @@ setup(
              'shorturls url-shortener',
     python_requires='>=3.5.2',
     packages=['goto_http_redirect_server'],
+    # enables `python -m goto-http-redirect-server`
+    py_modules=['goto-http-redirect-server'],
     entry_points={
         'console_scripts': [
             'goto_http_redirect_server=goto_http_redirect_server.goto_http_redirect_server:main',
