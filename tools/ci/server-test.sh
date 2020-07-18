@@ -16,17 +16,27 @@ set -u
 set -o pipefail
 
 readonly PROGRAM_NAME='goto_http_redirect_server'
+readonly PROGRAM_NAME2='goto-http-redirect-server'
 readonly LISTEN_IP='127.0.0.1'
 readonly PORT=55923  # hopefully not in-use!
 readonly URL="http://${LISTEN_IP}:${PORT}"
 readonly PYTHON=${PYTHON-python}
 
 set -x
+
+# test necessary programs are runnable
 curl --version  # note curl, fail sooner if not installed
 which "${PROGRAM_NAME}"
-"${PROGRAM_NAME}" --version
 "${PYTHON}" --version
+
+# test invocation via program name
+"${PROGRAM_NAME}" --version
+# test invocation via module name #33
 "${PYTHON}" -m "${PROGRAM_NAME}" --version
+# test invocation via module name (with dashes) #35
+"${PYTHON}" -m "${PROGRAM_NAME2}" --version
+
+# test basic server
 "${PROGRAM_NAME}" --debug \
     --shutdown 8 \
     --ip "${LISTEN_IP}" \
