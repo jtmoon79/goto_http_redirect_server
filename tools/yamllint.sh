@@ -11,9 +11,12 @@ readonly YAMLCONFIG=./.config/yamllint.yml
 
 yamllint --version
 
-for yaml in $(find -maxdepth 3 -type f \( -name '*.yaml' -or -name '*.yml' \)); do
-    (
-        set -x 
-        yamllint --config-file "${YAMLCONFIG}" "${yaml}" "${@}"
-    )
-done
+set -x
+
+exec \
+    yamllint \
+        --config-file "${YAMLCONFIG}" \
+        "./.azure-pipelines/azure-pipelines.yml" \
+        "./.circleci/config.yml" \
+        "./.config/yamllint.yml" \
+        "${@}"
