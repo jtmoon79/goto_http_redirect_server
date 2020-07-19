@@ -4,7 +4,6 @@
 [![CircleCI Build Status](https://circleci.com/gh/jtmoon79/goto_http_redirect_server.svg?style=svg)](https://circleci.com/gh/jtmoon79/goto_http_redirect_server)
 [![Azure Build Status](https://dev.azure.com/jtmmoon/goto_http_redirect_server/_apis/build/status/jtmoon79.goto_http_redirect_server?branchName=master)](https://dev.azure.com/jtmmoon/goto_http_redirect_server/_build/latest?definitionId=1&branchName=master)
 [![pytest-cov Code Coverage](https://img.shields.io/azure-devops/coverage/jtmmoon/goto_http_redirect_server/1)](https://dev.azure.com/jtmmoon/goto_http_redirect_server/_build?definitionId=1&_a=summary)
-[![Requirements Status](https://requires.io/github/jtmoon79/goto_http_redirect_server/requirements.svg?branch=master)](https://requires.io/github/jtmoon79/goto_http_redirect_server/requirements/?branch=master)
 [![PyPI version](https://badge.fury.io/py/goto-http-redirect-server.svg)](https://badge.fury.io/py/goto-http-redirect-server)
 [![Commits since](https://img.shields.io/github/commits-since/jtmoon79/goto_http_redirect_server/latest.svg)](https://img.shields.io/github/commits-since/jtmoon79/goto_http_redirect_server/latest.svg)
 [![Python versions](https://img.shields.io/pypi/pyversions/goto-http-redirect-server.svg?longCache=True)](https://pypi.org/pypi/goto-http-redirect-server/)
