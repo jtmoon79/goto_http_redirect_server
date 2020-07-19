@@ -177,11 +177,11 @@ class Re_EntryType(enum.IntEnum):
         if typ == cls._:      # '/a'
             return cls._P, cls._Q, cls._PQ
         elif typ == cls._P:   # '/a;p'
-            return cls._,     # '/a'
-        elif typ == cls._PQ:   # '/a;p?q'
-            return cls._,      # '/a'
-        elif typ == cls._Q:  # '/a?q'
-            return cls._,    # '/a'
+            return (cls._,)   # '/a'
+        elif typ == cls._PQ:  # '/a;p?q'
+            return (cls._,)   # '/a'
+        elif typ == cls._Q:   # '/a?q'
+            return (cls._,)   # '/a'
         # XXX: Disable Path Required Request Modifier
         # elif typ == cls.P:    # '/a/b'
         #     return cls._,     # '/a'
@@ -191,10 +191,11 @@ class Re_EntryType(enum.IntEnum):
         #     return cls._,     #
         # elif typ == cls.PQ:   # '/?'
         #     return cls._,     #
+
         raise ValueError('unmatched type value %s' % typ)
 
     @classmethod
-    def getEntryType_ParseResult(cls, ppq: str, pr: ParseResult):
+    def getEntryType_ParseResult(cls, _: str, pr: ParseResult):
         # TODO: urlparse does not distinguish empty parts and non-existent parts
         #       using empty string and None.
         #       e.g. parse.urlparse('/path?') is parse.urlparse('/path')
@@ -512,7 +513,7 @@ SIGNAL_RELOAD_WINDOWS = 'SIGBREAK'  # type: str
 # signal to cause --redirects file reload
 try:
     # Unix (not defined on Windows)
-    SIGNAL_RELOAD = signal.SIGUSR1
+    SIGNAL_RELOAD = signal.SIGUSR1  # type: ignore # in Windows, mypy attempts import and fails
 except AttributeError:
     # Windows (not defined on some Unix)
     SIGNAL_RELOAD = signal.SIGBREAK  # type: ignore # in Unix, mypy attempts import and fails
@@ -555,7 +556,7 @@ NOTE_ADMIN = htmls('')  # type: htmls
 #
 
 
-class StrDelay(object):
+class StrDelay():
     """
     Delayed evaluation of object.__str__.
 
@@ -583,6 +584,7 @@ class StrDelay(object):
 
 
 def html_escape(s_: htmls_str) -> htmls:
+    """transform a Python string into equivalent HTML-displayed string"""
     return htmls(
         html.escape(s_)
             .replace('\n', '<br />\n')
@@ -764,7 +766,6 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
         self.send_header(*self.Header_Connection_close)
         self.end_headers()
         self.wfile.write(html_docb)
-        return
 
     @staticmethod
     def combine_parseresult(pr1: ParseResult, pr2: ParseResult) -> str:
@@ -1050,7 +1051,6 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
                     esc_overall=esc_overall)
         )
         self._write_html_doc(html_doc)
-        return
 
     def do_GET_reload(self) -> None:
         http_sc = http.HTTPStatus.ACCEPTED  # HTTP Status Code
@@ -1085,7 +1085,6 @@ Reload request accepted at {esc_datetime}.
         self._write_html_doc(html_doc)
         global reload_do
         reload_do = True
-        return
 
     def do_GET_redirect_NOT_FOUND(self,
                                   ppq: str,
@@ -1115,7 +1114,6 @@ Redirect Path not found: <code>{esc_ppq}</code>
                 esc_ppq=esc_ppq)
         )
         self._write_html_doc(html_doc)
-        return
 
     def do_HEAD_redirect_NOT_FOUND(self) -> None:
         self.send_response(http.HTTPStatus.NOT_FOUND)
@@ -1124,7 +1122,6 @@ Redirect Path not found: <code>{esc_ppq}</code>
         self.send_header(*self.Header_ContentType_html)  # https://tools.ietf.org/html/rfc2616#page-124
         self.send_header(*self.Header_Connection_close)
         self.end_headers()
-        return
 
     def do_HEAD_nothing(self) -> None:
         self.send_response(http.HTTPStatus.FOUND)
@@ -1133,7 +1130,6 @@ Redirect Path not found: <code>{esc_ppq}</code>
         self.send_header(*self.Header_ContentType_html)  # https://tools.ietf.org/html/rfc2616#page-124
         self.send_header(*self.Header_Connection_close)
         self.end_headers()
-        return
 
     def _do_VERB_redirect(self,
                           ppq: str,
@@ -1145,8 +1141,8 @@ Redirect Path not found: <code>{esc_ppq}</code>
         HEAD requests must not have a body (among many other differences
         in GET and HEAD behavior).
         """
-        entry = RedirectHandler.query_match_finder(ppq, ppqpr, redirects_)
-        if entry is None:
+        entry_ = RedirectHandler.query_match_finder(ppq, ppqpr, redirects_)
+        if entry_ is None:
             self.log_message(
                 'no redirect found for incoming (%s), returning %s (%s)',
                 ppq,
@@ -1158,9 +1154,9 @@ Redirect Path not found: <code>{esc_ppq}</code>
                 return self.do_GET_redirect_NOT_FOUND(ppq, ppqpr)
             elif cmd == 'HEAD':
                 return self.do_HEAD_redirect_NOT_FOUND()
-            else:
-                log.error('Unhandled command "%s"', cmd)
-                return
+            log.error('Unhandled command "%s"', cmd)
+            return
+        entry = entry_  # type: ignore
 
         # merge RedirectEntry URI parts with incoming requested URI parts
         to = self.combine_parseresult(entry.to_pr, ppqpr)
@@ -1193,7 +1189,6 @@ Redirect Path not found: <code>{esc_ppq}</code>
         # Do Not Write HTTP Content
         count_key = '(%s) → (%s)' % (ppqpr.path, to)
         redirect_counter[count_key] += 1
-        return
 
     def _do_VERB_log(self):
         """simple helper"""
@@ -1230,7 +1225,6 @@ Redirect Path not found: <code>{esc_ppq}</code>
             return
 
         self._do_VERB_redirect(ppq, ppqpr, self.redirects)
-        return
 
     def do_HEAD(self) -> None:
         """
@@ -1252,7 +1246,6 @@ Redirect Path not found: <code>{esc_ppq}</code>
             return
 
         self._do_VERB_redirect(ppq, ppqpr, self.redirects)
-        return
 
 
 def redirect_handler_factory(redirects: Re_Entry_Dict,
@@ -1833,6 +1826,9 @@ About this program:
 
 
 def main() -> None:
+    """
+    default module entry point
+    """
     ip, \
         port, \
         log_debug, \
