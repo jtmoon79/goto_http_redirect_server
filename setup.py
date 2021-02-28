@@ -53,6 +53,10 @@ PACKAGE_DATA = GOTO_SERVICE_FILES + [
 ]
 
 
+# Python version >3.5 ?
+PYVER_GT35 = sys.version_info.major >= 3 and sys.version_info.minor > 5
+
+
 class GotoSetupCommand(Command, abc.ABC):
     """
     Base class for goto_http_redirect_server extra commands.
@@ -207,7 +211,7 @@ setup(
         'development': [
             'flake8==3.8',
             'mypy==0.812',
-            'pytest==6.2',
+            'pytest==6.2' if PYVER_GT35 else 'pytest==6.1',
             'pytest-cov==2.11',
             'pytest-timeout==1.4',
             'yamllint==1.26',
@@ -220,7 +224,7 @@ setup(
             'mypy==0.812',
         ],
         'development-pytest': [
-            'pytest==6.2',
+            'pytest==6.2' if PYVER_GT35 else 'pytest==6.1',
             'pytest-cov==2.11',
             'pytest-timeout==1.4',
         ],
