@@ -35,7 +35,7 @@ from goto_http_redirect_server.goto_http_redirect_server import (
     html_a,
     htmls,
     print_debug,
-    fromisoformat,
+    dts_to_datetime,
     to_ParseResult,
     redirect_handler_factory,
     RedirectHandler,
@@ -196,18 +196,21 @@ class Test_Functions(object):
     @pytest.mark.parametrize(
         'dts, expected',
         (
-            # these two cases will differ from Python 3.5 and subsequent Python versions
-            #pytest.param('2001-01-02 03 04 05', datetime(year=2001, month=1, day=2, hour=3, minute=4, second=5)),
-            #pytest.param('2002/01/02 03:04:05', datetime(year=2002, month=1, day=2, hour=3, minute=4, second=5)),
-            pytest.param('2003-01-02 03:04:05', datetime(year=2003, month=1, day=2, hour=3, minute=4, second=5)),
-            pytest.param('2004-01-02T03:04:05', datetime(year=2004, month=1, day=2, hour=3, minute=4, second=5)),
+            pytest.param('2001-01-02 03:04:05', datetime(year=2001, month=1, day=2, hour=3, minute=4, second=5)),
+            pytest.param('2002-01-02T03:04:05', datetime(year=2002, month=1, day=2, hour=3, minute=4, second=5)),
+            pytest.param('2003-01-02_03:04:05', datetime(year=2003, month=1, day=2, hour=3, minute=4, second=5)),
+            pytest.param('2004-01-02 03:04', datetime(year=2004, month=1, day=2, hour=3, minute=4)),
+            pytest.param('2005-01-02_03:04', datetime(year=2005, month=1, day=2, hour=3, minute=4)),
+            pytest.param('2006/01/02_03:04', datetime(year=2006, month=1, day=2, hour=3, minute=4)),
+            pytest.param('2007-01-02', datetime(year=2007, month=1, day=2)),
+            pytest.param('2008/01/02', datetime(year=2008, month=1, day=2)),
             pytest.param('BAD STRING', NOW),
         )
     )
-    def test_fromisoformat(self,
+    def test_dts_to_datetime(self,
                            dts: str,
                            expected: datetime):
-        actual = fromisoformat(dts)
+        actual = dts_to_datetime(dts)
         assert  actual == expected
 
     @pytest.mark.parametrize(

@@ -59,6 +59,19 @@ network.
 USER_DEFAULT = getpass.getuser()
 TIME_START = time.time()
 DATETIME_START = datetime.datetime.fromtimestamp(TIME_START).replace(microsecond=0)
+# parseable datetime string formats for a Redirect Entry
+DATETIME_STRPTIMES = (
+        r"%Y%m%dT%H%M%S",
+        r"%Y-%m-%dT%H:%M:%S",
+        r"%Y-%m-%d %H:%M:%S",
+        r"%Y-%m-%d_%H:%M:%S",
+        r"%Y/%m/%d %H:%M",
+        r"%Y-%m-%d %H:%M",
+        r"%Y/%m/%d_%H:%M",
+        r"%Y-%m-%d_%H:%M",
+        r"%Y-%m-%d",
+        r"%Y/%m/%d",
+)
 
 #
 # Types
@@ -635,39 +648,20 @@ def print_debug(message: str, end: str = "\n", file=sys.stderr) -> None:
             file.flush()
 
 
-def fromisoformat(dts: str) -> datetime.datetime:
+def dts_to_datetime(dts: str) -> datetime.datetime:
     """
-    Call datetime.datetime.fromisoformat on input string.
-
-    ISO 8901 Date Time format looks like
-    '2019-07-01 01:20:33' or '2019-07-01T01:20:33'
-
-    Versions of Python < 3.7 do not have datetime.datetime.fromisoformat so
-    provide an extremely basic implementation.
-    Could use https://pypi.org/project/backports-datetime-fromisoformat/
-    but this program goal is to avoid 3rd party modules.
-      '2019-07-01 01:20:33'
-       0123456789012345678
+    Parse datetime string among formats. Fallback to DATETIME_START
     """
 
-    def _fromisoformat_impl(s_: str) -> datetime.datetime:
-        return datetime.datetime(
-            int(s_[0:4]),  # year
-            month=int(s_[5:7]),
-            day=int(s_[8:10]),
-            hour=int(s_[11:13]),
-            minute=int(s_[14:16]),
-            second=int(s_[17:19]),
-        )
+    dt = None
+    for dts_patt in DATETIME_STRPTIMES:
+        try:
+            dt = datetime.datetime.strptime(dts, dts_patt)
+        except ValueError:
+            continue
+        break
 
-    _fromisoformat = _fromisoformat_impl
-    if hasattr(datetime.datetime, "fromisoformat"):
-        _fromisoformat = datetime.datetime.fromisoformat  # type: ignore
-
-    try:
-        dt = _fromisoformat(dts)
-    except ValueError:
-        log.error("bad datetime input (%s), fallback to program start datetime", dts)
+    if not dt:
         dt = DATETIME_START
     return dt
 
@@ -1336,7 +1330,7 @@ class RedirectsLoader(object):
                             user = Re_User(row[2])
                             date = row[3]
                             # ignore any remaining fields in row
-                            dt = fromisoformat(date)
+                            dt = dts_to_datetime(date)
                             key = Re_From_to_Re_EntryKey(from_)
                             typ = Re_EntryType.getEntryType_From(from_)
                             val = Re_Entry(
