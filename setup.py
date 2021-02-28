@@ -183,7 +183,8 @@ with open(os.path.join(_HERED, 'README.md'), encoding='utf-8') as f_:
     long_description = f_.read()
 
 setup(
-    # see https://github.com/python/cpython/blob/8837dd092fe5ad5184889104e8036811ed839f98/Lib/distutils/dist.py#L1023
+    # `setup` arguments are listed at
+    # https://github.com/python/cpython/blob/8837dd092fe5ad5184889104e8036811ed839f98/Lib/distutils/dist.py#L1023
     name='goto_http_redirect_server',
     version=__version__,
     author=__author__,
@@ -204,32 +205,32 @@ setup(
         # install these locally with command:
         #     python -m pip install --user -e '.[development]'
         'development': [
-            'flake8',
-            'mypy',
-            'pytest',
-            'pytest-cov',
-            'pytest-timeout',
-            'yamllint',
+            'flake8==3.8',
+            'mypy==0.812',
+            'pytest==6.2',
+            'pytest-cov==2.11',
+            'pytest-timeout==1.4',
+            'yamllint==1.26',
         ],
         # subsets of 'development' for faster `pip install` in CI stages
         'development-flake8': [
-            'flake8',
+            'flake8==3.8',
         ],
         'development-mypy': [
-            'mypy',
+            'mypy==0.812',
         ],
         'development-pytest': [
-            'pytest',
-            'pytest-cov',
-            'pytest-timeout',
+            'pytest==6.2',
+            'pytest-cov==2.11',
+            'pytest-timeout==1.4',
         ],
         'development-yamllint': [
-            'yamllint',
+            'yamllint==1.26',
         ],
         'build': [
             'pip',
-            'setuptools',
-            'twine',
+            'setuptools>=44',
+            'twine>=3.3',
             'wheel',
         ],
         'readme': [

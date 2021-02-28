@@ -18,4 +18,3 @@ exec \
         goto_http_redirect_server/goto_http_redirect_server.py \
         setup.py \
         "${@}"
-
