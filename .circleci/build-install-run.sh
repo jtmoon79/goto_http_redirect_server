@@ -34,6 +34,9 @@ SERVER_TEST=$("${REALPATH}" './tools/ci/server-test.sh')
 PY_TEST=$("${REALPATH}" './tools/pytest.sh')
 chmod -v +x -- "${SERVER_TEST}" "${PY_TEST}"
 
+# XXX: installation of packages will install cffi which runs make rule `build_rust`
+#      rust compiler is not available on CircleCI Alpine image so forcefully skip it
+export CRYPTOGRAPHY_DONT_BUILD_RUST=1
 # install and upgrade necessary packages
 python -m pip install --quiet --user --upgrade pip setuptools
 python -m pip install --quiet --user twine mypy
