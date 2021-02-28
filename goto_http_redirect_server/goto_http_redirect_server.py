@@ -5,12 +5,6 @@
 # This source code was created in-part to learn about various Python 3 features
 # and useful modules:  typing, mypy, pytest, other stuff, while aiming to be
 # "Pythontic". This makes for some verbose if descriptive code.
-#
-# TODO: needs to better handle potentially sensitive data within user-requests
-#       e.g. do not log URI parts query or params
-#
-# XXX: Disable Path Required Request Modifier
-#      This is work to allow '/' as a required modifier.
 
 
 import argparse
