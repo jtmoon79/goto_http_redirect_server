@@ -45,43 +45,36 @@ Trivial to install and run.  Only uses Python built-in modules.  Super handy ðŸ˜
 2. Install (pick one)
 
     - pip install official release from pypi.org
-      ```
-      pip install goto-http-redirect-server
-      ```
+
+          pip install goto-http-redirect-server
 
     - pip install latest code from github
-      ```
-      pip install https://github.com/jtmoon79/goto_http_redirect_server/archive/master.zip
-      ```
+
+          pip install "https://github.com/jtmoon79/goto_http_redirect_server/archive/master.zip"
 
     - Download from github and run
-      ```
-      curl 'https://raw.githubusercontent.com/jtmoon79/goto_http_redirect_server/master/goto_http_redirect_server/goto_http_redirect_server.py'
-      python goto_http_redirect_server.py --help
-      ```
 
-    - Run latest from github using [`tools/eazy-run.sh`](./tools/eazy-run.sh).
-      Pass command-line options to `eazy-run.sh` as if running `goto_http_redirect_server.py`.
-      ```
-      curl 'https://raw.githubusercontent.com/jtmoon79/goto_http_redirect_server/master/tools/eazy-run.sh'
-      ./eazy-run.sh --help
-      ```
+          curl "https://raw.githubusercontent.com/jtmoon79/goto_http_redirect_server/master/goto_http_redirect_server/goto_http_redirect_server.py"
+          python goto_http_redirect_server.py --version
+
+    - use [`pip-run`](https://pypi.org/project/pip-run/)
+
+          pip-run --use-pep517 --quiet "git+https://github.com/jtmoon79/goto_http_redirect_server" -- \
+              -m goto_http_redirect_server --version
 
     - Build and install using helper scripts [`tools/build-install.sh`](./tools/build-install.sh) or [`tools/build-install.ps1`](./tools/build-install.ps1)
-      ```
-      git clone https://github.com/jtmoon79/goto_http_redirect_server.git
-      goto_http_redirect_server/tools/build-install.sh
-      ```
+
+          git clone "https://github.com/jtmoon79/goto_http_redirect_server.git"
+          goto_http_redirect_server/tools/build-install.sh
 
     - Build and install
-      ```
-      git clone https://github.com/jtmoon79/goto_http_redirect_server.git
-      cd goto_http_redirect_server
-      python setup.py bdist_wheel
-      python -m pip install --user ./dist/goto_http_redirect_server-*-py3-none-any.whl
-      ```
 
-3.  start the _Go To HTTP Redirect Server_
+          git clone "https://github.com/jtmoon79/goto_http_redirect_server.git"
+          cd goto_http_redirect_server
+          python setup.py bdist_wheel
+          python -m pip install --user ./dist/goto_http_redirect_server-*-py3-none-any.whl
+
+3. start the _Go To HTTP Redirect Server_
 
         goto_http_redirect_server --redirects ./redirects1.csv
 
@@ -131,7 +124,7 @@ No service downtime!
 ### Reload via Signals
 
  1. Note during startup the Process ID (or query the host System).
- 
+
  2. Send the process signal to the running `goto_http_redirect_server`.<br />
     In Unix, use `kill`.<br />
     In Windows, use [`windows-kill.exe`](https://github.com/alirdn/windows-kill/releases)<br />
