@@ -2,6 +2,8 @@
 # -*- encoding: utf-8 -*-
 # -*- pyversion: >=3.5.2 -*-
 #
+# black --line-length 100
+#
 # This source code was created in-part to learn about various Python 3 features
 # and useful modules:  typing, mypy, pytest, other stuff, while aiming to be
 # "Pythontic". This makes for some verbose if descriptive code.
@@ -36,13 +38,13 @@ import uuid
 
 
 # canonical module informations used by setup.py
-__version__ = '1.1.6'
-__author__ = 'jtmoon79'
-__url_github__ = 'https://github.com/jtmoon79/goto_http_redirect_server'
-__url_azure__ = 'https://dev.azure.com/jtmmoon/goto_http_redirect_server'
-__url_circleci__ = 'https://circleci.com/gh/jtmoon79/goto_http_redirect_server'
-__url_pypi__ = 'https://pypi.org/project/goto-http-redirect-server/'
-__url_issues__ = 'https://github.com/jtmoon79/goto_http_redirect_server/issues'
+__version__ = "1.1.6"
+__author__ = "jtmoon79"
+__url_github__ = "https://github.com/jtmoon79/goto_http_redirect_server"
+__url_azure__ = "https://dev.azure.com/jtmmoon/goto_http_redirect_server"
+__url_circleci__ = "https://circleci.com/gh/jtmoon79/goto_http_redirect_server"
+__url_pypi__ = "https://pypi.org/project/goto-http-redirect-server/"
+__url_issues__ = "https://github.com/jtmoon79/goto_http_redirect_server/issues"
 # first line of __doc__ is used in setup.py. Should match README.md and title at
 # github.com project site and Azure project site.
 __doc__ = """\
@@ -56,8 +58,7 @@ network.
 
 USER_DEFAULT = getpass.getuser()
 TIME_START = time.time()
-DATETIME_START = datetime.datetime.fromtimestamp(TIME_START).\
-    replace(microsecond=0)
+DATETIME_START = datetime.datetime.fromtimestamp(TIME_START).replace(microsecond=0)
 
 #
 # Types
@@ -69,10 +70,14 @@ ParseResult = parse.ParseResult
 
 # Redirect Entry types
 
-Re_From = typing.NewType('Re_From', str)  # Redirect From URL Path as input from the Administrator (not modified)
-Re_To = typing.NewType('Re_To', str)  # Redirect To URL Location
-Re_User = typing.NewType('Re_User', str)  # User that created the Redirect (records-keeping thing, does not affect behavior)
-Re_Date = typing.NewType('Re_Date', datetime.datetime)  # Datetime Redirect was created (records-keeping thing, does not affect behavior)
+# Redirect From URL Path as input from the Administrator (not modified)
+Re_From = typing.NewType("Re_From", str)
+# Redirect To URL Location
+Re_To = typing.NewType("Re_To", str)
+# User that created the Redirect (records-keeping thing, does not affect behavior)
+Re_User = typing.NewType("Re_User", str)
+# Datetime Redirect was created (records-keeping thing, does not affect behavior)
+Re_Date = typing.NewType("Re_Date", datetime.datetime)
 Re_EntryKey = Re_From  # XXX: this might be too confusing?
 
 
@@ -85,8 +90,7 @@ def Re_From_to_Re_EntryKey(from_: Re_From) -> Re_EntryKey:
     return Re_EntryKey(from_)
 
 
-def to_ParseResult(value: typing.Union[str, Re_From, Re_To, Re_EntryKey]) \
-        -> ParseResult:
+def to_ParseResult(value: typing.Union[str, Re_From, Re_To, Re_EntryKey]) -> ParseResult:
     """
     helpful wrapper
 
@@ -117,21 +121,21 @@ class Re_EntryType(enum.IntEnum):
         #       raises TypeError
         #          __init__() takes 1 positional argument but 2 were given
         cls = self.__class__
-        if not hasattr(cls, 'Map'):
+        if not hasattr(cls, "Map"):
             # create once, set once to class-wide attribute
             # XXX: using enums, e.g. cls._P, will raise AttributeError
             cls.Map = {
-                0: '',
-                1: ';',
-                2: '?',
-                3: ';?',
+                0: "",
+                1: ";",
+                2: "?",
+                3: ";?",
                 # XXX: Disable Path Required Request Modifier
                 # 4: '/',
                 # 5: '/;',
                 # 6: '/?',
                 # 7: '/;?',
             }
-        if not hasattr(cls, 'MapRev'):
+        if not hasattr(cls, "MapRev"):
             cls.MapRev = {v: k for k, v in cls.Map.items()}
         # XXX: Disable Path Required Request Modifier
         # if not hasattr(cls, 'Paths'):
@@ -163,23 +167,21 @@ class Re_EntryType(enum.IntEnum):
         et = cls.getEntryType_From(from_)
         for typ in cls:
             if et != typ:
-                ret.append(
-                    Re_From_to_Re_EntryKey(from_ + typ.getStr_EntryType())
-                )
+                ret.append(Re_From_to_Re_EntryKey(from_ + typ.getStr_EntryType()))
         return ret
 
     @classmethod
     def getEntryTypes_fallback(cls, typ):
         """return tuple of Re_EntryTypes in order of required fallbacks"""
 
-        if typ == cls._:      # '/a'
+        if typ == cls._:  # '/a'
             return cls._P, cls._Q, cls._PQ
-        elif typ == cls._P:   # '/a;p'
-            return (cls._,)   # '/a'
+        elif typ == cls._P:  # '/a;p'
+            return (cls._,)  # '/a'
         elif typ == cls._PQ:  # '/a;p?q'
-            return (cls._,)   # '/a'
-        elif typ == cls._Q:   # '/a?q'
-            return (cls._,)   # '/a'
+            return (cls._,)  # '/a'
+        elif typ == cls._Q:  # '/a?q'
+            return (cls._,)  # '/a'
         # XXX: Disable Path Required Request Modifier
         # elif typ == cls.P:    # '/a/b'
         #     return cls._,     # '/a'
@@ -190,7 +192,7 @@ class Re_EntryType(enum.IntEnum):
         # elif typ == cls.PQ:   # '/?'
         #     return cls._,     #
 
-        raise ValueError('unmatched type value %s' % typ)
+        raise ValueError("unmatched type value %s" % typ)
 
     @classmethod
     def getEntryType_ParseResult(cls, _: str, pr: ParseResult):
@@ -225,16 +227,16 @@ class Re_EntryType(enum.IntEnum):
 #      be used here).
 
 __Re_EntryBase = NamedTuple(
-    '__Re_EntryBase',
+    "__Re_EntryBase",
     [
-        ('from_', Re_From),
-        ('to', Re_To),
-        ('user', Re_User),
-        ('date', datetime.datetime),
-        ('from_pr', ParseResult),  # ParseResult of from_
-        ('to_pr', ParseResult),    # ParseResult if to
-        ('etype', Re_EntryType),
-    ]
+        ("from_", Re_From),
+        ("to", Re_To),
+        ("user", Re_User),
+        ("date", datetime.datetime),
+        ("from_pr", ParseResult),  # ParseResult of from_
+        ("to_pr", ParseResult),  # ParseResult if to
+        ("etype", Re_EntryType),
+    ],
 )
 
 # XXX: setting default values for NamedTuple in Python <3.7 is also tedious.
@@ -257,6 +259,7 @@ class Re_Entry(__Re_EntryBase):
 
     represents a --from-to CLI argument or one line from a redirects file
     """
+
     def __new__(cls, *args, **kwargs):
         """initialize `from_pr` `to_pr` based on `from_` and `to`"""
 
@@ -272,14 +275,14 @@ class Re_Entry(__Re_EntryBase):
         #      indexing among other subtle behavior differences.
         #      So settle on this somewhat ugly but workable solution.
         #
-        from_ = 'from_'
+        from_ = "from_"
         from_i = 0  # `from_` index
-        from_pr = 'from_pr'
+        from_pr = "from_pr"
         from_val = None
-        to = 'to'
+        to = "to"
         toi = 1  # `to` index
-        to_pr = 'to_pr'
-        etype = 'etype'
+        to_pr = "to_pr"
+        etype = "etype"
         etypei = 6  # `etype` index
 
         # set `from_pr` if not passed
@@ -309,15 +312,15 @@ class Re_Entry(__Re_EntryBase):
         instance = super().__new__(cls, *args, **kwargs)
         # self-check
         if instance.from_ is None:
-            raise ValueError('Failed to set from_')
+            raise ValueError("Failed to set from_")
         if instance.to is None:
-            raise ValueError('Failed to set *to*')
+            raise ValueError("Failed to set *to*")
         if instance.from_pr is None:
-            raise ValueError('Failed to set from_pr')
+            raise ValueError("Failed to set from_pr")
         if instance.to_pr is None:
-            raise ValueError('Failed to set to_pr')
+            raise ValueError("Failed to set to_pr")
         if instance.etype is None:
-            raise ValueError('Failed to set etype')
+            raise ValueError("Failed to set etype")
 
         return instance
 
@@ -381,10 +384,7 @@ class Re_Entry(__Re_EntryBase):
 #
 # Re_EntryValue = Re_EntrySuite
 
-Re_Entry_Dict = typing.NewType(
-    'Re_Entry_Dict',
-    typing.Dict[Re_EntryKey, Re_Entry]
-)
+Re_Entry_Dict = typing.NewType("Re_Entry_Dict", typing.Dict[Re_EntryKey, Re_Entry])
 
 
 def Re_Entry_Dict_new() -> Re_Entry_Dict:
@@ -392,7 +392,7 @@ def Re_Entry_Dict_new() -> Re_Entry_Dict:
     return Re_Entry_Dict(dict())
 
 
-Re_Field_Delimiter = typing.NewType('Re_Field_Delimiter', str)
+Re_Field_Delimiter = typing.NewType("Re_Field_Delimiter", str)
 
 #
 # other helpful types and type aliases
@@ -402,11 +402,11 @@ Re_Field_Delimiter = typing.NewType('Re_Field_Delimiter', str)
 Path_List = typing.List[pathlib.Path]
 FromTo_List = typing.List[typing.Tuple[str, str]]
 Redirect_Counter = typing.DefaultDict[str, int]
-Redirect_Code_Value = typing.NewType('Redirect_Code_Value', int)
+Redirect_Code_Value = typing.NewType("Redirect_Code_Value", int)
 str_None = typing.Optional[str]
 Path_None = typing.Optional[pathlib.Path]
 Iter_str = typing.Iterable[str]
-htmls = typing.NewType('htmls', str)  # HTML String
+htmls = typing.NewType("htmls", str)  # HTML String
 htmls_str = typing.Union[htmls, str]
 
 
@@ -414,8 +414,8 @@ htmls_str = typing.Union[htmls, str]
 # further globals and constants initialization
 #
 
-PROGRAM_NAME = 'goto_http_redirect_server'
-LISTEN_IP = '0.0.0.0'
+PROGRAM_NAME = "goto_http_redirect_server"
+LISTEN_IP = "0.0.0.0"
 LISTEN_PORT = 80
 HOSTNAME = socket.gethostname()
 
@@ -495,19 +495,19 @@ var stIsIE=!1;if(sorttable={init:function(){arguments.callee.done||(arguments.ca
 
 # SOCKET_LISTEN_BACKLOG is eventually passed to socket.listen
 SOCKET_LISTEN_BACKLOG = 31  # type: int
-STATUS_PAGE_PATH_DEFAULT = '/status'  # type: str
-PATH_FAVICON = '/favicon.ico'  # type: str
+STATUS_PAGE_PATH_DEFAULT = "/status"  # type: str
+PATH_FAVICON = "/favicon.ico"  # type: str
 REDIRECT_PATHS_NOT_ALLOWED = (PATH_FAVICON,)  # type: typing.Tuple[str]
 # HTTP Status Code used for redirects (among several possible redirect codes)
 REDIRECT_CODE_DEFAULT = http.HTTPStatus.TEMPORARY_REDIRECT  # type: http.HTTPStatus
 REDIRECT_CODE = REDIRECT_CODE_DEFAULT  # type: http.HTTPStatus
 # urlparse-related things
-RE_URI_KEYWORDS = re.compile(r'\${(path|params|query|fragment)}')
-URI_KEYWORDS_REPL = ('path', 'params', 'query', 'fragment')  # type: Iter_str
+RE_URI_KEYWORDS = re.compile(r"\${(path|params|query|fragment)}")
+URI_KEYWORDS_REPL = ("path", "params", "query", "fragment")  # type: Iter_str
 
 # signals
-SIGNAL_RELOAD_UNIX = 'SIGUSR1'  # type: str
-SIGNAL_RELOAD_WINDOWS = 'SIGBREAK'  # type: str
+SIGNAL_RELOAD_UNIX = "SIGUSR1"  # type: str
+SIGNAL_RELOAD_WINDOWS = "SIGBREAK"  # type: str
 # signal to cause --redirects file reload
 try:
     # Unix (not defined on Windows)
@@ -517,15 +517,16 @@ except AttributeError:
     SIGNAL_RELOAD = signal.SIGBREAK  # type: ignore # in Unix, mypy attempts import and fails
 
 # redirect file things
-FIELD_DELIMITER_DEFAULT = Re_Field_Delimiter('\t')  # type: Re_Field_Delimiter
-FIELD_DELIMITER_DEFAULT_NAME = 'tab'  # type: str
-FIELD_DELIMITER_DEFAULT_ESCAPED = FIELD_DELIMITER_DEFAULT.\
-    encode('unicode_escape').decode('utf-8')  # type: str
-REDIRECT_FILE_IGNORE_LINE = '#'  # type: str
+FIELD_DELIMITER_DEFAULT = Re_Field_Delimiter("\t")  # type: Re_Field_Delimiter
+FIELD_DELIMITER_DEFAULT_NAME = "tab"  # type: str
+FIELD_DELIMITER_DEFAULT_ESCAPED = FIELD_DELIMITER_DEFAULT.encode("unicode_escape").decode(
+    "utf-8"
+)  # type: str
+REDIRECT_FILE_IGNORE_LINE = "#"  # type: str
 
 # logging module initializations (call logging_init to complete)
-LOGGING_FORMAT_DATETIME = '%Y-%m-%d %H:%M:%S'  # type: str
-LOGGING_FORMAT = '%(asctime)s %(name)s %(levelname)s: %(message)s'  # type: str
+LOGGING_FORMAT_DATETIME = "%Y-%m-%d %H:%M:%S"  # type: str
+LOGGING_FORMAT = "%(asctime)s %(name)s %(levelname)s: %(message)s"  # type: str
 # importers can override 'log'
 log = logging.getLogger(PROGRAM_NAME)  # type: logging.Logger
 
@@ -546,7 +547,7 @@ reload_datetime = None  # type: typing.Optional[datetime.datetime]
 redirect_counter = defaultdict(int)  # type: typing.DefaultDict[str, int]
 STATUS_PATH = None  # type: str_None
 RELOAD_PATH = None  # type: str_None
-NOTE_ADMIN = htmls('')  # type: htmls
+NOTE_ADMIN = htmls("")  # type: htmls
 
 
 #
@@ -554,7 +555,7 @@ NOTE_ADMIN = htmls('')  # type: htmls
 #
 
 
-class StrDelay():
+class StrDelay:
     """
     Delayed evaluation of object.__str__.
 
@@ -569,13 +570,14 @@ class StrDelay():
 
     XXX: There are probably more succinct implementations. Good enough.
     """
+
     def __init__(self, func, *args, **kwargs):
         self._func = func
         self._args = args
         self._kwargs = kwargs
 
     def __str__(self) -> str:
-        out = ''
+        out = ""
         if self._func:
             out = str(self._func(*self._args, **self._kwargs))
         return out
@@ -583,18 +585,14 @@ class StrDelay():
 
 def html_escape(s_: htmls_str) -> htmls:
     """transform a Python string into equivalent HTML-displayed string"""
-    return htmls(
-        html.escape(s_)
-            .replace('\n', '<br />\n')
-            .replace('  ', r'&nbsp; ')
-    )
+    return htmls(html.escape(s_).replace("\n", "<br />\n").replace("  ", r"&nbsp; "))
 
 
 def html_a(href: str, text: str_None = None) -> htmls:
     """create HTML <a> from href URL"""
     if text is None:
         text = href
-    return htmls('<a href="' + href + '">' + html_escape(text) + '</a>')
+    return htmls('<a href="' + href + '">' + html_escape(text) + "</a>")
 
 
 def datetime_now() -> datetime.datetime:
@@ -615,7 +613,7 @@ def logging_init(debug: bool, filename: Path_None) -> None:
         filename=filename_,
         level=logging.DEBUG,
         format=LOGGING_FORMAT,
-        datefmt=LOGGING_FORMAT_DATETIME
+        datefmt=LOGGING_FORMAT_DATETIME,
     )
     global log
     log = logging.getLogger(PROGRAM_NAME)
@@ -625,7 +623,7 @@ def logging_init(debug: bool, filename: Path_None) -> None:
         log.setLevel(logging.INFO)
 
 
-def print_debug(message: str, end: str = '\n', file=sys.stderr) -> None:
+def print_debug(message: str, end: str = "\n", file=sys.stderr) -> None:
     """
     Helper for printing (preferably to stderr) and checking logging.DEBUG.
 
@@ -633,7 +631,7 @@ def print_debug(message: str, end: str = '\n', file=sys.stderr) -> None:
     """
     if log.level <= logging.DEBUG:
         print(message, end=end, file=file)
-        if hasattr(file, 'flush'):
+        if hasattr(file, "flush"):
             file.flush()
 
 
@@ -659,18 +657,17 @@ def fromisoformat(dts: str) -> datetime.datetime:
             day=int(s_[8:10]),
             hour=int(s_[11:13]),
             minute=int(s_[14:16]),
-            second=int(s_[17:19])
+            second=int(s_[17:19]),
         )
 
     _fromisoformat = _fromisoformat_impl
-    if hasattr(datetime.datetime, 'fromisoformat'):
+    if hasattr(datetime.datetime, "fromisoformat"):
         _fromisoformat = datetime.datetime.fromisoformat  # type: ignore
 
     try:
         dt = _fromisoformat(dts)
     except ValueError:
-        log.error('bad datetime input (%s), fallback to program start datetime',
-                  dts)
+        log.error("bad datetime input (%s), fallback to program start datetime", dts)
         dt = DATETIME_START
     return dt
 
@@ -690,12 +687,12 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
     # https://github.com/python/cpython/blob/5c02a39a0b31a330e06b4d6f44835afb205dc7cc/Lib/http/server.py#L613-L615
     protocol_version = "HTTP/1.1"
 
-    Header_Server_Host = ('Redirect-Server-Host', HOSTNAME)
-    Header_Server_Version = ('Redirect-Server-Version', __version__)
+    Header_Server_Host = ("Redirect-Server-Host", HOSTNAME)
+    Header_Server_Version = ("Redirect-Server-Version", __version__)
     # see https://tools.ietf.org/html/rfc2616#page-124
-    Header_ContentType_html = ('Content-Type', 'text/html; charset=utf-8')
+    Header_ContentType_html = ("Content-Type", "text/html; charset=utf-8")
     # see https://tools.ietf.org/html/rfc2616#section-14.10
-    Header_Connection_close = ('Connection', 'close')
+    Header_Connection_close = ("Connection", "close")
     __count = 0
 
     redirects = None  # type: Re_Entry_Dict
@@ -707,12 +704,14 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
     note_admin = None  # type: htmls
 
     @classmethod
-    def set_c(cls,
-              redirects: Re_Entry_Dict,
-              status_code: http.HTTPStatus,
-              status_path: str,
-              reload_path: str_None,
-              note_admin: htmls):
+    def set_c(
+        cls,
+        redirects: Re_Entry_Dict,
+        status_code: http.HTTPStatus,
+        status_path: str,
+        reload_path: str_None,
+        note_admin: htmls,
+    ):
         """set class-wide attributes to new values"""
         cls.redirects = redirects
         cls.status_code = status_code
@@ -725,8 +724,7 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         RedirectHandler.__count += 1
         super().__init__(*args, **kwargs)
-        log.debug('RedirectHandler.__init__ %d (0x%08X)',
-                  RedirectHandler.__count, id(self))
+        log.debug("RedirectHandler.__init__ %d (0x%08X)", RedirectHandler.__count, id(self))
 
     def log_message(self, format_, *args, **kwargs):
         """
@@ -734,15 +732,13 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
         instances use the module-level logging.Logger instance `log`
         """
         try:
-            prepend = str(self.client_address[0]) + ':' + \
-                str(self.client_address[1]) + ' '
-            if 'loglevel' in kwargs and \
-               isinstance(kwargs['loglevel'], type(log.level)):
-                log.log(kwargs['loglevel'], prepend + format_, *args)
+            prepend = str(self.client_address[0]) + ":" + str(self.client_address[1]) + " "
+            if "loglevel" in kwargs and isinstance(kwargs["loglevel"], type(log.level)):
+                log.log(kwargs["loglevel"], prepend + format_, *args)
                 return
             log.debug(prepend + format_, *args)
         except Exception as ex:
-            print('Error during log_message\n%s' % str(ex), file=sys.stderr)
+            print("Error during log_message\n%s" % str(ex), file=sys.stderr)
 
     def _write_html_doc(self, html_doc: htmls) -> None:
         """
@@ -754,12 +750,10 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
         #      the entity-body, in decimal number of OCTETs
         # XXX: does this follow *all* Message Length rules?
         #      https://tools.ietf.org/html/rfc2616#section-4.4
-        html_docb = bytes(html_doc,
-                          encoding='utf-8',
-                          errors='xmlcharrefreplace')
+        html_docb = bytes(html_doc, encoding="utf-8", errors="xmlcharrefreplace")
         self.send_header(*self.Header_Server_Host)
         self.send_header(*self.Header_Server_Version)
-        self.send_header('Content-Length', str(len(html_docb)))
+        self.send_header("Content-Length", str(len(html_docb)))
         self.send_header(*self.Header_ContentType_html)
         self.send_header(*self.Header_Connection_close)
         self.end_headers()
@@ -818,7 +812,7 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
             for key in URI_KEYWORDS_REPL:
                 repl = pr2d[key] if key in pr2d else key
                 val_old = val
-                val = re.sub(r'\${%s}' % key, repl, val)
+                val = re.sub(r"\${%s}" % key, repl, val)
                 remove[key] = False
                 if val != val_old:
                     remove[key] = True
@@ -836,20 +830,20 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
 
         # selectively combine URI parts from pr2d
         # safe_substitute where appropriate
-        if 'fragment' in pr2d and pr2d['fragment']:
-            pr['fragment'] = pr2d['fragment']
-        if 'params' in pr2d and pr2d['params']:
+        if "fragment" in pr2d and pr2d["fragment"]:
+            pr["fragment"] = pr2d["fragment"]
+        if "params" in pr2d and pr2d["params"]:
             if pr1.params:
                 # XXX: how are URI Object Parameters combined?
                 #      see https://tools.ietf.org/html/rfc1808.html#section-2.1
-                pr['params'] = ssub(pr1.params) + ';' + pr2d['params']
+                pr["params"] = ssub(pr1.params) + ";" + pr2d["params"]
             else:
-                pr['params'] = pr2d['params']
-        if 'query' in pr2d and pr2d['query']:
+                pr["params"] = pr2d["params"]
+        if "query" in pr2d and pr2d["query"]:
             if pr1.query:
-                pr['query'] = ssub(pr1.query) + '&' + pr2d['query']
+                pr["query"] = ssub(pr1.query) + "&" + pr2d["query"]
             else:
-                pr['query'] = pr2d['query']
+                pr["query"] = pr2d["query"]
 
         url = parse.urlunparse(ParseResult(**pr))
         return url
@@ -864,10 +858,9 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
         return pr1.path == pr2.path
 
     @staticmethod
-    def query_match_finder(ppq: str,
-                           ppqpr: ParseResult,
-                           redirects: Re_Entry_Dict) \
-            -> typing.Optional[Re_Entry]:
+    def query_match_finder(
+        ppq: str, ppqpr: ParseResult, redirects: Re_Entry_Dict
+    ) -> typing.Optional[Re_Entry]:
         """
         An incoming query can have multiple matches within redirects. Return the
         required request matching entry.
@@ -916,52 +909,53 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
                 return redirects[keys[keyt.index(typ)]]
 
         # XXX: no fallback was found yet there were fallback keys? concerning.
-        log.error('Expected to find fallback type for type %s', ppqt)
+        log.error("Expected to find fallback type for type %s", ppqt)
         return None
 
     def do_GET_status(self, note_admin: htmls) -> None:
         """dump status information about this server instance"""
 
         http_sc = http.HTTPStatus.OK  # HTTP Status Code
-        self.log_message('status requested, returning %s (%s)',
-                         int(http_sc), http_sc.phrase,
-                         loglevel=logging.INFO)
+        self.log_message(
+            "status requested, returning %s (%s)",
+            int(http_sc),
+            http_sc.phrase,
+            loglevel=logging.INFO,
+        )
         self.send_response(http_sc)
         he = html_escape  # abbreviate
 
         # create the html body
-        esc_title = he(
-            '%s status' % PROGRAM_NAME)
-        start_datetime = datetime.datetime.\
-            fromtimestamp(TIME_START).replace(microsecond=0)
+        esc_title = he("%s status" % PROGRAM_NAME)
+        start_datetime = datetime.datetime.fromtimestamp(TIME_START).replace(microsecond=0)
         uptime = time.time() - TIME_START
-        esc_overall = \
-            'Program {}'.format(
-                html_a(__url_github__, PROGRAM_NAME)
-            )
-        esc_overall += he(' version {}.\n'.format(__version__))
+        esc_overall = "Program {}".format(html_a(__url_github__, PROGRAM_NAME))
+        esc_overall += he(" version {}.\n".format(__version__))
         esc_overall += he(
-            'Process ID %s listening on %s:%s on host %s\n'
-            'Process start datetime %s (up time %s)\n'
-            'Successful Redirect Status Code is %s (%s)'
-            % (os.getpid(), self.server.server_address[0],
-               self.server.server_address[1], HOSTNAME,
-               start_datetime, datetime.timedelta(seconds=uptime),
-               int(self.status_code), self.status_code.phrase,)
+            "Process ID %s listening on %s:%s on host %s\n"
+            "Process start datetime %s (up time %s)\n"
+            "Successful Redirect Status Code is %s (%s)"
+            % (
+                os.getpid(),
+                self.server.server_address[0],
+                self.server.server_address[1],
+                HOSTNAME,
+                start_datetime,
+                datetime.timedelta(seconds=uptime),
+                int(self.status_code),
+                self.status_code.phrase,
+            )
         )
 
         def obj_to_html(obj, sort_keys=False) -> htmls:
             """Convert an object to html"""
             return he(
-                json.dumps(obj, indent=2, ensure_ascii=False,
-                           sort_keys=sort_keys, default=str)
+                json.dumps(obj, indent=2, ensure_ascii=False, sort_keys=sort_keys, default=str)
             )
 
-        def redirects_to_html_table(rd: Re_Entry_Dict, reload_datetime_) \
-                -> htmls:
+        def redirects_to_html_table(rd: Re_Entry_Dict, reload_datetime_) -> htmls:
             """Convert Re_Entry_Dict into linkable html table"""
-            esc_reload_datetime = he(cast(datetime.datetime, reload_datetime_)
-                                     .isoformat())
+            esc_reload_datetime = he(cast(datetime.datetime, reload_datetime_).isoformat())
             s_ = """\
 <table class="sortable">
     <caption>Currently Loaded Redirects (last reload {esc_reload_datetime})</caption>
@@ -971,32 +965,32 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
         </tr>
     </thead>
     <tbody>
-""".format(esc_reload_datetime=esc_reload_datetime)
+""".format(
+                esc_reload_datetime=esc_reload_datetime
+            )
             for key in rd.keys():
                 val = rd[key]
                 s_ += """\
         <tr>
             <td>{from_}</td><td>{to_}</td><td class="ar">{user}</td><td>{date}</td>
         </tr>
-"""\
-                    .format(from_=html_a(val.from_),
-                            to_=he(val.to),
-                            user=he(val.user),
-                            date=he(str(val.date)),
-                            )
+""".format(
+                    from_=html_a(val.from_),
+                    to_=he(val.to),
+                    user=he(val.user),
+                    date=he(str(val.date)),
+                )
             s_ += """\
     </tbody>
 </table>"""
             return htmls(s_)
 
-        esc_reload_info = he(
-            ' (process signal %d (%s))' % (SIGNAL_RELOAD, SIGNAL_RELOAD)
-        )
+        esc_reload_info = he(" (process signal %d (%s))" % (SIGNAL_RELOAD, SIGNAL_RELOAD))
         esc_redirects_counter = obj_to_html(redirect_counter)
         esc_redirects = redirects_to_html_table(self.redirects, reload_datetime)
         esc_files = obj_to_html(Redirect_Files_List)
         if note_admin:
-            note_admin = htmls('\n    <div>\n') + note_admin + htmls('\n    </div>\n')  # type: ignore
+            note_admin = htmls("\n    <div>\n") + note_admin + htmls("\n    </div>\n")  # type: ignore
         html_doc = htmls(
             r"""<!DOCTYPE html>
 <html lang="en">
@@ -1037,27 +1031,31 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
     </pre>
 </div>
 </body>
-</html>"""
-            .format(esc_title=esc_title,
-                    css=CSS,
-                    javascript=JAVASCRIPT_SORTABLE_JS,
-                    note=note_admin,
-                    esc_redirects=esc_redirects,
-                    esc_reload_info=esc_reload_info,
-                    esc_files=esc_files,
-                    esc_redirects_counter=esc_redirects_counter,
-                    esc_overall=esc_overall)
+</html>""".format(
+                esc_title=esc_title,
+                css=CSS,
+                javascript=JAVASCRIPT_SORTABLE_JS,
+                note=note_admin,
+                esc_redirects=esc_redirects,
+                esc_reload_info=esc_reload_info,
+                esc_files=esc_files,
+                esc_redirects_counter=esc_redirects_counter,
+                esc_overall=esc_overall,
+            )
         )
         self._write_html_doc(html_doc)
 
     def do_GET_reload(self) -> None:
         http_sc = http.HTTPStatus.ACCEPTED  # HTTP Status Code
-        self.log_message('reload requested, returning %s (%s)',
-                         int(http_sc), http_sc.phrase,
-                         loglevel=logging.INFO)
+        self.log_message(
+            "reload requested, returning %s (%s)",
+            int(http_sc),
+            http_sc.phrase,
+            loglevel=logging.INFO,
+        )
         esc_datetime = html_escape(datetime_now().isoformat())
         self.send_response(http_sc)
-        esc_title = html_escape('%s reload' % PROGRAM_NAME)
+        esc_title = html_escape("%s reload" % PROGRAM_NAME)
         html_doc = htmls(
             r"""<!DOCTYPE html>
 <html lang="en">
@@ -1074,25 +1072,22 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
 Reload request accepted at {esc_datetime}.
 </body>
 </html>\
-"""
-            .format(esc_title=esc_title,
-                    css=CSS,
-                    esc_datetime=esc_datetime
-                    )
+""".format(
+                esc_title=esc_title, css=CSS, esc_datetime=esc_datetime
+            )
         )
         self._write_html_doc(html_doc)
         global reload_do
         reload_do = True
 
-    def do_GET_redirect_NOT_FOUND(self,
-                                  ppq: str,
-                                  ppqpr: ParseResult) -> None:
+    def do_GET_redirect_NOT_FOUND(self, ppq: str, ppqpr: ParseResult) -> None:
         """a Redirect request was not found, return some HTML to the user"""
 
         self.send_response(http.HTTPStatus.NOT_FOUND)
         esc_title = html_escape("Not Found - '%s'" % ppqpr.path[:64])
         esc_ppq = html_escape(ppq)
-        html_doc = htmls("""\
+        html_doc = htmls(
+            """\
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1106,10 +1101,9 @@ Reload request accepted at {esc_datetime}.
 Redirect Path not found: <code>{esc_ppq}</code>
 </body>
 </html>\
-"""
-        .format(esc_title=esc_title,
-                css=CSS,
-                esc_ppq=esc_ppq)
+""".format(
+                esc_title=esc_title, css=CSS, esc_ppq=esc_ppq
+            )
         )
         self._write_html_doc(html_doc)
 
@@ -1117,7 +1111,9 @@ Redirect Path not found: <code>{esc_ppq}</code>
         self.send_response(http.HTTPStatus.NOT_FOUND)
         self.send_header(*self.Header_Server_Host)
         self.send_header(*self.Header_Server_Version)
-        self.send_header(*self.Header_ContentType_html)  # https://tools.ietf.org/html/rfc2616#page-124
+        self.send_header(
+            *self.Header_ContentType_html
+        )  # https://tools.ietf.org/html/rfc2616#page-124
         self.send_header(*self.Header_Connection_close)
         self.end_headers()
 
@@ -1125,14 +1121,13 @@ Redirect Path not found: <code>{esc_ppq}</code>
         self.send_response(http.HTTPStatus.FOUND)
         self.send_header(*self.Header_Server_Host)
         self.send_header(*self.Header_Server_Version)
-        self.send_header(*self.Header_ContentType_html)  # https://tools.ietf.org/html/rfc2616#page-124
+        self.send_header(
+            *self.Header_ContentType_html
+        )  # https://tools.ietf.org/html/rfc2616#page-124
         self.send_header(*self.Header_Connection_close)
         self.end_headers()
 
-    def _do_VERB_redirect(self,
-                          ppq: str,
-                          ppqpr: ParseResult,
-                          redirects_: Re_Entry_Dict) -> None:
+    def _do_VERB_redirect(self, ppq: str, ppqpr: ParseResult, redirects_: Re_Entry_Dict) -> None:
         """
         handle the HTTP Redirect Request (the entire purpose of this
         script).  Used for GET and HEAD requests.
@@ -1142,15 +1137,16 @@ Redirect Path not found: <code>{esc_ppq}</code>
         entry_ = RedirectHandler.query_match_finder(ppq, ppqpr, redirects_)
         if entry_ is None:
             self.log_message(
-                'no redirect found for incoming (%s), returning %s (%s)',
+                "no redirect found for incoming (%s), returning %s (%s)",
                 ppq,
                 int(http.HTTPStatus.NOT_FOUND),
                 http.HTTPStatus.NOT_FOUND.phrase,
-                loglevel=logging.INFO)
+                loglevel=logging.INFO,
+            )
             cmd = self.command.upper()
-            if cmd == 'GET':
+            if cmd == "GET":
                 return self.do_GET_redirect_NOT_FOUND(ppq, ppqpr)
-            elif cmd == 'HEAD':
+            elif cmd == "HEAD":
                 return self.do_HEAD_redirect_NOT_FOUND()
             log.error('Unhandled command "%s"', cmd)
             return
@@ -1161,10 +1157,14 @@ Redirect Path not found: <code>{esc_ppq}</code>
         user = entry.user
         dt = entry.date
 
-        self.log_message('redirect found (%s) → (%s), returning %s (%s)',
-                         ppqpr.path, to,
-                         int(self.status_code), self.status_code.phrase,
-                         loglevel=logging.INFO)
+        self.log_message(
+            "redirect found (%s) → (%s), returning %s (%s)",
+            ppqpr.path,
+            to,
+            int(self.status_code),
+            self.status_code.phrase,
+            loglevel=logging.INFO,
+        )
 
         self.send_response(self.status_code)
         self.send_header(*self.Header_Server_Host)
@@ -1172,13 +1172,13 @@ Redirect Path not found: <code>{esc_ppq}</code>
         # The 'Location' Header is used by browsers for HTTP 30X Redirects
         # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Location
         # The most important statement in this program.
-        self.send_header('Location', to)
+        self.send_header("Location", to)
         try:
-            self.send_header('Redirect-Created-By', user)
+            self.send_header("Redirect-Created-By", user)
         except UnicodeEncodeError:
             log.exception('header "Redirect-Created-By" set to fallback')
-            self.send_header('Redirect-Created-By', 'Error Encoding User')
-        self.send_header('Redirect-Created-Date', dt.isoformat())
+            self.send_header("Redirect-Created-By", "Error Encoding User")
+        self.send_header("Redirect-Created-Date", dt.isoformat())
         self.send_header(*self.Header_Connection_close)
         # TODO: https://tools.ietf.org/html/rfc2616#section-10.3.2
         #       the entity of the response SHOULD contain a short hypertext
@@ -1189,18 +1189,21 @@ Redirect Path not found: <code>{esc_ppq}</code>
 
     def _do_VERB_log(self):
         """simple helper"""
-        print_debug('')
+        print_debug("")
         try:
             self.log_message(
-                '\n  self: %s (0x%08X)\n  self.client_address: %s\n  '
+                "\n  self: %s (0x%08X)\n  self.client_address: %s\n  "
                 'self.command: %s\n  self.path: "%s"\n  '
-                'self.headers:\n    %s',
-                type(self), id(self), self.client_address,
-                self.command, self.path,
-                str(self.headers).strip('\n').replace('\n', '\n    '),
+                "self.headers:\n    %s",
+                type(self),
+                id(self),
+                self.client_address,
+                self.command,
+                self.path,
+                str(self.headers).strip("\n").replace("\n", "\n    "),
             )
         except Exception:
-            log.exception('Failed to log request')
+            log.exception("Failed to log request")
 
     def do_GET(self) -> None:
         """
@@ -1245,11 +1248,13 @@ Redirect Path not found: <code>{esc_ppq}</code>
         self._do_VERB_redirect(ppq, ppqpr, self.redirects)
 
 
-def redirect_handler_factory(redirects: Re_Entry_Dict,
-                             status_code: http.HTTPStatus,
-                             status_path: str,
-                             reload_path: str_None,
-                             note_admin: htmls):
+def redirect_handler_factory(
+    redirects: Re_Entry_Dict,
+    status_code: http.HTTPStatus,
+    status_path: str,
+    reload_path: str_None,
+    note_admin: htmls,
+):
     """
     :param redirects: dictionary of from-to redirects for the server
     :param status_code: HTTPStatus instance to use for successful redirects
@@ -1259,9 +1264,12 @@ def redirect_handler_factory(redirects: Re_Entry_Dict,
     :return: RedirectHandler type: request handler class type for
              RedirectServer.RequestHandlerClass
     """
-    log.debug('using redirect dictionary (0x%08x) with %s entries:\n%s',
-              id(redirects), len(redirects),
-              StrDelay(pprint.pformat, redirects, indent=2))
+    log.debug(
+        "using redirect dictionary (0x%08x) with %s entries:\n%s",
+        id(redirects),
+        len(redirects),
+        StrDelay(pprint.pformat, redirects, indent=2),
+    )
 
     rh = RedirectHandler
     rh.set_c(redirects, status_code, status_path, reload_path, note_admin)
@@ -1298,9 +1306,9 @@ class RedirectsLoader(object):
         return entrys
 
     @staticmethod
-    def load_redirects_files(redirects_files: Path_List,
-                             field_delimiter: Re_Field_Delimiter) \
-            -> Re_Entry_Dict:
+    def load_redirects_files(
+        redirects_files: Path_List, field_delimiter: Re_Field_Delimiter
+    ) -> Re_Entry_Dict:
         """
         :param redirects_files: list of file paths to process for Re_Entry
         :param field_delimiter: passed to csv.reader keyword delimiter
@@ -1312,13 +1320,12 @@ class RedirectsLoader(object):
         # create Entry for each line in passed redirects_files
         for rfilen in redirects_files:
             try:
-                log.info('Process File (%s)', rfilen)
-                with open(str(rfilen), 'r', encoding='utf-8') as rfile:
+                log.info("Process File (%s)", rfilen)
+                with open(str(rfilen), "r", encoding="utf-8") as rfile:
                     csvr = csv.reader(rfile, delimiter=field_delimiter)
                     for row in csvr:
                         try:
-                            log.debug('File Line (%s:%s):%s',
-                                      rfilen, csvr.line_num, row)
+                            log.debug("File Line (%s:%s):%s", rfilen, csvr.line_num, row)
                             if not row:  # skip empty row
                                 continue
                             if row[0].startswith(REDIRECT_FILE_IGNORE_LINE):
@@ -1341,10 +1348,11 @@ class RedirectsLoader(object):
                             )
                             entrys[key] = val
                         except Exception:
-                            log.exception('Error processing row %d of file %s',
-                                          csvr.line_num, rfilen)
+                            log.exception(
+                                "Error processing row %d of file %s", csvr.line_num, rfilen
+                            )
             except Exception:
-                log.exception('Error processing file %s', rfilen)
+                log.exception("Error processing file %s", rfilen)
 
         return entrys
 
@@ -1361,15 +1369,12 @@ class RedirectsLoader(object):
         for path in REDIRECT_PATHS_NOT_ALLOWED:
             key = Re_From_to_Re_EntryKey(Re_From(path))
             if key in entrys.keys():
-                log.warning(
-                    'Removing reserved From value "%s" from redirect entries.',
-                    path
-                )
+                log.warning('Removing reserved From value "%s" from redirect entries.', path)
                 entrys.pop(key)
 
         # check for To "Location" Header values that will fail to encode
         remove = []
-        encoding = 'latin-1'
+        encoding = "latin-1"
         for key in entrys.keys():
             # test "Location" header value before send_response(status_code)
             to = entrys[key].to
@@ -1377,24 +1382,22 @@ class RedirectsLoader(object):
                 # this is done in standard library http/server.py
                 # method BaseServer.send_header
                 # https://github.com/python/cpython/blob/5c02a39a0b31a330e06b4d6f44835afb205dc7cc/Lib/http/server.py#L515-L516
-                to.encode(encoding, 'strict')
+                to.encode(encoding, "strict")
             except UnicodeEncodeError:
                 remove.append(key)
         for key in remove:
             to = entrys[key].to
             log.warning(
-                'Removing To "Location" value "%s"; it fails encoding to'
-                ' "%s"', to, encoding
+                'Removing To "Location" value "%s"; it fails encoding to' ' "%s"', to, encoding
             )
             del entrys[key]
 
         return entrys
 
     @staticmethod
-    def load_redirects(from_to: FromTo_List,
-                       redirects_files: Path_List,
-                       field_delimiter: Re_Field_Delimiter) \
-            -> Re_Entry_Dict:
+    def load_redirects(
+        from_to: FromTo_List, redirects_files: Path_List, field_delimiter: Re_Field_Delimiter
+    ) -> Re_Entry_Dict:
         """
         load (or reload) all redirect information, process into Re_EntryList
         Remove bad entries.
@@ -1405,8 +1408,7 @@ class RedirectsLoader(object):
         :return: Re_Entry_Dict: all processed information
         """
         entrys_fromto = RedirectsLoader.load_redirects_fromto(from_to)
-        entrys_files = RedirectsLoader.load_redirects_files(redirects_files,
-                                                            field_delimiter)
+        entrys_files = RedirectsLoader.load_redirects_files(redirects_files, field_delimiter)
         # --from-to passed entries override same entries from files
         entrys_files.update(entrys_fromto)
 
@@ -1419,6 +1421,7 @@ class RedirectServer(socketserver.ThreadingTCPServer):
     """
     Custom Server to allow reloading redirects while serve_forever.
     """
+
     field_delimiter = FIELD_DELIMITER_DEFAULT
 
     def __init__(self, *args):
@@ -1431,14 +1434,14 @@ class RedirectServer(socketserver.ThreadingTCPServer):
 
     def __enter__(self):
         """Python version <= 3.5 does not implement BaseServer.__enter__"""
-        if hasattr(socketserver.TCPServer, '__enter__'):
+        if hasattr(socketserver.TCPServer, "__enter__"):
             return super(socketserver.TCPServer, self).__enter__()
         """copy+paste from Python 3.7 socketserver.py class BaseServer"""
         return self
 
     def __exit__(self, *args):
         """Python version <= 3.5 does not implement BaseServer.__exit__"""
-        if hasattr(socketserver.TCPServer, '__exit__'):
+        if hasattr(socketserver.TCPServer, "__exit__"):
             return super(socketserver.TCPServer, self).__exit__()
         """copy+paste from Python 3.7 socketserver.py class BaseServer"""
         self.server_close()
@@ -1469,28 +1472,26 @@ class RedirectServer(socketserver.ThreadingTCPServer):
         global Redirect_FromTo_List
         global Redirect_Files_List
         entrys = RedirectsLoader.load_redirects(
-            Redirect_FromTo_List,
-            Redirect_Files_List,
-            self.field_delimiter
+            Redirect_FromTo_List, Redirect_Files_List, self.field_delimiter
         )
         global STATUS_PATH
         global reload_datetime
         global RELOAD_PATH
         global NOTE_ADMIN
         reload_datetime = datetime_now()
-        redirect_handler = redirect_handler_factory(entrys,
-                                                    REDIRECT_CODE,
-                                                    STATUS_PATH,
-                                                    RELOAD_PATH,
-                                                    NOTE_ADMIN)
+        redirect_handler = redirect_handler_factory(
+            entrys, REDIRECT_CODE, STATUS_PATH, RELOAD_PATH, NOTE_ADMIN
+        )
         pid = os.getpid()
         log.debug(
             "reload %s (0x%08x)\n"
             "new RequestHandlerClass (0x%08x) to replace old (0x%08x)\n"
             "PID %d",
-            reload_do, id(reload_do),
-            id(redirect_handler), id(self.RequestHandlerClass),
-            pid
+            reload_do,
+            id(reload_do),
+            id(redirect_handler),
+            id(self.RequestHandlerClass),
+            pid,
         )
 
         self.RequestHandlerClass = redirect_handler
@@ -1506,23 +1507,28 @@ def reload_signal_handler(signum, _) -> None:
     """
     global reload_do
     log.debug(
-        'reload_signal_handler: Signal Number %s, reload_do %s (0x%08x)',
-        signum, reload_do, id(reload_do))
+        "reload_signal_handler: Signal Number %s, reload_do %s (0x%08x)",
+        signum,
+        reload_do,
+        id(reload_do),
+    )
     reload_do = True
 
 
-def process_options() -> typing.Tuple[str,
-                                      int,
-                                      bool,
-                                      Path_None,
-                                      str,
-                                      str,
-                                      Redirect_Code_Value,
-                                      int,
-                                      Re_Field_Delimiter,
-                                      Path_None,
-                                      FromTo_List,
-                                      typing.List[str]]:
+def process_options() -> typing.Tuple[
+    str,
+    int,
+    bool,
+    Path_None,
+    str,
+    str,
+    Redirect_Code_Value,
+    int,
+    Re_Field_Delimiter,
+    Path_None,
+    FromTo_List,
+    typing.List[str],
+]:
     """Process script command-line options."""
 
     rcd = REDIRECT_CODE_DEFAULT  # abbreviate
@@ -1530,7 +1536,8 @@ def process_options() -> typing.Tuple[str,
     sys_args = copy.copy(sys.argv)  # set once
 
     parser = argparse.ArgumentParser(
-        description=__doc__ + """\
+        description=__doc__
+        + """\
 
 HTTP %s %s reply server. Load this server with redirects of "from path" and
 "to URL" and let it run indefinitely. Reload the running server by signaling the
@@ -1539,99 +1546,148 @@ process or HTTP requesting the RELOAD_PATH.
         % (int(rcd), rcd.phrase),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         prog=PROGRAM_NAME,
-        add_help=False
+        add_help=False,
     )
-    pgroup = parser.add_argument_group(title='Redirects',
-                                       description='One or more required.'
-                                       ' May be passed multiple times.')
-    pgroup.add_argument('--redirects', dest='redirects_files', action='append',
-                        help='File of redirects. Within a file,'
-                        ' is one redirect entry per line. A redirect entry is '
-                        ' four fields:'
-                        ' "from path", "to URL", "added by user", and'
-                        ' "added on datetime"'
-                        ' separated by the FIELD_DELIMITER character.',
-                        default=list())
-    pgroup.add_argument('--from-to',
-                        nargs=2, metavar=('from', 'to'),
-                        action='append',
-                        help='A single redirect entry of "from path" and'
-                             ' "to URL" fields. For example,'
-                             ' --from-to "/hr" "http://human-resources.megacorp.local/login"',
-                        default=list())
+    pgroup = parser.add_argument_group(
+        title="Redirects", description="One or more required." " May be passed multiple times."
+    )
+    pgroup.add_argument(
+        "--redirects",
+        dest="redirects_files",
+        action="append",
+        help="File of redirects. Within a file,"
+        " is one redirect entry per line. A redirect entry is "
+        " four fields:"
+        ' "from path", "to URL", "added by user", and'
+        ' "added on datetime"'
+        " separated by the FIELD_DELIMITER character.",
+        default=list(),
+    )
+    pgroup.add_argument(
+        "--from-to",
+        nargs=2,
+        metavar=("from", "to"),
+        action="append",
+        help='A single redirect entry of "from path" and'
+        ' "to URL" fields. For example,'
+        ' --from-to "/hr" "http://human-resources.megacorp.local/login"',
+        default=list(),
+    )
 
-    pgroup = parser.add_argument_group(title='Network Options')
-    pgroup.add_argument('--ip', '-i', action='store', default=LISTEN_IP,
-                        help='IP interface to listen on.'
-                             ' Default is %(default)s .')
-    pgroup.add_argument('--port', '-p', action='store', type=int,
-                        default=LISTEN_PORT,
-                        help='IP port to listen on.'
-                             ' Default is %(default)d .')
+    pgroup = parser.add_argument_group(title="Network Options")
+    pgroup.add_argument(
+        "--ip",
+        "-i",
+        action="store",
+        default=LISTEN_IP,
+        help="IP interface to listen on." " Default is %(default)s .",
+    )
+    pgroup.add_argument(
+        "--port",
+        "-p",
+        action="store",
+        type=int,
+        default=LISTEN_PORT,
+        help="IP port to listen on." " Default is %(default)d .",
+    )
 
-    pgroup = parser.add_argument_group(title='Server Options')
-    pgroup.add_argument('--status-path', action='store',
-                        default=STATUS_PAGE_PATH_DEFAULT, type=str,
-                        help='The status path'
-                             ' dumps information about the process and loaded'
-                             ' redirects.'
-                             ' Default status page path is "%(default)s".')
-    pgroup.add_argument('--reload-path', action='store',
-                        default=None, type=str,
-                        help='Allow reloads by HTTP GET Request to passed URL'
-                             ' Path. e.g. --reload-path "/reload".'
-                             ' May be a potential security or stability issue.'
-                             ' The program will always allow reload by'
-                             ' process signal.'
-                             ' Default is off.')
+    pgroup = parser.add_argument_group(title="Server Options")
+    pgroup.add_argument(
+        "--status-path",
+        action="store",
+        default=STATUS_PAGE_PATH_DEFAULT,
+        type=str,
+        help="The status path"
+        " dumps information about the process and loaded"
+        " redirects."
+        ' Default status page path is "%(default)s".',
+    )
+    pgroup.add_argument(
+        "--reload-path",
+        action="store",
+        default=None,
+        type=str,
+        help="Allow reloads by HTTP GET Request to passed URL"
+        ' Path. e.g. --reload-path "/reload".'
+        " May be a potential security or stability issue."
+        " The program will always allow reload by"
+        " process signal."
+        " Default is off.",
+    )
     rc_307 = http.HTTPStatus.TEMPORARY_REDIRECT
     rc_308 = http.HTTPStatus.PERMANENT_REDIRECT
-    pgroup.add_argument('--redirect-code', action='store',
-                        default=int(rcd), type=int,
-                        help='Set HTTP Redirect Status Code as an'
-                             ' integer. Most often the desired override will'
-                             ' be ' + str(int(rc_307)) +  # NOQA
-                             ' (' + rc_307.phrase +  # NOQA
-                             '). Keep in mind, Status Code ' + rc_308.phrase +  # NOQA
-                             ' will cause most browsers to cache the redirect.'
-                             ' Any HTTP Status Code could be used but odd'
-                             ' things will happen if a value like 500 is'
-                             ' returned.'
-                             ' This Status Code is only returned when a'
-                             ' loaded redirect entry is found and returned.'
-                             ' Default successful redirect Status Code is'
-                             ' %(default)s (' + rcd.phrase + ').')
-    pgroup.add_argument('--field-delimiter', action='store',
-                        default=FIELD_DELIMITER_DEFAULT,
-                        help='Field delimiter string for --redirects files'
-                             ' per-line redirect entries.'
-                             ' Default is "' +  # NOQA
-                             FIELD_DELIMITER_DEFAULT_ESCAPED +  # NOQA
-                             '" (ordinal ' +  # NOQA
-                             str(ord(FIELD_DELIMITER_DEFAULT[0])) + ').'
-                        )
-    assert len(FIELD_DELIMITER_DEFAULT) == 1,\
-        '--help is wrong about default FIELD_DELIMITER'
-    pgroup.add_argument('--status-note-file', action='store', type=str,
-                        help='Status page note: Filesystem path to a file with'
-                             ' HTML that will be embedded within a <div>'
-                             ' element in the status page.')
-    pgroup.add_argument('--shutdown', action='store', type=int,
-                        default=0,
-                        help='Shutdown the server after passed seconds.'
-                             ' Intended for testing.')
-    pgroup.add_argument('--log', action='store', type=str, default=None,
-                        help='Log to file at path LOG.'
-                             ' Default logging is to sys.stderr.')
-    pgroup.add_argument('--debug', action='store_true', default=False,
-                        help='Set logging level to DEBUG.'
-                             ' Default logging level is INFO.')
-    pgroup.add_argument('--version', action='version',
-                        help='Print "%s %s" and exit.' %
-                             (PROGRAM_NAME, __version__),
-                        version='%(prog)s ' + __version__)
-    pgroup.add_argument('-?', '-h', '--help', action='help',  # add last
-                        help='Print this help message and exit.')
+    pgroup.add_argument(
+        "--redirect-code",
+        action="store",
+        default=int(rcd),
+        type=int,
+        help="Set HTTP Redirect Status Code as an"
+        " integer. Most often the desired override will"
+        " be "
+        + str(int(rc_307))
+        + " ("  # NOQA
+        + rc_307.phrase
+        + "). Keep in mind, Status Code "  # NOQA
+        + rc_308.phrase
+        + " will cause most browsers to cache the redirect."  # NOQA
+        " Any HTTP Status Code could be used but odd"
+        " things will happen if a value like 500 is"
+        " returned."
+        " This Status Code is only returned when a"
+        " loaded redirect entry is found and returned."
+        " Default successful redirect Status Code is"
+        " %(default)s (" + rcd.phrase + ").",
+    )
+    pgroup.add_argument(
+        "--field-delimiter",
+        action="store",
+        default=FIELD_DELIMITER_DEFAULT,
+        help="Field delimiter string for --redirects files"
+        " per-line redirect entries."
+        ' Default is "'
+        + FIELD_DELIMITER_DEFAULT_ESCAPED  # NOQA
+        + '" (ordinal '  # NOQA
+        + str(ord(FIELD_DELIMITER_DEFAULT[0]))  # NOQA
+        + ").",
+    )
+    assert len(FIELD_DELIMITER_DEFAULT) == 1, "--help is wrong about default FIELD_DELIMITER"
+    pgroup.add_argument(
+        "--status-note-file",
+        action="store",
+        type=str,
+        help="Status page note: Filesystem path to a file with"
+        " HTML that will be embedded within a <div>"
+        " element in the status page.",
+    )
+    pgroup.add_argument(
+        "--shutdown",
+        action="store",
+        type=int,
+        default=0,
+        help="Shutdown the server after passed seconds." " Intended for testing.",
+    )
+    pgroup.add_argument(
+        "--log",
+        action="store",
+        type=str,
+        default=None,
+        help="Log to file at path LOG." " Default logging is to sys.stderr.",
+    )
+    pgroup.add_argument(
+        "--debug",
+        action="store_true",
+        default=False,
+        help="Set logging level to DEBUG." " Default logging level is INFO.",
+    )
+    pgroup.add_argument(
+        "--version",
+        action="version",
+        help='Print "%s %s" and exit.' % (PROGRAM_NAME, __version__),
+        version="%(prog)s " + __version__,
+    )
+    pgroup.add_argument(
+        "-?", "-h", "--help", action="help", help="Print this help message and exit."  # add last
+    )
 
     parser.epilog = """
 About Redirect Entries:
@@ -1779,25 +1835,27 @@ About this program:
 
 """.format(
         fd=FIELD_DELIMITER_DEFAULT,
-        sig_unix=SIGNAL_RELOAD_UNIX, sig_win=SIGNAL_RELOAD_WINDOWS,
-        sig_here=str(SIGNAL_RELOAD), sig_hered=int(SIGNAL_RELOAD),
+        sig_unix=SIGNAL_RELOAD_UNIX,
+        sig_win=SIGNAL_RELOAD_WINDOWS,
+        sig_here=str(SIGNAL_RELOAD),
+        sig_hered=int(SIGNAL_RELOAD),
         ignore=REDIRECT_FILE_IGNORE_LINE,
-        query='{query}',
+        query="{query}",
         rand1=str(uuid.uuid4()),
     )
 
     args = parser.parse_args()
 
     if not (args.redirects_files or args.from_to):
-        print('ERROR: No redirect information was passed (--redirects or '
-              '--from-to)',
-              file=sys.stderr)
+        print(
+            "ERROR: No redirect information was passed (--redirects or " "--from-to)",
+            file=sys.stderr,
+        )
         parser.print_usage()
         sys.exit(1)
 
     if args.status_path == args.reload_path:
-        print('ERROR: --status-path and --reload-path must be different paths',
-              file=sys.stderr)
+        print("ERROR: --status-path and --reload-path must be different paths", file=sys.stderr)
         parser.print_usage()
         sys.exit(1)
 
@@ -1810,42 +1868,49 @@ About this program:
         status_note_file = pathlib.Path(args.status_note_file)
 
     redirects_files = args.redirects_files  # type: typing.List[str]
-    return \
-        str(args.ip), \
-        int(args.port), \
-        bool(args.debug), \
-        log_filename, \
-        str(args.status_path), \
-        str(args.reload_path), \
-        Redirect_Code_Value(args.redirect_code), \
-        int(args.shutdown),\
-        Re_Field_Delimiter(args.field_delimiter), \
-        status_note_file, \
-        args.from_to, \
-        redirects_files
+    return (
+        str(args.ip),
+        int(args.port),
+        bool(args.debug),
+        log_filename,
+        str(args.status_path),
+        str(args.reload_path),
+        Redirect_Code_Value(args.redirect_code),
+        int(args.shutdown),
+        Re_Field_Delimiter(args.field_delimiter),
+        status_note_file,
+        args.from_to,
+        redirects_files,
+    )
 
 
 def main() -> None:
     """
     default module entry point
     """
-    ip, \
-        port, \
-        log_debug, \
-        log_filename, \
-        status_path, \
-        reload_path, \
-        redirect_code, \
-        shutdown, \
-        field_delimiter, \
-        status_note_file, \
-        from_to, \
-        redirects_files \
-        = process_options()
+    (
+        ip,
+        port,
+        log_debug,
+        log_filename,
+        status_path,
+        reload_path,
+        redirect_code,
+        shutdown,
+        field_delimiter,
+        status_note_file,
+        from_to,
+        redirects_files,
+    ) = process_options()
 
     logging_init(log_debug, log_filename)
-    log.debug('Start %s version %s\nRun command:\n%s %s',
-              PROGRAM_NAME, __version__, sys.executable, ' '.join(sys.argv))
+    log.debug(
+        "Start %s version %s\nRun command:\n%s %s",
+        PROGRAM_NAME,
+        __version__,
+        sys.executable,
+        " ".join(sys.argv),
+    )
 
     # setup field delimiter
     RedirectServer.field_delimiter = field_delimiter  # set once
@@ -1858,82 +1923,83 @@ def main() -> None:
     Redirect_Files_List = redirects_files_  # set once
     # load the redirect entries from various sources
     entry_list = RedirectsLoader.load_redirects(
-        Redirect_FromTo_List,
-        Redirect_Files_List,
-        field_delimiter
+        Redirect_FromTo_List, Redirect_Files_List, field_delimiter
     )
     global reload_datetime
     reload_datetime = datetime_now()
 
     if len(entry_list) < 1:
-        log.warning('There are no redirect entries')
+        log.warning("There are no redirect entries")
 
     global STATUS_PATH
     STATUS_PATH = status_path
-    log.debug('status_path (%s)', STATUS_PATH)
+    log.debug("status_path (%s)", STATUS_PATH)
 
     global RELOAD_PATH
     RELOAD_PATH = reload_path
-    log.debug('reload_path (%s)', RELOAD_PATH)
+    log.debug("reload_path (%s)", RELOAD_PATH)
 
     redirect_code_ = http.HTTPStatus(int(redirect_code))
     global REDIRECT_CODE
     REDIRECT_CODE = redirect_code_
-    log.debug('Successful Redirect Status Code is %s (%s)', int(REDIRECT_CODE),
-              REDIRECT_CODE.phrase)
+    log.debug(
+        "Successful Redirect Status Code is %s (%s)", int(REDIRECT_CODE), REDIRECT_CODE.phrase
+    )
 
     global NOTE_ADMIN
     if status_note_file:
-        log.debug('reading --status-note-file (%s)', status_note_file)
+        log.debug("reading --status-note-file (%s)", status_note_file)
         note_s = open(str(status_note_file)).read()
         NOTE_ADMIN = htmls(note_s)
-        log.debug('read %d characters from --status-note-file', len(NOTE_ADMIN))
+        log.debug("read %d characters from --status-note-file", len(NOTE_ADMIN))
 
     # register the signal handler function
-    log.debug('Register handler for signal %d (%s)',
-              SIGNAL_RELOAD, SIGNAL_RELOAD)
+    log.debug("Register handler for signal %d (%s)", SIGNAL_RELOAD, SIGNAL_RELOAD)
     signal.signal(SIGNAL_RELOAD, reload_signal_handler)
 
     do_shutdown = False  # flag between threads MainThread and shutdown_thread
 
     def shutdown_server(redirect_server_: RedirectServer, shutdown_: int):
         """Thread entry point"""
-        log.debug('Server will shutdown in %s seconds', shutdown_)
+        log.debug("Server will shutdown in %s seconds", shutdown_)
         start = time.time()
         while time.time() - start < shutdown_:
             if do_shutdown:
                 time.sleep(0.1)  # allow main thread time to print stacktrace
                 break
             time.sleep(0.5)
-        log.info("Calling shutdown on Redirect_Server %s (0x%08x)",
-                 str(redirect_server_), id(redirect_server_))
+        log.info(
+            "Calling shutdown on Redirect_Server %s (0x%08x)",
+            str(redirect_server_),
+            id(redirect_server_),
+        )
         redirect_server_.shutdown()
 
     # create the first instance of the Redirect Handler
-    redirect_handler = redirect_handler_factory(entry_list,
-                                                REDIRECT_CODE,
-                                                STATUS_PATH,
-                                                RELOAD_PATH,
-                                                NOTE_ADMIN)
+    redirect_handler = redirect_handler_factory(
+        entry_list, REDIRECT_CODE, STATUS_PATH, RELOAD_PATH, NOTE_ADMIN
+    )
     with RedirectServer((ip, port), redirect_handler) as redirect_server:
-        serve_time = 'forever'
+        serve_time = "forever"
         if shutdown:
-            serve_time = 'for %s seconds' % shutdown
+            serve_time = "for %s seconds" % shutdown
             st = threading.Thread(
-                name='shutdown_thread',
+                name="shutdown_thread",
                 target=shutdown_server,
-                args=(redirect_server, shutdown,))
+                args=(
+                    redirect_server,
+                    shutdown,
+                ),
+            )
             st.start()
-        log.info("Serve %s at %s:%s, Process ID %s", serve_time, ip, port,
-                 os.getpid())
+        log.info("Serve %s at %s:%s, Process ID %s", serve_time, ip, port, os.getpid())
         try:
-            log.debug("Redirect_Server %s (0x%08x)",
-                      redirect_server, id(redirect_server))
+            log.debug("Redirect_Server %s (0x%08x)", redirect_server, id(redirect_server))
             redirect_server.serve_forever(poll_interval=1)  # never returns
         except (KeyboardInterrupt, InterruptedError):
             do_shutdown = True
             raise
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
