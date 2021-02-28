@@ -1594,7 +1594,7 @@ process or HTTP requesting the RELOAD_PATH.
                              ' (' + rc_307.phrase +  # NOQA
                              '). Keep in mind, Status Code ' + rc_308.phrase +  # NOQA
                              ' will cause most browsers to cache the redirect.'
-                             'Any HTTP Status Code could be used but odd'
+                             ' Any HTTP Status Code could be used but odd'
                              ' things will happen if a value like 500 is'
                              ' returned.'
                              ' This Status Code is only returned when a'
