@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
+# black --line-length 100
+#
 # TODO: it is possible to override distutils.dist.Distribution and pass within
 #       setup `distclass=MyDistribution`.  However, it's not clear how to
 #       remove unsupported commands from possible commands, e.g. `upload_docs`
@@ -32,24 +34,26 @@ from goto_http_redirect_server.goto_http_redirect_server import (
     __url_circleci__,
     __url_pypi__,
     __url_issues__,
-    __doc__
+    __doc__,
 )
+
 # XXX: these defaults should match those in tools/ci/service-*.sh files
-GOTO_FILE_REDIRECTS = '/usr/local/share/goto_http_redirect_server.csv'
-GOTO_CONFIG = '/etc/goto_http_redirect_server.conf'
+GOTO_FILE_REDIRECTS = "/usr/local/share/goto_http_redirect_server.csv"
+GOTO_CONFIG = "/etc/goto_http_redirect_server.conf"
 _HERED = os.path.abspath(os.path.dirname(__file__))
 GOTO_SERVICE_FILES = [
-    os.path.join(_HERED, 'service', file_) for file_ in (
-        'goto_http_redirect_server.conf',
-        'goto_http_redirect_server.service',
-        'goto_http_redirect_server.sh',
-        'service-install.sh',
-        'service-uninstall.sh',
+    os.path.join(_HERED, "service", file_)
+    for file_ in (
+        "goto_http_redirect_server.conf",
+        "goto_http_redirect_server.service",
+        "goto_http_redirect_server.sh",
+        "service-install.sh",
+        "service-uninstall.sh",
     )
 ]
 PACKAGE_DATA = GOTO_SERVICE_FILES + [
-    os.path.join(_HERED, 'setup.py'),
-    os.path.join(_HERED, 'README.md'),
+    os.path.join(_HERED, "setup.py"),
+    os.path.join(_HERED, "README.md"),
 ]
 
 
@@ -85,22 +89,21 @@ class GotoSetupCommand(Command, abc.ABC):
         output = None
         try:
             if verbose:
-                print(' '.join(cmd), file=sys.stderr)
+                print(" ".join(cmd), file=sys.stderr)
             output = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as cpe:
-            print(str(cpe.output, errors='backslashreplace'), file=sys.stderr)
-            print('Command (%s) returned %s' % (' '.join(cmd), cpe.returncode),
-                  file=sys.stderr)
+            print(str(cpe.output, errors="backslashreplace"), file=sys.stderr)
+            print("Command (%s) returned %s" % (" ".join(cmd), cpe.returncode), file=sys.stderr)
         finally:
             if output and verbose:
-                print(str(output, errors='backslashreplace'), file=sys.stderr)
+                print(str(output, errors="backslashreplace"), file=sys.stderr)
 
     @abc.abstractmethod
     def run(self):
-        if 'linux' not in platform.system().lower():
+        if "linux" not in platform.system().lower():
             raise NotImplementedError(
-                'systemd services are for a Linux system,'
-                ' this is a %s system.' % platform.system()
+                "systemd services are for a Linux system,"
+                " this is a %s system." % platform.system()
             )
 
 
@@ -117,18 +120,17 @@ class systemd_install(GotoSetupCommand):
          Force these to match.
     """
 
-    script = os.path.join(_HERED,
-                          'service',
-                          'service-install.sh')
+    script = os.path.join(_HERED, "service", "service-install.sh")
 
-    description = 'install systemd service files for' + \
-                  ' goto_http_redirect_server.service (Linux only) - calls %s' \
-                  % script
+    description = (
+        "install systemd service files for"
+        + " goto_http_redirect_server.service (Linux only) - calls %s" % script
+    )
 
     # these should match service-install.sh
     user_options = [
-        ('enable', 'e', 'enable the systemd service'),
-        ('start', 's', 'start the systemd service (requires --enable)'),
+        ("enable", "e", "enable the systemd service"),
+        ("start", "s", "start the systemd service (requires --enable)"),
     ]
     enable = None
     start = None
@@ -141,8 +143,8 @@ class systemd_install(GotoSetupCommand):
         super().run()
         # passed to service-install.sh
         opts = []
-        opts += ['--enable'] if self.enable else []
-        opts += ['--start'] if self.start else []
+        opts += ["--enable"] if self.enable else []
+        opts += ["--start"] if self.start else []
         self.run_print([self.script] + opts)
 
 
@@ -153,18 +155,17 @@ class systemd_uninstall(GotoSetupCommand):
     XXX: see message about class name in systemd_install
     """
 
-    script = os.path.join(_HERED,
-                          'service',
-                          'service-uninstall.sh')
+    script = os.path.join(_HERED, "service", "service-uninstall.sh")
 
-    description = 'uninstall systemd service files for' + \
-                  ' goto_http_redirect_server.service (Linux only) - calls %s' \
-                  % script
+    description = (
+        "uninstall systemd service files for"
+        + " goto_http_redirect_server.service (Linux only) - calls %s" % script
+    )
 
     # these should match service-uninstall.sh
     user_options = [
-        ('reload', 'r', 'reload the systemd service after service removal'),
-        ('wipe', 'w', 'remove configuration and csv files'),
+        ("reload", "r", "reload the systemd service after service removal"),
+        ("wipe", "w", "remove configuration and csv files"),
     ]
     reload = None
     wipe = None
@@ -177,99 +178,99 @@ class systemd_uninstall(GotoSetupCommand):
         super().run()
         # passed to service-uninstall.sh
         opts = []
-        opts += ['--reload'] if self.reload else []
-        opts += ['--wipe'] if self.wipe else []
+        opts += ["--reload"] if self.reload else []
+        opts += ["--wipe"] if self.wipe else []
         self.run_print([self.script] + opts)
 
 
 # Get the long description from the README.md file
-with open(os.path.join(_HERED, 'README.md'), encoding='utf-8') as f_:
+with open(os.path.join(_HERED, "README.md"), encoding="utf-8") as f_:
     long_description = f_.read()
 
 setup(
     # `setup` arguments are listed at
     # https://github.com/python/cpython/blob/8837dd092fe5ad5184889104e8036811ed839f98/Lib/distutils/dist.py#L1023
-    name='goto_http_redirect_server',
+    name="goto_http_redirect_server",
     version=__version__,
     author=__author__,
     url=__url_pypi__,
     project_urls={
-        'Source': __url_github__,
-        'Bug Reports': __url_issues__,
-        'CI (Azure)': __url_azure__,
-        'CI (CircleCI)': __url_circleci__,
+        "Source": __url_github__,
+        "Bug Reports": __url_issues__,
+        "CI (Azure)": __url_azure__,
+        "CI (CircleCI)": __url_circleci__,
     },
     description=__doc__.splitlines()[0],
-    long_description_content_type='text/markdown',
+    long_description_content_type="text/markdown",
     long_description=long_description,
-    license='MIT License',
+    license="MIT License",
     install_requires=[],
-    setup_requires=['wheel'],
+    setup_requires=["wheel"],
     extras_require={
         # install these locally with command:
         #     python -m pip install --user -e '.[development]'
-        'development': [
-            'flake8==3.8',
-            'mypy==0.812',
-            'pytest==6.2' if PYVER_GT35 else 'pytest==6.1',
-            'pytest-cov==2.11',
-            'pytest-timeout==1.4',
-            'yamllint==1.26',
+        "development": [
+            "flake8==3.8",
+            "mypy==0.812",
+            "pytest==6.2" if PYVER_GT35 else "pytest==6.1",
+            "pytest-cov==2.11",
+            "pytest-timeout==1.4",
+            "yamllint==1.26",
         ],
         # subsets of 'development' for faster `pip install` in CI stages
-        'development-flake8': [
-            'flake8==3.8',
+        "development-flake8": [
+            "flake8==3.8",
         ],
-        'development-mypy': [
-            'mypy==0.812',
+        "development-mypy": [
+            "mypy==0.812",
         ],
-        'development-pytest': [
-            'pytest==6.2' if PYVER_GT35 else 'pytest==6.1',
-            'pytest-cov==2.11',
-            'pytest-timeout==1.4',
+        "development-pytest": [
+            "pytest==6.2" if PYVER_GT35 else "pytest==6.1",
+            "pytest-cov==2.11",
+            "pytest-timeout==1.4",
         ],
-        'development-yamllint': [
-            'yamllint==1.26',
+        "development-yamllint": [
+            "yamllint==1.26",
         ],
-        'build': [
-            'pip',
-            'setuptools>=44',
-            'twine>=3.3',
-            'wheel',
+        "build": [
+            "pip",
+            "setuptools>=44",
+            "twine>=3.3",
+            "wheel",
         ],
-        'readme': [
-            'md_toc',
-        ]
+        "readme": [
+            "md_toc",
+        ],
     },
     # see https://pypi.org/classifiers/
     classifiers=[
-        'Development Status :: 5 - Production/Stable',
-        'Environment :: Console',
-        'Operating System :: OS Independent',
-        'Natural Language :: English',
-        'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python :: 3.5',
-        'Topic :: Internet :: WWW/HTTP :: HTTP Servers'
+        "Development Status :: 5 - Production/Stable",
+        "Environment :: Console",
+        "Operating System :: OS Independent",
+        "Natural Language :: English",
+        "License :: OSI Approved :: MIT License",
+        "Programming Language :: Python :: 3.5",
+        "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
     ],
     # keywords should match "topics" listed at github project
-    keywords='http-server redirect-urls shortcuts shorturl shorturl-services'
-             'shorturls url-shortener',
-    python_requires='>=3.5.2',
-    packages=['goto_http_redirect_server'],
+    keywords="http-server redirect-urls shortcuts shorturl shorturl-services"
+    "shorturls url-shortener",
+    python_requires=">=3.5.2",
+    packages=["goto_http_redirect_server"],
     # enables `python -m goto-http-redirect-server`
-    py_modules=['goto-http-redirect-server'],
+    py_modules=["goto-http-redirect-server"],
     entry_points={
-        'console_scripts': [
-            'goto_http_redirect_server=goto_http_redirect_server.goto_http_redirect_server:main',
+        "console_scripts": [
+            "goto_http_redirect_server=goto_http_redirect_server.goto_http_redirect_server:main",
         ],
     },
     # viewable from `python setup.py --help-commands`
     cmdclass={
-        'systemd_install': systemd_install,
-        'systemd_uninstall': systemd_uninstall,
+        "systemd_install": systemd_install,
+        "systemd_uninstall": systemd_uninstall,
     },
     package_data={
-        'goto_http_redirect_server': PACKAGE_DATA,
+        "goto_http_redirect_server": PACKAGE_DATA,
     },
     include_package_data=True,
 )
