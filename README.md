@@ -166,19 +166,18 @@ No service downtime!
 
 # `--help` message
 
-    usage: goto_http_redirect_server [--redirects REDIRECTS_FILES]
-                                     [--from-to from to] [--ip IP] [--port PORT]
-                                     [--status-path STATUS_PATH]
-                                     [--reload-path RELOAD_PATH]
-                                     [--redirect-code REDIRECT_CODE]
-                                     [--field-delimiter FIELD_DELIMITER]
-                                     [--status-note-file STATUS_NOTE_FILE]
-                                     [--shutdown SHUTDOWN] [--log LOG] [--debug]
-                                     [--version] [-?]
+    usage: goto_http_redirect_server [--redirects REDIRECTS_FILES] [--from-to from to]
+                                    [--ip IP] [--port PORT] [--status-path STATUS_PATH]
+                                    [--reload-path RELOAD_PATH]
+                                    [--redirect-code REDIRECT_CODE]
+                                    [--field-delimiter FIELD_DELIMITER]
+                                    [--status-note-file STATUS_NOTE_FILE]
+                                    [--shutdown SHUTDOWN] [--log LOG] [--debug]
+                                    [--version] [-?]
 
     The "Go To" HTTP Redirect Server for sharing dynamic shortcut URLs on your network.
 
-    HTTP 308 Permanent Redirect reply server. Load this server with redirects of "from path" and
+    HTTP 307 Temporary Redirect reply server. Load this server with redirects of "from path" and
     "to URL" and let it run indefinitely. Reload the running server by signaling the
     process or HTTP requesting the RELOAD_PATH.
 
@@ -186,12 +185,12 @@ No service downtime!
       One or more required. May be passed multiple times.
 
       --redirects REDIRECTS_FILES
-                            File of redirects. Within a file, is one redirect
-                            entry per line. A redirect entry is four fields: "from
-                            path", "to URL", "added by user", and "added on
-                            datetime" separated by the FIELD_DELIMITER character.
-      --from-to from to     A single redirect entry of "from path" and "to URL"
-                            fields. For example, --from-to "/hr" "http://human-
+                            File of redirects. Within a file, is one redirect entry per
+                            line. A redirect entry is four fields: "from path", "to URL",
+                            "added by user", and "added on datetime" separated by the
+                            FIELD_DELIMITER character.
+      --from-to from to     A single redirect entry of "from path" and "to URL" fields.
+                            For example, --from-to "/hr" "http://human-
                             resources.megacorp.local/login"
 
     Network Options:
@@ -200,37 +199,33 @@ No service downtime!
 
     Server Options:
       --status-path STATUS_PATH
-                            The status path dumps information about the process
-                            and loaded redirects. Default status page path is
-                            "/status".
+                            The status path dumps information about the process and loaded
+                            redirects. Default status page path is "/status".
       --reload-path RELOAD_PATH
-                            Allow reloads by HTTP GET Request to passed URL Path.
-                            e.g. --reload-path "/reload". May be a potential
-                            security or stability issue. The program will always
-                            allow reload by process signal. Default is off.
+                            Allow reloads by HTTP GET Request to passed URL Path. e.g.
+                            --reload-path "/reload". May be a potential security or
+                            stability issue. The program will always allow reload by
+                            process signal. Default is off.
       --redirect-code REDIRECT_CODE
-                            Set HTTP Redirect Status Code as an integer. Most
-                            often the desired override will be 307 (Temporary
-                            Redirect). Any HTTP Status Code could be used but odd
-                            things will happen if a value like 500 is returned.
-                            This Status Code is only returned when a loaded
-                            redirect entry is found and returned. Default
-                            successful redirect Status Code is 308 (Permanent
-                            Redirect).
+                            Set HTTP Redirect Status Code as an integer. Most often the
+                            desired override will be 307 (Temporary Redirect). Keep in
+                            mind, Status Code Permanent Redirect will cause most browsers
+                            to cache the redirect.Any HTTP Status Code could be used but
+                            odd things will happen if a value like 500 is returned. This
+                            Status Code is only returned when a loaded redirect entry is
+                            found and returned. Default successful redirect Status Code is
+                            307 (Temporary Redirect).
       --field-delimiter FIELD_DELIMITER
-                            Field delimiter string for --redirects files per-line
-                            redirect entries. Default is "\t" (ordinal 9).
+                            Field delimiter string for --redirects files per-line redirect
+                            entries. Default is "\t" (ordinal 9).
       --status-note-file STATUS_NOTE_FILE
-                            Status page note: Filesystem path to a file with HTML
-                            that will be embedded within a <div> element in the
-                            status page.
+                            Status page note: Filesystem path to a file with HTML that
+                            will be embedded within a <div> element in the status page.
       --shutdown SHUTDOWN   Shutdown the server after passed seconds. Intended for
                             testing.
-      --log LOG             Log to file at path LOG. Default logging is to
-                            sys.stderr.
-      --debug               Set logging level to DEBUG. Default logging level is
-                            INFO.
-      --version             Print "goto_http_redirect_server 1.1.2" and exit.
+      --log LOG             Log to file at path LOG. Default logging is to sys.stderr.
+      --debug               Set logging level to DEBUG. Default logging level is INFO.
+      --version             Print "goto_http_redirect_server 1.1.5" and exit.
       -?, -h, --help        Print this help message and exit.
 
     About Redirect Entries:
@@ -276,7 +271,7 @@ No service downtime!
 
       First, given the URL
 
-         http://host.com/pa/th;parm?a=A&b=B#frag
+        http://host.com/pa/th;parm?a=A&b=B#frag
 
       the URI parts that form a urllib.urlparse ParseResult class would be:
 
@@ -344,13 +339,13 @@ No service downtime!
       Required Request Modifiers must be at the end of the "from path" field string.
       Required Request Modifiers strings are:
 
-         ';'  for user requests with a parameter.
-         '?'  for user requests with a query.
-         ';?' for user requests with a parameter and a query.
+        ';'  for user requests with a parameter.
+        '?'  for user requests with a query.
+        ';?' for user requests with a parameter and a query.
 
     About Redirect Files:
 
-       A line with a leading "#" will be ignored.
+      A line with a leading "#" will be ignored.
 
     About Reloads:
 
@@ -369,7 +364,7 @@ No service downtime!
       Options --status-path and --reload-path may be passed paths to obscure access
       from unauthorized users. e.g.
 
-          --status-path '/3811b8c6-a925-469e-a837-1787d4ade762'
+          --status-path '/d77629da-8797-4e2a-95de-0cb3e3f523e7'
 
     About this program:
 
