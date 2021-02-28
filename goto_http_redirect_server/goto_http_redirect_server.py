@@ -61,16 +61,16 @@ TIME_START = time.time()
 DATETIME_START = datetime.datetime.fromtimestamp(TIME_START).replace(microsecond=0)
 # parseable datetime string formats for a Redirect Entry
 DATETIME_STRPTIMES = (
-        r"%Y%m%dT%H%M%S",
-        r"%Y-%m-%dT%H:%M:%S",
-        r"%Y-%m-%d %H:%M:%S",
-        r"%Y-%m-%d_%H:%M:%S",
-        r"%Y/%m/%d %H:%M",
-        r"%Y-%m-%d %H:%M",
-        r"%Y/%m/%d_%H:%M",
-        r"%Y-%m-%d_%H:%M",
-        r"%Y-%m-%d",
-        r"%Y/%m/%d",
+    r"%Y%m%dT%H%M%S",
+    r"%Y-%m-%dT%H:%M:%S",
+    r"%Y-%m-%d %H:%M:%S",
+    r"%Y-%m-%d_%H:%M:%S",
+    r"%Y/%m/%d %H:%M",
+    r"%Y-%m-%d %H:%M",
+    r"%Y/%m/%d_%H:%M",
+    r"%Y-%m-%d_%H:%M",
+    r"%Y-%m-%d",
+    r"%Y/%m/%d",
 )
 
 #
