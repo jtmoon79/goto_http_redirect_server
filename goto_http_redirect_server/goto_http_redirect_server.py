@@ -1191,8 +1191,7 @@ Redirect Path not found: <code>{esc_ppq}</code>
         #       note with a hyperlink to the new URI(s)
         self.end_headers()
         # Do Not Write HTTP Content
-        count_key = '(%s) → (%s)' % (ppqpr.path, to)
-        redirect_counter[count_key] += 1
+        redirect_counter[str(ppqpr.path)] += 1
 
     def _do_VERB_log(self):
         """simple helper"""
