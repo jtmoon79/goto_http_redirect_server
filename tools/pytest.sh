@@ -16,5 +16,5 @@ exec python \
             --verbose \
             -c ./.config/pytest.ini \
             --cov-config=./.config/coverage.ini \
-            . \
+            goto_http_redirect_server/ \
             "${@}"
