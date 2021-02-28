@@ -225,7 +225,7 @@ No service downtime!
                             testing.
       --log LOG             Log to file at path LOG. Default logging is to sys.stderr.
       --debug               Set logging level to DEBUG. Default logging level is INFO.
-      --version             Print "goto_http_redirect_server 1.1.8" and exit.
+      --version             Print "goto_http_redirect_server 1.1.9" and exit.
       -?, -h, --help        Print this help message and exit.
 
     About Redirect Entries:
