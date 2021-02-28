@@ -501,7 +501,7 @@ STATUS_PAGE_PATH_DEFAULT = '/status'  # type: str
 PATH_FAVICON = '/favicon.ico'  # type: str
 REDIRECT_PATHS_NOT_ALLOWED = (PATH_FAVICON,)  # type: typing.Tuple[str]
 # HTTP Status Code used for redirects (among several possible redirect codes)
-REDIRECT_CODE_DEFAULT = http.HTTPStatus.PERMANENT_REDIRECT  # type: http.HTTPStatus
+REDIRECT_CODE_DEFAULT = http.HTTPStatus.TEMPORARY_REDIRECT  # type: http.HTTPStatus
 REDIRECT_CODE = REDIRECT_CODE_DEFAULT  # type: http.HTTPStatus
 # urlparse-related things
 RE_URI_KEYWORDS = re.compile(r'\${(path|params|query|fragment)}')
@@ -1575,7 +1575,7 @@ process or HTTP requesting the RELOAD_PATH.
     pgroup = parser.add_argument_group(title='Server Options')
     pgroup.add_argument('--status-path', action='store',
                         default=STATUS_PAGE_PATH_DEFAULT, type=str,
-                        help=' The status path'
+                        help='The status path'
                              ' dumps information about the process and loaded'
                              ' redirects.'
                              ' Default status page path is "%(default)s".')
@@ -1587,14 +1587,17 @@ process or HTTP requesting the RELOAD_PATH.
                              ' The program will always allow reload by'
                              ' process signal.'
                              ' Default is off.')
-    rc_302 = http.HTTPStatus.TEMPORARY_REDIRECT
+    rc_307 = http.HTTPStatus.TEMPORARY_REDIRECT
+    rc_308 = http.HTTPStatus.PERMANENT_REDIRECT
     pgroup.add_argument('--redirect-code', action='store',
                         default=int(rcd), type=int,
                         help='Set HTTP Redirect Status Code as an'
                              ' integer. Most often the desired override will'
-                             ' be ' + str(int(rc_302)) +  # NOQA
-                             ' (' + rc_302.phrase +  # NOQA
-                             '). Any HTTP Status Code could be used but odd'
+                             ' be ' + str(int(rc_307)) +  # NOQA
+                             ' (' + rc_307.phrase +  # NOQA
+                             '). Keep in mind, Status Code ' + rc_308.phrase +  # NOQA
+                             ' will cause most browsers to cache the redirect.'
+                             'Any HTTP Status Code could be used but odd'
                              ' things will happen if a value like 500 is'
                              ' returned.'
                              ' This Status Code is only returned when a'
