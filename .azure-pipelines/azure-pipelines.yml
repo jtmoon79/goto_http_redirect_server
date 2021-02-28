@@ -275,6 +275,9 @@ stages:
             Ubuntu1804_Python38:
               python.version: '3.8'
               vmImageName: 'ubuntu-18.04'
+            Ubuntu2004_Python39:
+              python.version: '3.9'
+              vmImageName: 'ubuntu-20.04'
             MacOS1014:
               python.version: $(GOTO_PY_VERSION)
               vmImageName: 'macOS-10.14'
