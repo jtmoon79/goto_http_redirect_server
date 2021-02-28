@@ -1537,8 +1537,7 @@ def process_options() -> typing.Tuple[
 
     parser = argparse.ArgumentParser(
         description=__doc__
-        + """\
-
+        + """
 HTTP %s %s reply server. Load this server with redirects of "from path" and
 "to URL" and let it run indefinitely. Reload the running server by signaling the
 process or HTTP requesting the RELOAD_PATH.
