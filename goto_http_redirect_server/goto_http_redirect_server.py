@@ -10,7 +10,7 @@
 
 
 import argparse
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 import copy
 import csv
 import datetime
@@ -32,7 +32,7 @@ import sys
 import threading
 import time
 import typing
-from typing import cast, NamedTuple
+from typing import cast, DefaultDict, List, NamedTuple, Optional, Tuple, Union
 from urllib import parse
 import uuid
 
@@ -103,7 +103,7 @@ def Re_From_to_Re_EntryKey(from_: Re_From) -> Re_EntryKey:
     return Re_EntryKey(from_)
 
 
-def to_ParseResult(value: typing.Union[str, Re_From, Re_To, Re_EntryKey]) -> ParseResult:
+def to_ParseResult(value: Union[str, Re_From, Re_To, Re_EntryKey]) -> ParseResult:
     """
     helpful wrapper
 
@@ -155,12 +155,12 @@ class Re_EntryType(enum.IntEnum):
         #     cls.Paths = (4, 5, 6, 7)
         super(cls, self).__init__()
 
-    def getStr_EntryType(self):
+    def getStr_EntryType(self) -> str:
         """reverse mapping of EntryType to it's required appending string"""
-        return self.Map[self]
+        return self.Map[self]  # type: ignore
 
     @classmethod
-    def getEntryType_From(cls, from_: Re_From):
+    def getEntryType_From(cls, from_: Re_From) -> enum.IntEnum:
         """the last matching Re_EntryType is the required matching"""
         required = cls._
         for typ in cls:
@@ -169,7 +169,7 @@ class Re_EntryType(enum.IntEnum):
         return required
 
     @classmethod
-    def getEntryKeys(cls, from_: Re_From) -> typing.List[Re_EntryKey]:
+    def getEntryKeys(cls, from_: Re_From) -> List[Re_EntryKey]:
         """
         return list of all possible Re_EntryKeys
 
@@ -180,11 +180,11 @@ class Re_EntryType(enum.IntEnum):
         et = cls.getEntryType_From(from_)
         for typ in cls:
             if et != typ:
-                ret.append(Re_From_to_Re_EntryKey(from_ + typ.getStr_EntryType()))
+                ret.append(Re_From_to_Re_EntryKey(Re_From(from_ + typ.getStr_EntryType())))
         return ret
 
     @classmethod
-    def getEntryTypes_fallback(cls, typ):
+    def getEntryTypes_fallback(cls, typ) -> Tuple[enum.IntEnum, ...]:
         """return tuple of Re_EntryTypes in order of required fallbacks"""
 
         if typ == cls._:  # '/a'
@@ -208,7 +208,9 @@ class Re_EntryType(enum.IntEnum):
         raise ValueError("unmatched type value %s" % typ)
 
     @classmethod
-    def getEntryType_ParseResult(cls, _: str, pr: ParseResult):
+    def getEntryType_ParseResult(cls, _: str, pr: ParseResult) -> enum.IntEnum:
+        # given ParseResult, return appropriate Re_EntryType
+        #
         # TODO: urlparse does not distinguish empty parts and non-existent parts
         #       using empty string and None.
         #       e.g. parse.urlparse('/path?') is parse.urlparse('/path')
@@ -341,10 +343,10 @@ class Re_Entry(__Re_EntryBase):
 # class Re_EntrySuite(MutableMapping):
 #     """constrained mapping of Re_EntryType to Re_Entry"""
 #
-#     KEYS = [x for x in Re_EntryType]  # type: typing.List[Re_EntryType]
+#     KEYS = [x for x in Re_EntryType]  # type: List[Re_EntryType]
 #
 #     def __init__(self,
-#                  iterable: typing.Optional[
+#                  iterable: Optional[
 #                      typing.Iterable[
 #                          typing.Tuple[Re_EntryType, Re_Entry]
 #                      ]
@@ -397,12 +399,14 @@ class Re_Entry(__Re_EntryBase):
 #
 # Re_EntryValue = Re_EntrySuite
 
-Re_Entry_Dict = typing.NewType("Re_Entry_Dict", typing.Dict[Re_EntryKey, Re_Entry])
+# XXX: mypy does not like the following but it seems perfectly fine to me
+# Re_Entry_Dict = typing.NewType("Re_Entry_Dict", typing.OrderedDict[Re_EntryKey, Re_Entry])
+Re_Entry_Dict = typing.NewType("Re_Entry_Dict", OrderedDict)
 
 
 def Re_Entry_Dict_new() -> Re_Entry_Dict:
     """type annotated empty Re_Entry_Dict"""
-    return Re_Entry_Dict(dict())
+    return Re_Entry_Dict(OrderedDict())
 
 
 Re_Field_Delimiter = typing.NewType("Re_Field_Delimiter", str)
@@ -412,15 +416,15 @@ Re_Field_Delimiter = typing.NewType("Re_Field_Delimiter", str)
 # XXX: some get very pedantic because they are for learning's sake.
 #
 
-Path_List = typing.List[pathlib.Path]
-FromTo_List = typing.List[typing.Tuple[str, str]]
+Path_List = List[pathlib.Path]
+FromTo_List = List[Tuple[str, str]]
 Redirect_Counter = typing.DefaultDict[str, int]
 Redirect_Code_Value = typing.NewType("Redirect_Code_Value", int)
-str_None = typing.Optional[str]
-Path_None = typing.Optional[pathlib.Path]
+str_None = Optional[str]
+Path_None = Optional[pathlib.Path]
 Iter_str = typing.Iterable[str]
 htmls = typing.NewType("htmls", str)  # HTML String
-htmls_str = typing.Union[htmls, str]
+htmls_str = Union[htmls, str]
 
 
 #
@@ -510,7 +514,7 @@ var stIsIE=!1;if(sorttable={init:function(){arguments.callee.done||(arguments.ca
 SOCKET_LISTEN_BACKLOG = 31  # type: int
 STATUS_PAGE_PATH_DEFAULT = "/status"  # type: str
 PATH_FAVICON = "/favicon.ico"  # type: str
-REDIRECT_PATHS_NOT_ALLOWED = (PATH_FAVICON,)  # type: typing.Tuple[str]
+REDIRECT_PATHS_NOT_ALLOWED = (PATH_FAVICON,)  # type: Tuple[str, ...]
 # HTTP Status Code used for redirects (among several possible redirect codes)
 REDIRECT_CODE_DEFAULT = http.HTTPStatus.TEMPORARY_REDIRECT  # type: http.HTTPStatus
 REDIRECT_CODE = REDIRECT_CODE_DEFAULT  # type: http.HTTPStatus
@@ -544,7 +548,7 @@ LOGGING_FORMAT = "%(asctime)s %(name)s %(levelname)s: %(message)s"  # type: str
 log = logging.getLogger(PROGRAM_NAME)  # type: logging.Logger
 
 # write-once copy of sys.argv
-sys_args = []  # type: typing.List[str]
+sys_args = []  # type: List[str]
 
 
 #
@@ -556,8 +560,8 @@ Redirect_FromTo_List = []  # type: FromTo_List
 # global list of --redirects files
 Redirect_Files_List = []  # type: Path_List
 reload_do = False  # type: bool
-reload_datetime = None  # type: typing.Optional[datetime.datetime]
-redirect_counter = defaultdict(int)  # type: typing.DefaultDict[str, int]
+reload_datetime = None  # type: Optional[datetime.datetime]
+redirect_counter = defaultdict(int)  # type: DefaultDict[str, int]
 STATUS_PATH = None  # type: str_None
 RELOAD_PATH = None  # type: str_None
 NOTE_ADMIN = htmls("")  # type: htmls
@@ -718,7 +722,7 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         RedirectHandler.__count += 1
         super().__init__(*args, **kwargs)
-        log.debug("RedirectHandler.__init__ %d (0x%08X)", RedirectHandler.__count, id(self))
+        log.debug("RedirectHandler.__init__ %d (@0x%08X)", RedirectHandler.__count, id(self))
 
     def log_message(self, format_, *args, **kwargs):
         """
@@ -754,7 +758,7 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
         self.wfile.write(html_docb)
 
     @staticmethod
-    def combine_parseresult(pr1: ParseResult, pr2: ParseResult) -> str:
+    def combine_parseresult(pr1: ParseResult, pr2: ParseResult) -> Re_To:
         """
         Combine ParseResult parts.
 
@@ -840,7 +844,7 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
                 pr["query"] = pr2d["query"]
 
         url = parse.urlunparse(ParseResult(**pr))
-        return url
+        return Re_To(url)
 
     @staticmethod
     def query_match(pr1: ParseResult, pr2: ParseResult) -> bool:
@@ -851,13 +855,72 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
         # TODO: how should this interact with path required modifier?
         return pr1.path == pr2.path
 
+    # manual caching for the function `_query_match_finder`
+    # use key `hash(ppq)` to avoid storing secrets within the `ppq` URL string
+    ppq_cache_enabled = True    # type: bool
+    _ppq_cache = OrderedDict()  # type: OrderedDict[int, Tuple[Re_Entry, Re_To]]
+    _ppq_cache_max = 50         # type: int
+    _ppq_cache_redirects_hash = 0  # type: int
+
+    @staticmethod
+    def ppq_cache_clear() -> None:
+        RedirectHandler._ppq_cache.clear()
+        RedirectHandler._ppq_cache_redirects_hash = 0
+
+    @staticmethod
+    def _ppq_cache_save(ppq: str, to: Re_To, entry: Re_Entry) -> None:
+        if not RedirectHandler.ppq_cache_enabled:
+            return
+        # XXX: SECURITY RISK: Python hash is not cryptographically secure
+        ppqh = hash(ppq)
+        # delete entry if too big
+        if len(RedirectHandler._ppq_cache) >= \
+                RedirectHandler._ppq_cache_max:
+            # log.debug("_ppq_cache(@0x%08X).popitem() len %s",
+            #           id(RedirectHandler._ppq_cache),
+            #           len(RedirectHandler._ppq_cache))
+            # type `OrderedDict` means `popitem` deletes least recently entered
+            # XXX: this is a primitive cache eviction algorithm. A "least used cache entry" would
+            #      be better. Good enough.
+            RedirectHandler._ppq_cache.popitem()
+        # cache the entry
+        RedirectHandler._ppq_cache[ppqh] = (entry, to)
+        # log.debug("_ppq_cache(@0x%08X).save[0x%08X]='%s' len %d",
+        #           id(RedirectHandler._ppq_cache), ppqh, entry.to,
+        #           len(RedirectHandler._ppq_cache))
+
+    @staticmethod
+    def _ppq_cache_check(ppq: str, redirects: Re_Entry_Dict) \
+            -> Union[Tuple[Re_Entry, Re_To], Tuple[None, None]]:
+        if not RedirectHandler.ppq_cache_enabled:
+            return None, None
+        # the `_ppq_cache_redirects_hash` is a sanity check
+        redirects_hash = id(redirects)
+        if RedirectHandler._ppq_cache_redirects_hash == 0:
+            RedirectHandler._ppq_cache_redirects_hash = redirects_hash
+            log.debug("set _ppq_cache_redirects_hash 0x%016X", redirects_hash)
+        elif RedirectHandler._ppq_cache_redirects_hash != redirects_hash:
+            log.error("_ppq_cache_redirects was not cleared")
+            RedirectHandler.ppq_cache_clear()
+            return None, None
+
+        # XXX: SECURITY RISK: Python hash is not cryptographically secure
+        ppqh = hash(ppq)
+        if ppqh in RedirectHandler._ppq_cache:
+            # log.debug("cached in _ppq_cache(@0x%08X)[0x%08X] len %d",
+            #           id(RedirectHandler._ppq_cache),
+            #           ppqh, len(RedirectHandler._ppq_cache))
+            return RedirectHandler._ppq_cache[ppqh]
+        return None, None
+
     @staticmethod
     def query_match_finder(
         ppq: str, ppqpr: ParseResult, redirects: Re_Entry_Dict
-    ) -> typing.Optional[Re_Entry]:
+    ) -> Optional[Re_Entry]:
         """
         An incoming query can have multiple matches within redirects. Return the
         required request matching entry.
+        Has underlying caching.
 
         For example, given incoming ppq '/foo?a=1' and redirects
             {
@@ -872,6 +935,7 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
         :param ppqpr: same incoming user request as ParseResult
         :param redirects: loaded redirect entries
         """
+
         path = ppqpr.path
         keys = []
         keyt = []
@@ -900,10 +964,11 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
         # search for inexact but appropriate type match
         for typ in Re_EntryType.getEntryTypes_fallback(ppqt):
             if typ in keyt:
-                return redirects[keys[keyt.index(typ)]]
+                r_ = keys[keyt.index(typ)]
+                return redirects[r_]
 
         # XXX: no fallback was found yet there were fallback keys? concerning.
-        log.error("Expected to find fallback type for type %s", ppqt)
+        log.error("Expected to find fallback type for type %s, none found", ppqt)
         return None
 
     def do_GET_status(self, note_admin: htmls) -> None:
@@ -1121,20 +1186,41 @@ Redirect Path not found: <code>{esc_ppq}</code>
         self.send_header(*self.Header_Connection_close)
         self.end_headers()
 
+    @staticmethod
+    def _do_VERB_redirect_processing(ppq: str, ppqpr: ParseResult, redirects: Re_Entry_Dict) \
+            -> Union[Tuple[Re_Entry, Re_To], Tuple[None, None]]:
+        """
+        Handle processing of `ppq`, `ppqpr` and checking and using the `ppq_cache`.
+        """
+        entry, to = RedirectHandler._ppq_cache_check(ppq, redirects)
+        if entry:
+            if not to:  # sanity check
+                log.error("entry (%s) found but 'to' is Falsey (%s); this is unexpected", entry, to)
+            return entry, to  # type: ignore # XXX: mypy complains for no good reason
+        entry = RedirectHandler.query_match_finder(ppq, ppqpr, redirects)
+        if not entry:
+            return None, None
+        # merge RedirectEntry URI parts with incoming requested URI parts
+        to = RedirectHandler.combine_parseresult(entry.to_pr, ppqpr)
+        RedirectHandler._ppq_cache_save(ppq, to, entry)
+        return entry, to
+
     def _do_VERB_redirect(self, ppq: str, ppqpr: ParseResult, redirects_: Re_Entry_Dict) -> None:
         """
         handle the HTTP Redirect Request (the entire purpose of this
         script).  Used for GET and HEAD requests.
+
         HEAD requests must not have a body (among many other differences
-        in GET and HEAD behavior).
+        in GET and HEAD behavior). See https://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html
         """
-        entry_ = RedirectHandler.query_match_finder(ppq, ppqpr, redirects_)
-        if entry_ is None:
+        entry, to = RedirectHandler._do_VERB_redirect_processing(ppq, ppqpr, redirects_)
+
+        if entry is None:
+            # no redirect found, return NOT FOUND in manner appropriate to the request (i.e. follow
+            # HTTP standards for GET and HEAD)
             self.log_message(
                 "no redirect found for incoming (%s), returning %s (%s)",
-                ppq,
-                int(http.HTTPStatus.NOT_FOUND),
-                http.HTTPStatus.NOT_FOUND.phrase,
+                ppq, int(http.HTTPStatus.NOT_FOUND), http.HTTPStatus.NOT_FOUND.phrase,
                 loglevel=logging.INFO,
             )
             cmd = self.command.upper()
@@ -1144,19 +1230,11 @@ Redirect Path not found: <code>{esc_ppq}</code>
                 return self.do_HEAD_redirect_NOT_FOUND()
             log.error('Unhandled command "%s"', cmd)
             return
-        entry = entry_  # type: ignore
 
-        # merge RedirectEntry URI parts with incoming requested URI parts
-        to = self.combine_parseresult(entry.to_pr, ppqpr)
-        user = entry.user
-        dt = entry.date
-
+        # XXX: SECURITY RISK: logging `to` which may contain secrets
         self.log_message(
             "redirect found (%s) → (%s), returning %s (%s)",
-            ppqpr.path,
-            to,
-            int(self.status_code),
-            self.status_code.phrase,
+            ppqpr.path, to, int(self.status_code), self.status_code.phrase,
             loglevel=logging.INFO,
         )
 
@@ -1166,13 +1244,13 @@ Redirect Path not found: <code>{esc_ppq}</code>
         # The 'Location' Header is used by browsers for HTTP 30X Redirects
         # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Location
         # The most important statement in this program.
-        self.send_header("Location", to)
+        self.send_header("Location", str(to))
         try:
-            self.send_header("Redirect-Created-By", user)
+            self.send_header("Redirect-Created-By", entry.user)
         except UnicodeEncodeError:
             log.exception('header "Redirect-Created-By" set to fallback')
             self.send_header("Redirect-Created-By", "Error Encoding User")
-        self.send_header("Redirect-Created-Date", dt.isoformat())
+        self.send_header("Redirect-Created-Date", entry.date.isoformat())
         self.send_header(*self.Header_Connection_close)
         # TODO: https://tools.ietf.org/html/rfc2616#section-10.3.2
         #       the entity of the response SHOULD contain a short hypertext
@@ -1186,7 +1264,7 @@ Redirect Path not found: <code>{esc_ppq}</code>
         print_debug("")
         try:
             self.log_message(
-                "\n  self: %s (0x%08X)\n  self.client_address: %s\n  "
+                "\n  self: %s (@0x%08X)\n  self.client_address: %s\n  "
                 'self.command: %s\n  self.path: "%s"\n  '
                 "self.headers:\n    %s",
                 type(self),
@@ -1259,7 +1337,7 @@ def redirect_handler_factory(
              RedirectServer.RequestHandlerClass
     """
     log.debug(
-        "using redirect dictionary (0x%08x) with %s entries:\n%s",
+        "using redirect dictionary (@0x%08x) with %s entries:\n%s",
         id(redirects),
         len(redirects),
         StrDelay(pprint.pformat, redirects, indent=2),
@@ -1476,10 +1554,11 @@ class RedirectServer(socketserver.ThreadingTCPServer):
         redirect_handler = redirect_handler_factory(
             entrys, REDIRECT_CODE, STATUS_PATH, RELOAD_PATH, NOTE_ADMIN
         )
+        RedirectHandler.ppq_cache_clear()
         pid = os.getpid()
         log.debug(
-            "reload %s (0x%08x)\n"
-            "new RequestHandlerClass (0x%08x) to replace old (0x%08x)\n"
+            "reload %s (@0x%08x)\n"
+            "new RequestHandlerClass (@0x%08x) to replace old (@0x%08x)\n"
             "PID %d",
             reload_do,
             id(reload_do),
@@ -1501,7 +1580,7 @@ def reload_signal_handler(signum, _) -> None:
     """
     global reload_do
     log.debug(
-        "reload_signal_handler: Signal Number %s, reload_do %s (0x%08x)",
+        "reload_signal_handler: Signal Number %s, reload_do %s (@0x%08x)",
         signum,
         reload_do,
         id(reload_do),
@@ -1509,7 +1588,7 @@ def reload_signal_handler(signum, _) -> None:
     reload_do = True
 
 
-def process_options() -> typing.Tuple[
+def process_options() -> Tuple[
     str,
     int,
     bool,
@@ -1521,7 +1600,8 @@ def process_options() -> typing.Tuple[
     Re_Field_Delimiter,
     Path_None,
     FromTo_List,
-    typing.List[str],
+    List[str],
+    bool,
 ]:
     """Process script command-line options."""
 
@@ -1651,6 +1731,14 @@ process or HTTP requesting the RELOAD_PATH.
         help="Status page note: Filesystem path to a file with"
         " HTML that will be embedded within a <div>"
         " element in the status page.",
+    )
+    pgroup.add_argument(
+        "--no-cache",
+        action="store_true",
+        default=False,
+        help="Turn off caching. Caching will store finalized 'To:' Header URLs in process memory."
+        " If users are expected to pass secrets (e.g. a password in a URL parameter) then turn off"
+        " caching.",
     )
     pgroup.add_argument(
         "--shutdown",
@@ -1823,6 +1911,8 @@ About Paths:
 
 About this program:
 
+  Underlying caching is so HTTP Redirect responses are a little bit faster.
+
   Modules used are available within the standard CPython distribution.
   Written for Python 3.7 but hacked to run with at least Python 3.5.2.
 
@@ -1860,7 +1950,7 @@ About this program:
     if args.status_note_file:
         status_note_file = pathlib.Path(args.status_note_file)
 
-    redirects_files = args.redirects_files  # type: typing.List[str]
+    redirects_files = args.redirects_files  # type: List[str]
     return (
         str(args.ip),
         int(args.port),
@@ -1874,6 +1964,7 @@ About this program:
         status_note_file,
         args.from_to,
         redirects_files,
+        not args.no_cache,
     )
 
 
@@ -1894,6 +1985,7 @@ def main() -> None:
         status_note_file,
         from_to,
         redirects_files,
+        ppq_cache_enabled,
     ) = process_options()
 
     logging_init(log_debug, log_filename)
@@ -1905,8 +1997,8 @@ def main() -> None:
         " ".join(sys.argv),
     )
 
-    # setup field delimiter
     RedirectServer.field_delimiter = field_delimiter  # set once
+    RedirectHandler.ppq_cache_enabled = ppq_cache_enabled  # set once
 
     # process the passed redirects
     global Redirect_FromTo_List
@@ -1962,7 +2054,7 @@ def main() -> None:
                 break
             time.sleep(0.5)
         log.info(
-            "Calling shutdown on Redirect_Server %s (0x%08x)",
+            "Calling shutdown on Redirect_Server %s (@0x%08x)",
             str(redirect_server_),
             id(redirect_server_),
         )
@@ -1987,7 +2079,7 @@ def main() -> None:
             st.start()
         log.info("Serve %s at %s:%s, Process ID %s", serve_time, ip, port, os.getpid())
         try:
-            log.debug("Redirect_Server %s (0x%08x)", redirect_server, id(redirect_server))
+            log.debug("Redirect_Server %s (@0x%08x)", redirect_server, id(redirect_server))
             redirect_server.serve_forever(poll_interval=1)  # never returns
         except (KeyboardInterrupt, InterruptedError):
             do_shutdown = True

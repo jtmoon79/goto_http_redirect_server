@@ -8,14 +8,19 @@ __author__ = 'jtmoon79'
 __doc__ = \
     """Test the goto_http_redirect_server project using pytest."""
 
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from datetime import datetime
 import getpass
 import http
 from http import client
+from pprint import pformat
+import random
+import sys
 import threading
 import time
+import timeit
 import typing
+import urllib
 from urllib.parse import ParseResult
 
 import pytest
@@ -28,6 +33,7 @@ from goto_http_redirect_server.goto_http_redirect_server import (
     Re_EntryType,
     Re_EntryKey,
     Re_Entry_Dict,
+    Re_Entry_Dict_new,
     FromTo_List,
     REDIRECT_PATHS_NOT_ALLOWED,
     REDIRECT_CODE_DEFAULT,
@@ -351,9 +357,240 @@ class Test_Functions(object):
                                 ppq: str, ppqpr: ParseResult,
                                 redirects: Re_Entry_Dict,
                                 entry: Re_Entry):
+        """
+        Test `RedirectHandler.query_match_finder` returns explected `Re_Entry`
+        """
         assert RedirectHandler.query_match_finder(
             ppq, ppqpr,
             redirects) == entry
+
+    def test_ppq_cache_clear(self):
+        """
+        Simple test `RedirectHandler.ppq_cache_clear` runs and does not raise.
+        """
+        RedirectHandler.ppq_cache_clear()
+        assert len(RedirectHandler._ppq_cache) == 0
+
+    _test_ppq_cache_redirects = OrderedDict(
+        [
+            ('/a1', Re_Entry('/a1', '/A1')),
+            ('/a2;', Re_Entry('/a2;', '/A2a')),
+            ('/a2?', Re_Entry('/a2?', '/A2b')),
+            ('/a3', Re_Entry('/a3', '/A3')),
+        ]
+    )
+
+    @pytest.mark.parametrize(
+        'ppq, ppqpr,'
+        'redirects,'
+        'entry, ppq_cache_len, ppq_cache_check',
+        (
+            # order is important, the state of RedirectHandler._ppq_cache
+            # is carried forward after each test
+            pytest.param(
+                '/a1', pr(path='/a1'),
+                _test_ppq_cache_redirects,
+                Re_Entry('/a1', '/A1'), 1, False
+            ),
+            pytest.param(
+                '/a2', pr(path='/a2'),
+                _test_ppq_cache_redirects,
+                Re_Entry('/a2;', '/A2a'), 2, False
+            ),
+            pytest.param(
+                '/a2', pr(path='/a2'),
+                _test_ppq_cache_redirects,
+                Re_Entry('/a2;', '/A2a'), 2, True
+            ),
+            pytest.param(
+                '/a2?foo', pr(path='/a2', query='foo'),
+                _test_ppq_cache_redirects,
+                Re_Entry('/a2?', '/A2b'), 2, False
+            ),
+            pytest.param(
+                '/x', pr(path='/x'),
+                _test_ppq_cache_redirects,
+                None, 2, False
+            ),
+            pytest.param(
+                '/a2', pr(path='/a2'),
+                _test_ppq_cache_redirects,
+                Re_Entry('/a2;', '/A2a'), 2, False
+            ),
+            pytest.param(
+                '/a3', pr(path='/a3'),
+                _test_ppq_cache_redirects,
+                Re_Entry('/a3', '/A3'), 2, False
+            ),
+            pytest.param(
+                '/a3', pr(path='/a3'),
+                _test_ppq_cache_redirects,
+                Re_Entry('/a3', '/A3'), 2, True
+            ),
+            pytest.param(
+                '/a2', pr(path='/a2'),
+                _test_ppq_cache_redirects,
+                Re_Entry('/a2;', '/A2a'), 2, False
+            ),
+        )
+    )
+    def test_ppq_cache(
+        self,
+        ppq: str,
+        ppqpr: ParseResult,
+        redirects: Re_Entry_Dict,
+        entry: Re_Entry,
+        ppq_cache_len: int,
+        ppq_cache_check: bool
+    ):
+        """
+        Test `RedirectHandler` works.
+
+        XXX: `RedirectHandler.test_ppq_cache_clear` must run once just before this
+             this test case should be redesigned to not have that dependency,
+             or use a pytest fixture that can wrap series of paremetrize tests
+        """
+        # XXX: sanity check
+        assert RedirectHandler.ppq_cache_enabled
+        RedirectHandler._ppq_cache_max = 2
+
+        if ppq_cache_check:
+            assert RedirectHandler._ppq_cache_check(ppq, redirects)
+        else:
+            assert RedirectHandler._ppq_cache_check(ppq, redirects) == (None, None)
+        entry_, _ = RedirectHandler._do_VERB_redirect_processing(ppq, ppqpr, redirects)
+        assert entry_ == entry
+        assert len(RedirectHandler._ppq_cache) == ppq_cache_len
+
+    @pytest.mark.parametrize(
+        "ppq, ppqpr,"
+        "redirects,"
+        "ppq_cache_len, ppq_cache_enabled, ppq_cache_clear",
+        (
+            pytest.param(
+                '/a1', pr(path='/a1'),
+                _test_ppq_cache_redirects,
+                0, False, True,
+            ),
+            pytest.param(
+                '/a2', pr(path='/a2'),
+                _test_ppq_cache_redirects,
+                0, False, False,
+            ),
+            pytest.param(
+                '/a2', pr(path='/a2'),
+                _test_ppq_cache_redirects,
+                1, True, False,
+            ),
+        )
+    )
+    def test_ppq_cache_enabled(
+        self,
+        ppq: str,
+        ppqpr: ParseResult,
+        redirects: Re_Entry_Dict,
+        ppq_cache_len: int,
+        ppq_cache_enabled: bool,
+        ppq_cache_clear: bool,
+    ):
+        """
+        Test `RedirectHandler.ppq_cache_enabled` flag enables or disables caching.
+        """
+        if ppq_cache_clear:
+            RedirectHandler.ppq_cache_clear()
+        RedirectHandler.ppq_cache_enabled = ppq_cache_enabled
+        _, __ = RedirectHandler._do_VERB_redirect_processing(ppq, ppqpr, redirects)
+        assert len(RedirectHandler._ppq_cache) == ppq_cache_len
+
+    @pytest.mark.parametrize(
+        "redirects_len, timeit_number, ppq_cache_max",
+        (
+            pytest.param(100, 100, 50),
+            pytest.param(100, 1000, 50),
+            pytest.param(1000, 100, 50),
+            pytest.param(1000, 1000, 50),
+            pytest.param(10000, 100, 50),
+            pytest.param(10000, 1000, 50),
+        ),
+    )
+    def test_ppq_cache_enabled_timeit(
+        self,
+        redirects_len: int,
+        timeit_number: int,
+        ppq_cache_max: int,
+    ):
+        """
+        Test the `RedirectHandler._ppq_cache` is actually useful by timing the
+        difference with and without via `ppq_cache_enabled` flag
+        """
+        time_start = time.time()
+        RedirectHandler._ppq_cache_max = ppq_cache_max
+
+        def _gen_redirects(redirects_len_: int) -> Re_Entry_Dict:
+            """generate a `Re_Entry_Dict` of size `redirects_len_`."""
+            redirects_ = Re_Entry_Dict_new()
+            for i_ in range(0, redirects_len_):
+                from_ = "/%08X" % i_
+                to_ = "/%08X" % i_
+                redirects_[Re_EntryKey(from_)] = Re_Entry(from_, to_)
+            return redirects_
+
+        # generate the redirects entries
+        redirects = _gen_redirects(redirects_len)
+        # create a small variety of lookups
+        lookups = list()
+        for l_ in (
+            "/NO-MATCH1",
+            #"/NO-MATCH2;f",
+            #"/NO-MATCH3;f?a=A",
+            #"/NO-MATCH4#foobar",
+            # should match generated entries in `_gen_redirects`
+            "/%08X" % 1,
+            "/%08X?a=A" % 2,
+            "/%08X#c" % 3,
+            "/%08X?a=A&b=B#c" % 4,
+            "/%08X?a=A&b=B#c" % int(redirects_len / 2),
+            "/%08X?a=A&b=B#c" % (redirects_len - 2),
+            "/%08X?a=A&b=B#c" % (redirects_len - 1),
+        ):
+            lookups.append((l_, urllib.parse.urlparse(l_),))
+
+        # save `cache_enabled` setting
+        cache_enabled_prev = RedirectHandler.ppq_cache_enabled
+
+        print("", file=sys.stderr)
+        results = {True: None, False: None}
+        for cache_enabled in (True, False,):
+            # set `cache_enabled` to test setting, clear cache
+            RedirectHandler.ppq_cache_enabled = cache_enabled
+            RedirectHandler.ppq_cache_clear()
+
+            print("timeit(%4d) lookups len %d, redirects size %-5d, cache enabled %-5s: "
+                  % (timeit_number, len(lookups), len(redirects),
+                     RedirectHandler.ppq_cache_enabled,),
+                  end="", file=sys.stderr)
+            sys.stdout.flush()
+            sys.stderr.flush()
+
+            # timeit code
+            def stmt_():
+                for (ppq, ppqpr) in lookups:
+                    __, ___ = RedirectHandler._do_VERB_redirect_processing(ppq, ppqpr, redirects)
+            time1 = timeit.Timer(stmt=stmt_, globals=globals()).timeit(number=timeit_number)
+
+            # print timeit results
+            print("%1.6f" % (time1,), file=sys.stderr)
+            sys.stdout.flush()
+            sys.stderr.flush()
+            # save timeit results for later assert
+            results[cache_enabled] = time1
+        # restore `cache_enabled` setting, clear cache
+        RedirectHandler.ppq_cache_enabled = cache_enabled_prev
+        RedirectHandler.ppq_cache_clear()
+        time_stop = time.time()
+        print("total time taken for test case %40s%1.6f" % ("", time_stop - time_start,), file=sys.stderr)
+        # the cache disabled should be larger value (longer time; slower) than cache enabled
+        assert results[False] > results[True]
 
     @pytest.mark.parametrize(
         'pr1,'
