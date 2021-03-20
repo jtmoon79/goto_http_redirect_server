@@ -40,9 +40,11 @@ from goto_http_redirect_server.goto_http_redirect_server import (
     Path_List,
     REDIRECT_PATHS_NOT_ALLOWED,
     REDIRECT_CODE_DEFAULT,
+    StrDelay,
     html_escape,
     html_a,
     htmls,
+    datetime_now,
     print_debug,
     dts_to_datetime,
     to_ParseResult,
@@ -179,8 +181,16 @@ class Test_ClassesSimple(object):
             entry = Re_Entry(*entry_args, **entry_kwargs)
             assert entry == entry_expected
 
+    def test_StrDelay(self):
+        sd = StrDelay(lambda x: x, "foobar")
+        assert sd
+        assert str(sd)
+
 
 class Test_Functions(object):
+
+    def test_datetime_now(self):
+        assert datetime_now()
 
     @pytest.mark.parametrize(
         's_, expected',
@@ -893,8 +903,45 @@ class Test_Functions(object):
         actual = RedirectsLoader.load_redirects_files(redirects_files, FIELD_DELIMITER_DEFAULT)
         assert actual == expected
 
+    @pytest.mark.parametrize(
+        'from_to, redirects_files, expected',
+        (
+            pytest.param(
+                [('/a', 'A')],
+                [Path("./goto_http_redirect_server/test/re6.csv")],
+                Re_Entry_Dict_new(
+                    [
+                        ("/r1", Re_Entry("/r1", "http://www.r1.com", "bob1",
+                                         datetime_str("2020-01-01 00:00:00"))),
+                        ("/r2", Re_Entry("/r2", "http://www.r2.com", "bob2",
+                                         datetime_str("2020-01-02 00:00:00"))),
+                        ("/a", Re_Entry("/a", "A", USER, NOW)),
+                    ]
+                )
+            ),
+            pytest.param(
+                [('/r1', 'R1')],
+                [Path("./goto_http_redirect_server/test/re6.csv")],
+                Re_Entry_Dict_new(
+                    [
+                        ("/r1", Re_Entry("/r1", "R1", USER, NOW)),
+                        ("/r2", Re_Entry("/r2", "http://www.r2.com", "bob2",
+                                         datetime_str("2020-01-02 00:00:00"))),
+                    ]
+                ),
+                id="--from-to overrides"
+            ),
+        )
+    )
+    def test_load_redirects(self,
+                            from_to: FromTo_List,
+                            redirects_files: Path_List,
+                            expected: Re_Entry_Dict):
+        actual = RedirectsLoader.load_redirects(from_to, redirects_files, FIELD_DELIMITER_DEFAULT)
+        assert actual == expected
 
-IP = '127.0.0.3'
+
+IP = '127.0.0.3'  # localhost
 PORT = 33797  # an unlikely port to be used
 ENTRY_LIST = {'/a': ('b', USER, NOW)}
 
