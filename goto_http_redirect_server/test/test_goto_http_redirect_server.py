@@ -74,6 +74,10 @@ ET = Re_EntryType
 # all committed test resources should be under this directory
 #resources = Path.joinpath(Path(__file__).parent, 'test_resources')
 
+def noop(*args, **kwargs):
+    """No Operation - useful for stubbing functions"""
+    pass
+
 
 def pr(**kwargs) -> ParseResult:
     """helper to create a `ParseResult`, sets unset parameters to empty string"""
@@ -962,8 +966,7 @@ def port() -> int:
     return PORT
 
 
-def new_redirect_handler(redirects: Re_Entry_Dict) \
-        -> RedirectHandler:
+def new_redirect_handler(redirects: Re_Entry_Dict) -> typing.Type[RedirectHandler]:
     return redirect_handler_factory(
         redirects,
         REDIRECT_CODE_DEFAULT,
@@ -971,6 +974,36 @@ def new_redirect_handler(redirects: Re_Entry_Dict) \
         '/reload',
         htmls('')
     )
+
+
+def new_redirect_handler_stubbed(redirects_: Re_Entry_Dict) -> typing.Type[RedirectHandler]:
+    """RedirectHandler class with some stubbed functions and preset values"""
+    class server_(object):
+        server_address = (1, 2)
+
+    class RedirectHandler_stub(RedirectHandler):
+        redirects = redirects_
+        status_code = REDIRECT_CODE_DEFAULT
+        status_path = "/status"
+        reload_path = "/reload"
+        status_path_pr = urllib.parse.urlparse(status_path)
+        reload_path_pr = urllib.parse.urlparse(str(reload_path))
+        note_admin = htmls("")
+        server = server_()
+
+        def send_response(*args, **kwargs):
+            pass
+
+        def send_header(*args, **kwargs):
+            pass
+
+        def send_headers(*args, **kwargs):
+            pass
+
+        def end_headers(*args, **kwargs):
+            pass
+
+    return RedirectHandler_stub
 
 
 def shutdown_server_thread(redirect_server: RedirectServer, sleep: float = 4):
@@ -1015,8 +1048,35 @@ def request_thread(ip: str, port: int, url: str, method: str, wait: float):
     return rt
 
 
-class Test_ClassesComplex(object):
+class Test_ClassesComplex1(object):
+    """
+    Test cases to increase LoC coverage.
+    Test cases in `Test_LiveServer` exercise similar code paths
+    but run in a new threads and so not tracked by `coverage`.
+    """
+    _redirects = Re_Entry_Dict_new(
+        [
+            ('/a1', Re_Entry('/a1', '/A1')),
+            ('/a2;', Re_Entry('/a2;', '/A2a')),
+            ('/a2?', Re_Entry('/a2?', '/A2b')),
+            ('/a3', Re_Entry('/a3', '/A3')),
+        ]
+    )
 
+    def test_RedirectHandler_do_HEAD_redirect_NOT_FOUND(self):
+        rh = new_redirect_handler_stubbed(self._redirects)
+        rh.do_HEAD_redirect_NOT_FOUND(rh)
+
+    def test_RedirectHandler_do_HEAD_nothing(self):
+        rh = new_redirect_handler_stubbed(self._redirects)
+        rh.do_HEAD_nothing(rh)
+
+    #def test_RedirectHandler_do_GET_status(self):
+    #    rh = new_redirect_handler_stubbed(self._redirects)
+    #    rh.do_GET_status(rh, htmls(""), NOW)
+
+
+class Test_ClassesComplex2(object):
     def test_RedirectServer_server_activate(self):
         with RedirectServer((IP, port()), new_redirect_handler(ENTRY_LIST)) as redirect_server:
             redirect_server.server_activate()

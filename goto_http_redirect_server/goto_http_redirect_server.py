@@ -981,7 +981,7 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
         log.error("Expected to find fallback type for type %s, none found", ppqt)
         return None
 
-    def do_GET_status(self, note_admin: htmls) -> None:
+    def do_GET_status(self, note_admin: htmls, reload_datetime_: datetime.datetime) -> None:
         """dump status information about this server instance"""
 
         http_sc = http.HTTPStatus.OK  # HTTP Status Code
@@ -1022,9 +1022,9 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
                 json.dumps(obj, indent=2, ensure_ascii=False, sort_keys=sort_keys, default=str)
             )
 
-        def redirects_to_html_table(rd: Re_Entry_Dict, reload_datetime_) -> htmls:
+        def redirects_to_html_table(rd: Re_Entry_Dict, reload_datetime__) -> htmls:
             """Convert Re_Entry_Dict into linkable html table"""
-            esc_reload_datetime = he(cast(datetime.datetime, reload_datetime_).isoformat())
+            esc_reload_datetime = he(cast(datetime.datetime, reload_datetime__).isoformat())
             s_ = """\
 <table class="sortable">
     <caption>Currently Loaded Redirects (last reload {esc_reload_datetime})</caption>
@@ -1056,7 +1056,7 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
 
         esc_reload_info = he(" (process signal %d (%s))" % (SIGNAL_RELOAD, SIGNAL_RELOAD))
         esc_redirects_counter = obj_to_html(redirect_counter)
-        esc_redirects = redirects_to_html_table(self.redirects, reload_datetime)
+        esc_redirects = redirects_to_html_table(self.redirects, reload_datetime_)
         esc_files = obj_to_html(Redirect_Files_List)
         if note_admin:
             note_admin = htmls("\n    <div>\n") + note_admin + htmls("\n    </div>\n")  # type: ignore
@@ -1207,7 +1207,7 @@ Redirect Path not found: <code>{esc_ppq}</code>
         if entry:
             if not to:  # sanity check
                 log.error("entry (%s) found but 'to' is Falsey (%s); this is unexpected", entry, to)
-            return entry, to  # type: ignore # XXX: mypy complains for no good reason
+            return entry, to  # type: ignore # mypy Issue #10225
         entry = RedirectHandler.query_match_finder(ppq, ppqpr, redirects)
         if not entry:
             return None, None
@@ -1306,7 +1306,8 @@ Redirect Path not found: <code>{esc_ppq}</code>
         ppq = self.path
         ppqpr = to_ParseResult(ppq)
         if self.query_match(self.status_path_pr, ppqpr):
-            self.do_GET_status(self.note_admin)
+            global reload_datetime
+            self.do_GET_status(self.note_admin, reload_datetime)  # type: ignore
             return
         elif self.query_match(self.reload_path_pr, ppqpr):
             self.do_GET_reload()
@@ -1342,7 +1343,7 @@ def redirect_handler_factory(
     status_path: str,
     reload_path: str_None,
     note_admin: htmls,
-):
+) -> typing.Type[RedirectHandler]:
     """
     :param redirects: dictionary of from-to redirects for the server
     :param status_code: HTTPStatus instance to use for successful redirects
