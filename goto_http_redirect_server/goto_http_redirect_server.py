@@ -117,9 +117,9 @@ class Re_EntryType(enum.IntEnum):
     """a.k.a. Required Request Modifier"""
 
     # these must be in an order for `getEntryType_From` to succeed
-    _ = 0    # /foo              ''   must start from 0
-    _P = 1   # /foo;param        ';'
-    _Q = 2   # /foo?query        '?'
+    _ = 0  # /foo              ''   must start from 0
+    _P = 1  # /foo;param        ';'
+    _Q = 2  # /foo?query        '?'
     _PQ = 3  # /foo;param?query  ';?'
     # XXX: Disable Path Required Request Modifier
     # P =   4  # /foo/path         '/'
@@ -404,8 +404,10 @@ class Re_Entry(__Re_EntryBase):
 Re_Entry_Dict = typing.NewType("Re_Entry_Dict", OrderedDict)
 
 
-def Re_Entry_Dict_new() -> Re_Entry_Dict:
-    """type annotated empty Re_Entry_Dict"""
+def Re_Entry_Dict_new(data: Optional[typing.Sequence] = None) -> Re_Entry_Dict:
+    """type annotated Re_Entry_Dict creation"""
+    if data:
+        return Re_Entry_Dict(OrderedDict(data))
     return Re_Entry_Dict(OrderedDict())
 
 
@@ -539,7 +541,15 @@ FIELD_DELIMITER_DEFAULT_NAME = "tab"  # type: str
 FIELD_DELIMITER_DEFAULT_ESCAPED = FIELD_DELIMITER_DEFAULT.encode("unicode_escape").decode(
     "utf-8"
 )  # type: str
-REDIRECT_FILE_IGNORE_LINE = "#"  # type: str
+# lines starting with '#' are comment lines and should be ignored. Also, Excel silently surrounds
+# any line with double-quotes if the line has odd characters or multiple spaces.
+REDIRECT_FILE_COMMENT = "#"  # type: str
+REDIRECT_FILE_COMMENTS = (
+    REDIRECT_FILE_COMMENT,
+    " %s" % REDIRECT_FILE_COMMENT,
+    '"%s'% REDIRECT_FILE_COMMENT,
+    '" %s' % REDIRECT_FILE_COMMENT,
+)
 
 # logging module initializations (call logging_init to complete)
 LOGGING_FORMAT_DATETIME = "%Y-%m-%d %H:%M:%S"  # type: str
@@ -857,9 +867,9 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
 
     # manual caching for the function `_query_match_finder`
     # use key `hash(ppq)` to avoid storing secrets within the `ppq` URL string
-    ppq_cache_enabled = True    # type: bool
+    ppq_cache_enabled = True  # type: bool
     _ppq_cache = OrderedDict()  # type: OrderedDict[int, Tuple[Re_Entry, Re_To]]
-    _ppq_cache_max = 50         # type: int
+    _ppq_cache_max = 50  # type: int
     _ppq_cache_redirects_hash = 0  # type: int
 
     @staticmethod
@@ -874,8 +884,7 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
         # XXX: SECURITY RISK: Python hash is not cryptographically secure
         ppqh = hash(ppq)
         # delete entry if too big
-        if len(RedirectHandler._ppq_cache) >= \
-                RedirectHandler._ppq_cache_max:
+        if len(RedirectHandler._ppq_cache) >= RedirectHandler._ppq_cache_max:
             # log.debug("_ppq_cache(@0x%08X).popitem() len %s",
             #           id(RedirectHandler._ppq_cache),
             #           len(RedirectHandler._ppq_cache))
@@ -890,8 +899,9 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
         #           len(RedirectHandler._ppq_cache))
 
     @staticmethod
-    def _ppq_cache_check(ppq: str, redirects: Re_Entry_Dict) \
-            -> Union[Tuple[Re_Entry, Re_To], Tuple[None, None]]:
+    def _ppq_cache_check(
+        ppq: str, redirects: Re_Entry_Dict
+    ) -> Union[Tuple[Re_Entry, Re_To], Tuple[None, None]]:
         if not RedirectHandler.ppq_cache_enabled:
             return None, None
         # the `_ppq_cache_redirects_hash` is a sanity check
@@ -1187,8 +1197,9 @@ Redirect Path not found: <code>{esc_ppq}</code>
         self.end_headers()
 
     @staticmethod
-    def _do_VERB_redirect_processing(ppq: str, ppqpr: ParseResult, redirects: Re_Entry_Dict) \
-            -> Union[Tuple[Re_Entry, Re_To], Tuple[None, None]]:
+    def _do_VERB_redirect_processing(
+        ppq: str, ppqpr: ParseResult, redirects: Re_Entry_Dict
+    ) -> Union[Tuple[Re_Entry, Re_To], Tuple[None, None]]:
         """
         Handle processing of `ppq`, `ppqpr` and checking and using the `ppq_cache`.
         """
@@ -1220,7 +1231,9 @@ Redirect Path not found: <code>{esc_ppq}</code>
             # HTTP standards for GET and HEAD)
             self.log_message(
                 "no redirect found for incoming (%s), returning %s (%s)",
-                ppq, int(http.HTTPStatus.NOT_FOUND), http.HTTPStatus.NOT_FOUND.phrase,
+                ppq,
+                int(http.HTTPStatus.NOT_FOUND),
+                http.HTTPStatus.NOT_FOUND.phrase,
                 loglevel=logging.INFO,
             )
             cmd = self.command.upper()
@@ -1234,7 +1247,10 @@ Redirect Path not found: <code>{esc_ppq}</code>
         # XXX: SECURITY RISK: logging `to` which may contain secrets
         self.log_message(
             "redirect found (%s) → (%s), returning %s (%s)",
-            ppqpr.path, to, int(self.status_code), self.status_code.phrase,
+            ppqpr.path,
+            to,
+            int(self.status_code),
+            self.status_code.phrase,
             loglevel=logging.INFO,
         )
 
@@ -1366,6 +1382,9 @@ class RedirectsLoader(object):
             from_ = Re_From(ft[0])
             to_ = Re_To(ft[1])
             key = Re_From_to_Re_EntryKey(from_)
+            if key in entrys:
+                log.warning("Ignoring repeat --from-to entry '%s' -> '%s'", from_, to_)
+                continue
             typ = Re_EntryType.getEntryType_From(from_)
             val = Re_Entry(
                 from_,
@@ -1400,7 +1419,7 @@ class RedirectsLoader(object):
                             log.debug("File Line (%s:%s):%s", rfilen, csvr.line_num, row)
                             if not row:  # skip empty row
                                 continue
-                            if row[0].startswith(REDIRECT_FILE_IGNORE_LINE):
+                            if row[0].startswith(REDIRECT_FILE_COMMENTS):
                                 # skip rows starting with such
                                 continue
                             from_ = Re_From(row[0])
@@ -1410,6 +1429,16 @@ class RedirectsLoader(object):
                             # ignore any remaining fields in row
                             dt = dts_to_datetime(date)
                             key = Re_From_to_Re_EntryKey(from_)
+                            # do not overwrite previous entries
+                            if key in entrys:
+                                log.warning(
+                                    "Ignoring repeat redirects file entry in '%s' line %s, '%s' -> '%s'",
+                                    rfilen,
+                                    csvr.line_num,
+                                    from_,
+                                    to_,
+                                )
+                                continue
                             typ = Re_EntryType.getEntryType_From(from_)
                             val = Re_Entry(
                                 from_,
@@ -1888,7 +1917,7 @@ Redirect Entry Required Request Modifiers:
 
 About Redirect Files:
 
-   A line with a leading "{ignore}" will be ignored.
+   A line with a leading "{comment}" will be ignored.
 
 About Reloads:
 
@@ -1922,7 +1951,7 @@ About this program:
         sig_win=SIGNAL_RELOAD_WINDOWS,
         sig_here=str(SIGNAL_RELOAD),
         sig_hered=int(SIGNAL_RELOAD),
-        ignore=REDIRECT_FILE_IGNORE_LINE,
+        comment=REDIRECT_FILE_COMMENT,
         query="{query}",
         rand1=str(uuid.uuid4()),
     )

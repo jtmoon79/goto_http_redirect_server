@@ -13,8 +13,8 @@ from datetime import datetime
 import getpass
 import http
 from http import client
+from pathlib import Path
 from pprint import pformat
-import random
 import sys
 import threading
 import time
@@ -27,6 +27,8 @@ import pytest
 
 import goto_http_redirect_server
 from goto_http_redirect_server.goto_http_redirect_server import (
+    DATETIME_STRPTIMES,
+    FIELD_DELIMITER_DEFAULT,
     Re_User,
     Re_Date,
     Re_Entry,
@@ -35,6 +37,7 @@ from goto_http_redirect_server.goto_http_redirect_server import (
     Re_Entry_Dict,
     Re_Entry_Dict_new,
     FromTo_List,
+    Path_List,
     REDIRECT_PATHS_NOT_ALLOWED,
     REDIRECT_CODE_DEFAULT,
     html_escape,
@@ -69,8 +72,8 @@ ET = Re_EntryType
 #resources = Path.joinpath(Path(__file__).parent, 'test_resources')
 
 
-def pr(**kwargs):
-    """create a ParseResult, sets unset parameters to empty string"""
+def pr(**kwargs) -> ParseResult:
+    """helper to create a `ParseResult`, sets unset parameters to empty string"""
     args = defaultdict(str, kwargs)
     return ParseResult(
         scheme=args['scheme'],
@@ -80,6 +83,18 @@ def pr(**kwargs):
         query=args['query'],
         fragment=args['fragment'],
     )
+
+
+def datetime_str(datetime_as_str: str) -> datetime:
+    """
+    Helper to create a `datetime` from a string in particular format
+    """
+    for strptime_format in DATETIME_STRPTIMES:
+        try:
+            return datetime.strptime(datetime_as_str, strptime_format)
+        except:
+            pass
+    raise ValueError("Could not convert string '%s' to datetime" % (datetime_as_str,))
 
 
 class Test_ClassesSimple(object):
@@ -371,7 +386,7 @@ class Test_Functions(object):
         RedirectHandler.ppq_cache_clear()
         assert len(RedirectHandler._ppq_cache) == 0
 
-    _test_ppq_cache_redirects = OrderedDict(
+    _test_ppq_cache_redirects = Re_Entry_Dict_new(
         [
             ('/a1', Re_Entry('/a1', '/A1')),
             ('/a2;', Re_Entry('/a2;', '/A2a')),
@@ -790,10 +805,17 @@ class Test_Functions(object):
         'from_to, expected',
         (
             pytest.param(
-                [('a', 'b',)], {'a': Re_Entry('a', 'b')},
-                # TODO: add more!
+                [('a', 'A')], Re_Entry_Dict_new([('a', Re_Entry('a', 'A'))])
             ),
-        )
+            pytest.param(
+                [('a', 'A'), ('b', 'B')],
+                Re_Entry_Dict_new([('a', Re_Entry('a', 'A')), ('b', Re_Entry('b', 'B'))])
+            ),
+            pytest.param(
+                [('a', 'A'), ('b', 'B'), ('b', 'X')],
+                Re_Entry_Dict_new([('a', Re_Entry('a', 'A')), ('b', Re_Entry('b', 'B'))])
+            )
+        ),
     )
     def test_load_redirects_fromto(self,
                                    from_to: FromTo_List,
@@ -830,6 +852,44 @@ class Test_Functions(object):
                              input_: Re_Entry_Dict,
                              expected: Re_Entry_Dict):
         actual = RedirectsLoader.clean_redirects(input_)
+        assert actual == expected
+
+    @pytest.mark.parametrize(
+        'redirects_files, expected',
+        (
+            pytest.param(
+                [Path("./goto_http_redirect_server/test/re6.csv")],
+                Re_Entry_Dict_new(
+                    [
+                        ("/r1", Re_Entry("/r1", "http://www.r1.com", "bob1",
+                                         datetime_str("2020-01-01 00:00:00"))),
+                        ("/r2", Re_Entry("/r2", "http://www.r2.com", "bob2",
+                                         datetime_str("2020-01-02 00:00:00"))),
+                    ]
+                )
+            ),
+            pytest.param(
+                [
+                    Path("./goto_http_redirect_server/test/re6.csv"),
+                    Path("./goto_http_redirect_server/test/re7.csv"),
+                ],
+                Re_Entry_Dict_new(
+                    [
+                        ("/r1", Re_Entry("/r1", "http://www.r1.com", "bob1",
+                                         datetime_str("2020-01-01 00:00:00"))),
+                        ("/r2", Re_Entry("/r2", "http://www.r2.com", "bob2",
+                                         datetime_str("2020-01-02 00:00:00"))),
+                        ("/r3", Re_Entry("/r3", "http://www.r3.com", "bob3",
+                                         datetime_str("2020-01-03 00:00:00"))),
+                    ]
+                )
+            ),
+        )
+    )
+    def test_load_redirects_files(self,
+                                  redirects_files: Path_List,
+                                  expected: Re_Entry_Dict):
+        actual = RedirectsLoader.load_redirects_files(redirects_files, FIELD_DELIMITER_DEFAULT)
         assert actual == expected
 
 
