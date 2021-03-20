@@ -1,0 +1,4 @@
+# this test file coincides with re6.csv
+/r3	http://www.r3.com	bob3	2020-01-03 00:00:00
+# next is repeat entry from re6.csv with slightly different parameters
+/r2	http://www.r2.com	bob4	2020-01-02 01:02:03

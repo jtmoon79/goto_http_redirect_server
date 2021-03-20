@@ -1,0 +1,7 @@
+# this test file has various comment lines
+/r1	http://www.r1.com	bob1	2020-01-01 00:00:00
+#/r	http://www.r.com	bob1	2020-01-01 00:00:00
+"#/r	http://www.r.com	bob1	2020-01-01 00:00:00"
+ #/r	http://www.r.com	bob1	2020-01-01 00:00:00
+" #/r	http://www.r.com	bob1	2020-01-01 00:00:00"
+/r2	http://www.r2.com	bob2	2020-01-02 00:00:00
