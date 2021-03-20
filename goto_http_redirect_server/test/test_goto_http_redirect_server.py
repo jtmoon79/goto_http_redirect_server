@@ -58,9 +58,9 @@ NOW = datetime.now().replace(microsecond=0)
 goto_http_redirect_server.goto_http_redirect_server.DATETIME_START = NOW
 goto_http_redirect_server.goto_http_redirect_server.datetime_now = lambda: NOW
 # need something different than NOW
-LATER = datetime.now()
+LATER = datetime.now().replace(microsecond=0)
 LATER = LATER.replace(second=(LATER.second + 1 if LATER.second < 59 else 0))
-
+assert NOW != LATER
 USER = getpass.getuser()
 
 # shorten some names for clarity
