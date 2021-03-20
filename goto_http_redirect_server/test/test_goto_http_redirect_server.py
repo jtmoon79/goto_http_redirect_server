@@ -61,7 +61,8 @@ goto_http_redirect_server.goto_http_redirect_server.datetime_now = lambda: NOW
 LATER = datetime.now().replace(microsecond=0)
 LATER = LATER.replace(second=(LATER.second + 1 if LATER.second < 59 else 0))
 assert NOW != LATER
-USER = getpass.getuser()
+
+USER = goto_http_redirect_server.goto_http_redirect_server.USER_DEFAULT
 
 # shorten some names for clarity
 topr = to_ParseResult
