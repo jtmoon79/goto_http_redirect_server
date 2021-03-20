@@ -865,7 +865,7 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
         # TODO: how should this interact with path required modifier?
         return pr1.path == pr2.path
 
-    # manual caching for the function `_query_match_finder`
+    # manual caching
     # use key `hash(ppq)` to avoid storing secrets within the `ppq` URL string
     ppq_cache_enabled = True  # type: bool
     _ppq_cache = OrderedDict()  # type: OrderedDict[int, Tuple[Re_Entry, Re_To]]
