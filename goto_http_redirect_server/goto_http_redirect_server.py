@@ -92,6 +92,9 @@ Re_User = typing.NewType("Re_User", str)
 # Datetime Redirect was created (records-keeping thing, does not affect behavior)
 Re_Date = typing.NewType("Re_Date", datetime.datetime)
 Re_EntryKey = Re_From  # XXX: this might be too confusing?
+# path, parameters, query in a str as given by the BaseHTTPRequestHandler, i.e. the
+# incoming user request
+Ppq = typing.NewType("Ppq", str)
 
 
 def Re_From_to_Re_EntryKey(from_: Re_From) -> Re_EntryKey:
@@ -103,7 +106,7 @@ def Re_From_to_Re_EntryKey(from_: Re_From) -> Re_EntryKey:
     return Re_EntryKey(from_)
 
 
-def to_ParseResult(value: Union[str, Re_From, Re_To, Re_EntryKey]) -> ParseResult:
+def to_ParseResult(value: Union[str, Ppq, Re_From, Re_To, Re_EntryKey]) -> ParseResult:
     """
     helpful wrapper
 
@@ -878,7 +881,7 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
         RedirectHandler._ppq_cache_redirects_hash = 0
 
     @staticmethod
-    def _ppq_cache_save(ppq: str, to: Re_To, entry: Re_Entry) -> None:
+    def _ppq_cache_save(ppq: Ppq, to: Re_To, entry: Re_Entry) -> None:
         if not RedirectHandler.ppq_cache_enabled:
             return
         # XXX: SECURITY RISK: Python hash is not cryptographically secure
@@ -900,7 +903,7 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
 
     @staticmethod
     def _ppq_cache_check(
-        ppq: str, redirects: Re_Entry_Dict
+        ppq: Ppq, redirects: Re_Entry_Dict
     ) -> Union[Tuple[Re_Entry, Re_To], Tuple[None, None]]:
         if not RedirectHandler.ppq_cache_enabled:
             return None, None
@@ -925,7 +928,7 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
 
     @staticmethod
     def query_match_finder(
-        ppq: str, ppqpr: ParseResult, redirects: Re_Entry_Dict
+        ppq: Ppq, ppqpr: ParseResult, redirects: Re_Entry_Dict
     ) -> Optional[Re_Entry]:
         """
         An incoming query can have multiple matches within redirects. Return the
@@ -1149,7 +1152,7 @@ Reload request accepted at {esc_datetime}.
         global reload_do
         reload_do = True
 
-    def do_GET_redirect_NOT_FOUND(self, ppq: str, ppqpr: ParseResult) -> None:
+    def do_GET_redirect_NOT_FOUND(self, ppq: Ppq, ppqpr: ParseResult) -> None:
         """a Redirect request was not found, return some HTML to the user"""
 
         self.send_response(http.HTTPStatus.NOT_FOUND)
@@ -1198,10 +1201,10 @@ Redirect Path not found: <code>{esc_ppq}</code>
 
     @staticmethod
     def _do_VERB_redirect_processing(
-        ppq: str, ppqpr: ParseResult, redirects: Re_Entry_Dict
+        ppq: Ppq, ppqpr: ParseResult, redirects: Re_Entry_Dict
     ) -> Union[Tuple[Re_Entry, Re_To], Tuple[None, None]]:
         """
-        Handle processing of `ppq`, `ppqpr` and checking and using the `ppq_cache`.
+        Handle processing of `ppq`, `ppqpr` and redirects checking and using the `ppq_cache`.
         """
         entry, to = RedirectHandler._ppq_cache_check(ppq, redirects)
         if entry:
@@ -1216,9 +1219,9 @@ Redirect Path not found: <code>{esc_ppq}</code>
         RedirectHandler._ppq_cache_save(ppq, to, entry)
         return entry, to
 
-    def _do_VERB_redirect(self, ppq: str, ppqpr: ParseResult, redirects_: Re_Entry_Dict) -> None:
+    def _do_VERB_redirect(self, ppq: Ppq, ppqpr: ParseResult, redirects_: Re_Entry_Dict) -> None:
         """
-        handle the HTTP Redirect Request (the entire purpose of this
+        Handle the HTTP Redirect Request (the entire purpose of this
         script).  Used for GET and HEAD requests.
 
         HEAD requests must not have a body (among many other differences
@@ -1272,7 +1275,9 @@ Redirect Path not found: <code>{esc_ppq}</code>
         #       the entity of the response SHOULD contain a short hypertext
         #       note with a hyperlink to the new URI(s)
         self.end_headers()
+
         # Do Not Write HTTP Content
+
         redirect_counter[str(ppqpr.path)] += 1
 
     def _do_VERB_log(self):
@@ -1303,7 +1308,7 @@ Redirect Path not found: <code>{esc_ppq}</code>
         """
         self._do_VERB_log()
 
-        ppq = self.path
+        ppq = Ppq(self.path)
         ppqpr = to_ParseResult(ppq)
         if self.query_match(self.status_path_pr, ppqpr):
             global reload_datetime
@@ -1325,7 +1330,7 @@ Redirect Path not found: <code>{esc_ppq}</code>
         """
         self._do_VERB_log()
 
-        ppq = self.path
+        ppq = Ppq(self.path)
         ppqpr = to_ParseResult(ppq)
         if self.query_match(self.status_path_pr, ppqpr):
             self.do_HEAD_nothing()
