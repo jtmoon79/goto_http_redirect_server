@@ -19,7 +19,11 @@ A reminder of end-to-end steps for creating a new release.
 
 4. build release using `build-install` script.
 
-5. upload to pypi following `build-install` script instructions
+5. upload to pypi following `build-install` script instructions<br/>
+   or
+   ```text
+   python -m twine upload --verbose ./dist/goto_http_redirect_server-A.B.C-py3-none-any.whl
+   ```
 
 6. tagging
 
