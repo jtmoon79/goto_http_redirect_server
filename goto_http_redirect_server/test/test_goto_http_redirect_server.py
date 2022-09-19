@@ -8,13 +8,14 @@ __author__ = 'jtmoon79'
 __doc__ = \
     """Test the goto_http_redirect_server project using pytest."""
 
-from collections import defaultdict, OrderedDict
+from collections import defaultdict
 from datetime import datetime
-import getpass
 import http
 from http import client
+import logging
 from pathlib import Path
-from pprint import pformat
+from pprint import pprint  # for live debugging
+import random
 import sys
 import threading
 import time
@@ -29,6 +30,7 @@ import goto_http_redirect_server
 from goto_http_redirect_server.goto_http_redirect_server import (
     DATETIME_STRPTIMES,
     FIELD_DELIMITER_DEFAULT,
+    log,
     Re_User,
     Re_Date,
     Re_Entry,
@@ -38,12 +40,15 @@ from goto_http_redirect_server.goto_http_redirect_server import (
     Re_Entry_Dict_new,
     FromTo_List,
     Path_List,
+    Ppq,
     REDIRECT_PATHS_NOT_ALLOWED,
     REDIRECT_CODE_DEFAULT,
     StrDelay,
     html_escape,
     html_a,
     htmls,
+    Cache_Ppq,
+    Cache_Ppq_new,
     datetime_now,
     print_debug,
     dts_to_datetime,
@@ -65,6 +70,8 @@ LATER = LATER.replace(second=(LATER.second + 1 if LATER.second < 59 else 0))
 assert NOW != LATER
 
 USER = goto_http_redirect_server.goto_http_redirect_server.USER_DEFAULT
+
+log.setLevel(logging.DEBUG)
 
 # shorten some names for clarity
 topr = to_ParseResult
@@ -191,6 +198,9 @@ class Test_ClassesSimple(object):
         assert str(sd)
 
 
+global ppq_cache
+
+
 class Test_Functions(object):
 
     def test_datetime_now(self):
@@ -263,6 +273,15 @@ class Test_Functions(object):
                          pr2: ParseResult,
                          expected: bool):
         assert RedirectHandler.query_match(pr1, pr2) is expected
+
+    @pytest.mark.parametrize(
+        "ppq, pr_",
+        (
+            pytest.param('/a', pr(path='/a')),
+        )
+    )
+    def test_to_ParseResult(self, ppq: Ppq, pr_: ParseResult):
+        assert to_ParseResult(ppq) == pr_
 
     @pytest.mark.parametrize(
         'ppq, ppqpr,'
@@ -394,12 +413,13 @@ class Test_Functions(object):
             ppq, ppqpr,
             redirects) == entry
 
-    def test_ppq_cache_clear(self):
-        """
-        Simple test `RedirectHandler.ppq_cache_clear` runs and does not raise.
-        """
-        RedirectHandler.ppq_cache_clear()
-        assert len(RedirectHandler._ppq_cache) == 0
+    #def test_ppq_cache_clear(self):
+    #    """
+    #    Simple test `RedirectHandler.ppq_cache_clear` runs and does not raise.
+    #    """
+    #    global ppq_cache
+    #    RedirectHandler.ppq_cache_clear()
+    #    assert len(ppq_cache) == 0
 
     _test_ppq_cache_redirects = Re_Entry_Dict_new(
         [
@@ -413,54 +433,54 @@ class Test_Functions(object):
     @pytest.mark.parametrize(
         'ppq, ppqpr,'
         'redirects,'
-        'entry, ppq_cache_len, ppq_cache_check',
+        'entry, ppq_cache_len, ppq_cache_check, first_test',
         (
             # order is important, the state of RedirectHandler._ppq_cache
             # is carried forward after each test
             pytest.param(
                 '/a1', pr(path='/a1'),
                 _test_ppq_cache_redirects,
-                Re_Entry('/a1', '/A1'), 1, False
+                Re_Entry('/a1', '/A1'), 1, False, True
             ),
             pytest.param(
                 '/a2', pr(path='/a2'),
                 _test_ppq_cache_redirects,
-                Re_Entry('/a2;', '/A2a'), 2, False
+                Re_Entry('/a2;', '/A2a'), 2, False, False
             ),
             pytest.param(
                 '/a2', pr(path='/a2'),
                 _test_ppq_cache_redirects,
-                Re_Entry('/a2;', '/A2a'), 2, True
+                Re_Entry('/a2;', '/A2a'), 2, True, False
             ),
             pytest.param(
                 '/a2?foo', pr(path='/a2', query='foo'),
                 _test_ppq_cache_redirects,
-                Re_Entry('/a2?', '/A2b'), 2, False
+                Re_Entry('/a2?', '/A2b'), 2, False, False
             ),
             pytest.param(
                 '/x', pr(path='/x'),
                 _test_ppq_cache_redirects,
-                None, 2, False
+                None, 2, False, False
             ),
             pytest.param(
                 '/a2', pr(path='/a2'),
                 _test_ppq_cache_redirects,
-                Re_Entry('/a2;', '/A2a'), 2, False
+                Re_Entry('/a2;', '/A2a'), 2, False, False
             ),
             pytest.param(
                 '/a3', pr(path='/a3'),
                 _test_ppq_cache_redirects,
-                Re_Entry('/a3', '/A3'), 2, False
+                Re_Entry('/a3', '/A3'), 2, False, False
             ),
             pytest.param(
                 '/a3', pr(path='/a3'),
                 _test_ppq_cache_redirects,
-                Re_Entry('/a3', '/A3'), 2, True
+                Re_Entry('/a3', '/A3'), 2, True, False
             ),
             pytest.param(
                 '/a2', pr(path='/a2'),
                 _test_ppq_cache_redirects,
-                Re_Entry('/a2;', '/A2a'), 2, False
+                Re_Entry('/a2;', '/A2a'), 2, False, False
             ),
         )
     )
@@ -471,90 +491,88 @@ class Test_Functions(object):
         redirects: Re_Entry_Dict,
         entry: Re_Entry,
         ppq_cache_len: int,
-        ppq_cache_check: bool
+        ppq_cache_check: bool,
+        first_test: bool,
     ):
         """
-        Test `RedirectHandler` works.
+        Test `RedirectHandler` caching.
 
         XXX: `RedirectHandler.test_ppq_cache_clear` must run once just before this
              this test case should be redesigned to not have that dependency,
-             or use a pytest fixture that can wrap series of paremetrize tests
+             or use a pytest fixture that can wrap series of parametrize tests
         """
         # XXX: sanity check
-        assert RedirectHandler.ppq_cache_enabled
         RedirectHandler._ppq_cache_max = 2
 
-        if ppq_cache_check:
-            assert RedirectHandler._ppq_cache_check(ppq, redirects)
-        else:
-            assert RedirectHandler._ppq_cache_check(ppq, redirects) == (None, None)
-        entry_, _ = RedirectHandler._do_VERB_redirect_processing(ppq, ppqpr, redirects)
-        assert entry_ == entry
-        assert len(RedirectHandler._ppq_cache) == ppq_cache_len
+        global ppq_cache
+        if first_test:
+            ppq_cache = Cache_Ppq_new()
 
-    @pytest.mark.parametrize(
-        "ppq, ppqpr,"
-        "redirects,"
-        "ppq_cache_len, ppq_cache_enabled, ppq_cache_clear",
-        (
-            pytest.param(
-                '/a1', pr(path='/a1'),
-                _test_ppq_cache_redirects,
-                0, False, True,
-            ),
-            pytest.param(
-                '/a2', pr(path='/a2'),
-                _test_ppq_cache_redirects,
-                0, False, False,
-            ),
-            pytest.param(
-                '/a2', pr(path='/a2'),
-                _test_ppq_cache_redirects,
-                1, True, False,
-            ),
-        )
-    )
-    def test_ppq_cache_enabled(
-        self,
-        ppq: str,
-        ppqpr: ParseResult,
-        redirects: Re_Entry_Dict,
-        ppq_cache_len: int,
-        ppq_cache_enabled: bool,
-        ppq_cache_clear: bool,
-    ):
-        """
-        Test `RedirectHandler.ppq_cache_enabled` flag enables or disables caching.
-        """
-        if ppq_cache_clear:
-            RedirectHandler.ppq_cache_clear()
-        RedirectHandler.ppq_cache_enabled = ppq_cache_enabled
-        _, __ = RedirectHandler._do_VERB_redirect_processing(ppq, ppqpr, redirects)
-        assert len(RedirectHandler._ppq_cache) == ppq_cache_len
+        if ppq_cache_check:
+            assert RedirectHandler._ppq_cache_check(ppq, redirects, ppq_cache)
+        else:
+            assert RedirectHandler._ppq_cache_check(ppq, redirects, ppq_cache) == (None, None)
+        entry_, _ = RedirectHandler._do_VERB_redirect_processing(ppq, ppqpr, redirects, ppq_cache)
+        assert entry_ == entry
+        assert len(ppq_cache) == ppq_cache_len
+
+    #@pytest.mark.parametrize(
+    #    "ppq, ppqpr,"
+    #    "redirects,"
+    #    "ppq_cache_len, ppq_cache_enabled, ppq_cache_clear",
+    #    (
+    #        pytest.param(
+    #            '/a1', pr(path='/a1'),
+    #            _test_ppq_cache_redirects,
+    #            0, False, True,
+    #        ),
+    #        pytest.param(
+    #            '/a2', pr(path='/a2'),
+    #            _test_ppq_cache_redirects,
+    #            0, False, False,
+    #        ),
+    #        pytest.param(
+    #            '/a2', pr(path='/a2'),
+    #            _test_ppq_cache_redirects,
+    #            1, True, False,
+    #        ),
+    #    )
+    #)
+    #def test_ppq_cache_enabled(
+    #    self,
+    #    ppq: str,
+    #    ppqpr: ParseResult,
+    #    redirects: Re_Entry_Dict,
+    #    ppq_cache_len: int,
+    #    ppq_cache_enabled: bool,
+    #    ppq_cache_clear: bool,
+    #):
+    #    """
+    #    Test `RedirectHandler.ppq_cache_enabled` flag enables or disables caching.
+    #    """
+    #    if ppq_cache_clear:
+    #        RedirectHandler.ppq_cache_clear()
+    #    RedirectHandler.ppq_cache_enabled = ppq_cache_enabled
+    #    ppq_cache = Cache_Ppq_new()
+    #    _, __ = RedirectHandler._do_VERB_redirect_processing(ppq, ppqpr, redirects, ppq_cache)
+    #    assert len(RedirectHandler._ppq_cache) == ppq_cache_len
 
     @pytest.mark.parametrize(
         "redirects_len, timeit_number, ppq_cache_max",
         (
-            pytest.param(100, 100, 50),
             pytest.param(100, 1000, 50),
-            pytest.param(1000, 100, 50),
             pytest.param(1000, 1000, 50),
-            pytest.param(10000, 100, 50),
             pytest.param(10000, 1000, 50),
         ),
     )
     def test_ppq_cache_enabled_timeit(
-        self,
-        redirects_len: int,
-        timeit_number: int,
-        ppq_cache_max: int,
+        self, redirects_len: int, timeit_number: int, ppq_cache_max: int,
     ):
         """
         Test the `RedirectHandler._ppq_cache` is actually useful by timing the
-        difference with and without via `ppq_cache_enabled` flag
+        difference with and without via `ppq_cache_max` flag
         """
         time_start = time.time()
-        RedirectHandler._ppq_cache_max = ppq_cache_max
 
         def _gen_redirects(redirects_len_: int) -> Re_Entry_Dict:
             """generate a `Re_Entry_Dict` of size `redirects_len_`."""
@@ -585,19 +603,17 @@ class Test_Functions(object):
         ):
             lookups.append((l_, urllib.parse.urlparse(l_),))
 
-        # save `cache_enabled` setting
-        cache_enabled_prev = RedirectHandler.ppq_cache_enabled
+        # save `ppq_cache_max` setting
+        ppq_cache_max_prev = RedirectHandler.ppq_cache_max
 
         print("", file=sys.stderr)
-        results = {True: None, False: None}
-        for cache_enabled in (True, False,):
-            # set `cache_enabled` to test setting, clear cache
-            RedirectHandler.ppq_cache_enabled = cache_enabled
-            RedirectHandler.ppq_cache_clear()
+        results = {ppq_cache_max: None, 0: None}
+        for max_ in (ppq_cache_max, 0):
+            ppq_cache_ = Cache_Ppq_new()
+            RedirectHandler.ppq_cache_max = max_
 
-            print("timeit(%4d) lookups len %d, redirects size %-5d, cache enabled %-5s: "
-                  % (timeit_number, len(lookups), len(redirects),
-                     RedirectHandler.ppq_cache_enabled,),
+            print("timeit(%4d) lookups len %d, redirects size %-5d, ppq_cache_max %-5s: "
+                  % (timeit_number, len(lookups), len(redirects), max_,),
                   end="", file=sys.stderr)
             sys.stdout.flush()
             sys.stderr.flush()
@@ -605,7 +621,8 @@ class Test_Functions(object):
             # timeit code
             def stmt_():
                 for (ppq, ppqpr) in lookups:
-                    __, ___ = RedirectHandler._do_VERB_redirect_processing(ppq, ppqpr, redirects)
+                    __, ___ = RedirectHandler._do_VERB_redirect_processing(ppq, ppqpr, redirects, ppq_cache_)
+
             time1 = timeit.Timer(stmt=stmt_, globals=globals()).timeit(number=timeit_number)
 
             # print timeit results
@@ -613,14 +630,14 @@ class Test_Functions(object):
             sys.stdout.flush()
             sys.stderr.flush()
             # save timeit results for later assert
-            results[cache_enabled] = time1
-        # restore `cache_enabled` setting, clear cache
-        RedirectHandler.ppq_cache_enabled = cache_enabled_prev
-        RedirectHandler.ppq_cache_clear()
+            results[max_] = time1
+
+        # restore `ppq_cache_max` setting
+        RedirectHandler.ppq_cache_max = ppq_cache_max_prev
         time_stop = time.time()
         print("total time taken for test case %40s%1.6f" % ("", time_stop - time_start,), file=sys.stderr)
         # the cache disabled should be larger value (longer time; slower) than cache enabled
-        assert results[False] > results[True]
+        assert results[0] > results[ppq_cache_max]
 
     @pytest.mark.parametrize(
         'pr1,'
@@ -780,6 +797,7 @@ class Test_Functions(object):
                                  pr1: ParseResult,
                                  pr2: ParseResult,
                                  expected: str):
+        RedirectHandler._lru_cache_max = 0
         actual = RedirectHandler.combine_parseresult(pr1, pr2)
         assert actual == expected
 
@@ -946,7 +964,7 @@ class Test_Functions(object):
 
 
 IP = '127.0.0.3'  # localhost
-PORT = 33797  # an unlikely port to be used
+PORT = random.choice((33700, 33720, 33740, 33760, 33780))  # unlikely ports to be used
 ENTRY_LIST = {'/a': ('b', USER, NOW)}
 
 
@@ -1153,7 +1171,7 @@ class Test_LiveServer(object):
         port_ = port()
         with RedirectServer((ip, port_), new_redirect_handler(redirects)) as redirect_server:
             # XXX: crude synchronizations. Good enough for this test harness!
-            wait = 0.5
+            wait = 0.2
             srv_uptime = wait + 0.5
             thr_wait = wait
             shutdown_server_thread(redirect_server, srv_uptime)
@@ -1162,9 +1180,9 @@ class Test_LiveServer(object):
             rt.join(thr_wait)  # blocks for thr_wait until thread ends
 
             # assertions
-            assert not rt.is_alive(), 'thread did not end within %s seconds' % thr_wait
+            assert not rt.is_alive(), "thread did not end within %s seconds" % thr_wait
             global Request_Thread_Return
-            assert Request_Thread_Return is not None, 'the thread did not set the global Request_Thread_Return; unlucky time synch? did the thread crash?'
+            assert Request_Thread_Return is not None, "the thread did not set the global Request_Thread_Return; unlucky time synch? did the thread crash?"
             rr = Request_Thread_Return
             Request_Thread_Return = None
             if hi is None and loe:

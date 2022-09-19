@@ -87,6 +87,21 @@ else
 fi
 GOTO_FILE_SCRIPT=${GOTO_FILE_SCRIPT:-/usr/local/bin/goto_http_redirect_server}
 
+# launch $GOTO_AUTORELOAD_SCRIPT if possible
+if [[ ! -z "${GOTO_AUTORELOAD_SCRIPT-}" ]]; then
+    declare inotify_name=$(basename -- "${GOTO_AUTORELOAD_SCRIPT}")
+    if [[ ! -e "${GOTO_AUTORELOAD_SCRIPT}" ]]; then
+        echo "Warning: GOTO_AUTORELOAD_SCRIPT is set to '${GOTO_AUTORELOAD_SCRIPT}' but was not found" >&2
+    elif [[ ! -x "${GOTO_AUTORELOAD_SCRIPT}" ]]; then
+        echo "Warning: GOTO_AUTORELOAD_SCRIPT '${GOTO_AUTORELOAD_SCRIPT}' is not executable" >&2
+    else
+        (
+            set -x
+            "${GOTO_AUTORELOAD_SCRIPT}" "${GOTO_URL_RELOAD}" "${GOTO_REDIRECTS_CSV}" &
+        )
+    fi
+fi
+
 set -x
 exec \
     ${nice} \

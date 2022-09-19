@@ -7,7 +7,17 @@
 # This source code was created in-part to learn about various Python 3 features
 # and useful modules:  typing, mypy, pytest, other stuff, while aiming to be
 # "Pythontic". This makes for some verbose if descriptive code.
-
+#
+# TODO: better stats in status page:
+#       total number of redirects
+#       count of total uses
+#       count of status page loads
+#       count of return codes returned
+#       count of errant (dicarded) entries
+#       count of duplicated entries by key
+#       count of duplicated entries by value
+#
+# TODO: add --autoreload as option, call program `inotifywait` to implement.
 
 import argparse
 from collections import defaultdict, OrderedDict
@@ -15,6 +25,8 @@ import copy
 import csv
 import datetime
 import enum
+from functools import lru_cache
+import gc
 import getpass
 import html
 import http
@@ -51,6 +63,7 @@ __doc__ = """\
 The "Go To" HTTP Redirect Server for sharing dynamic shortcut URLs on your \
 network.
 """
+PROGRAM_NAME = "goto_http_redirect_server"
 
 #
 # globals and constants initialization needed for default values
@@ -95,6 +108,8 @@ Re_EntryKey = Re_From  # XXX: this might be too confusing?
 # path, parameters, query in a str as given by the BaseHTTPRequestHandler, i.e. the
 # incoming user request
 Ppq = typing.NewType("Ppq", str)
+# `To` or HTTP Header "Location:"
+Location = typing.NewType("Location", str)
 
 
 def Re_From_to_Re_EntryKey(from_: Re_From) -> Re_EntryKey:
@@ -106,13 +121,13 @@ def Re_From_to_Re_EntryKey(from_: Re_From) -> Re_EntryKey:
     return Re_EntryKey(from_)
 
 
-def to_ParseResult(value: Union[str, Ppq, Re_From, Re_To, Re_EntryKey]) -> ParseResult:
+def to_ParseResult(ppq: Ppq) -> ParseResult:
     """
     helpful wrapper
 
     XXX: this is somewhat overdone since class re-design
     """
-    return parse.urlparse(str(value))
+    return parse.urlparse(str(ppq))
 
 
 @enum.unique
@@ -402,7 +417,7 @@ class Re_Entry(__Re_EntryBase):
 #
 # Re_EntryValue = Re_EntrySuite
 
-# XXX: mypy does not like the following but it seems perfectly fine to me
+# XXX: `typing.OrderedDict` added in 3.7.2
 # Re_Entry_Dict = typing.NewType("Re_Entry_Dict", typing.OrderedDict[Re_EntryKey, Re_Entry])
 Re_Entry_Dict = typing.NewType("Re_Entry_Dict", OrderedDict)
 
@@ -431,12 +446,22 @@ Iter_str = typing.Iterable[str]
 htmls = typing.NewType("htmls", str)  # HTML String
 htmls_str = Union[htmls, str]
 
+# XXX: `typing.OrderedDict` added in 3.7.2
+# Cache_Ppq = typing.OrderedDict[int, Tuple[Re_Entry, Location]]
+Cache_Ppq = typing.NewType("Cache_Ppq", OrderedDict)  # TODO: rename to `Ppq_Cache`
+
+
+def Cache_Ppq_new(data: Optional[typing.Sequence] = None) -> Cache_Ppq:
+    """type annotated Cache_Ppq creation"""
+    if data:
+        return Cache_Ppq(OrderedDict(data))
+    return Cache_Ppq(OrderedDict())
+
 
 #
 # further globals and constants initialization
 #
 
-PROGRAM_NAME = "goto_http_redirect_server"
 LISTEN_IP = "0.0.0.0"
 LISTEN_PORT = 80
 HOSTNAME = socket.gethostname()
@@ -714,6 +739,11 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
     reload_path_pr = None  # type: ParseResult
     note_admin = None  # type: htmls
 
+    _lru_cache_max = 100  # type: int
+
+    _ppq_cache = None  # type: Cache_Ppq
+    ppq_cache_max = 100  # type: int
+
     @classmethod
     def set_c(
         cls,
@@ -734,8 +764,9 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
 
     def __init__(self, *args, **kwargs):
         RedirectHandler.__count += 1
-        super().__init__(*args, **kwargs)
         log.debug("RedirectHandler.__init__ %d (@0x%08X)", RedirectHandler.__count, id(self))
+        self._ppq_cache = Cache_Ppq_new()
+        super().__init__(*args, **kwargs)
 
     def log_message(self, format_, *args, **kwargs):
         """
@@ -771,7 +802,7 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
         self.wfile.write(html_docb)
 
     @staticmethod
-    def combine_parseresult(pr1: ParseResult, pr2: ParseResult) -> Re_To:
+    def combine_parseresult(pr1: ParseResult, pr2: ParseResult) -> Location:
         """
         Combine ParseResult parts.
 
@@ -857,7 +888,7 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
                 pr["query"] = pr2d["query"]
 
         url = parse.urlunparse(ParseResult(**pr))
-        return Re_To(url)
+        return Location(url)
 
     @staticmethod
     def query_match(pr1: ParseResult, pr2: ParseResult) -> bool:
@@ -868,63 +899,10 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
         # TODO: how should this interact with path required modifier?
         return pr1.path == pr2.path
 
-    # manual caching
-    # use key `hash(ppq)` to avoid storing secrets within the `ppq` URL string
-    ppq_cache_enabled = True  # type: bool
-    _ppq_cache = OrderedDict()  # type: OrderedDict[int, Tuple[Re_Entry, Re_To]]
-    _ppq_cache_max = 50  # type: int
-    _ppq_cache_redirects_hash = 0  # type: int
-
-    @staticmethod
-    def ppq_cache_clear() -> None:
-        RedirectHandler._ppq_cache.clear()
-        RedirectHandler._ppq_cache_redirects_hash = 0
-
-    @staticmethod
-    def _ppq_cache_save(ppq: Ppq, to: Re_To, entry: Re_Entry) -> None:
-        if not RedirectHandler.ppq_cache_enabled:
-            return
-        # XXX: SECURITY RISK: Python hash is not cryptographically secure
-        ppqh = hash(ppq)
-        # delete entry if too big
-        if len(RedirectHandler._ppq_cache) >= RedirectHandler._ppq_cache_max:
-            # log.debug("_ppq_cache(@0x%08X).popitem() len %s",
-            #           id(RedirectHandler._ppq_cache),
-            #           len(RedirectHandler._ppq_cache))
-            # type `OrderedDict` means `popitem` deletes least recently entered
-            # XXX: this is a primitive cache eviction algorithm. A "least used cache entry" would
-            #      be better. Good enough.
-            RedirectHandler._ppq_cache.popitem()
-        # cache the entry
-        RedirectHandler._ppq_cache[ppqh] = (entry, to)
-        # log.debug("_ppq_cache(@0x%08X).save[0x%08X]='%s' len %d",
-        #           id(RedirectHandler._ppq_cache), ppqh, entry.to,
-        #           len(RedirectHandler._ppq_cache))
-
-    @staticmethod
-    def _ppq_cache_check(
-        ppq: Ppq, redirects: Re_Entry_Dict
-    ) -> Union[Tuple[Re_Entry, Re_To], Tuple[None, None]]:
-        if not RedirectHandler.ppq_cache_enabled:
-            return None, None
-        # the `_ppq_cache_redirects_hash` is a sanity check
-        redirects_hash = id(redirects)
-        if RedirectHandler._ppq_cache_redirects_hash == 0:
-            RedirectHandler._ppq_cache_redirects_hash = redirects_hash
-            log.debug("set _ppq_cache_redirects_hash 0x%016X", redirects_hash)
-        elif RedirectHandler._ppq_cache_redirects_hash != redirects_hash:
-            log.error("_ppq_cache_redirects was not cleared")
-            RedirectHandler.ppq_cache_clear()
-            return None, None
-
-        # XXX: SECURITY RISK: Python hash is not cryptographically secure
-        ppqh = hash(ppq)
-        if ppqh in RedirectHandler._ppq_cache:
-            # log.debug("cached in _ppq_cache(@0x%08X)[0x%08X] len %d",
-            #           id(RedirectHandler._ppq_cache),
-            #           ppqh, len(RedirectHandler._ppq_cache))
-            return RedirectHandler._ppq_cache[ppqh]
-        return None, None
+    @lru_cache(maxsize=_lru_cache_max)
+    def _to_ParseResult(self, ppq: Ppq) -> ParseResult:
+        """caching wrapper to `to_ParseResult`"""
+        return to_ParseResult(ppq)
 
     @staticmethod
     def query_match_finder(
@@ -1013,7 +991,7 @@ class RedirectHandler(server.SimpleHTTPRequestHandler):
                 self.server.server_address[1],
                 HOSTNAME,
                 start_datetime,
-                datetime.timedelta(seconds=uptime),
+                datetime.timedelta(seconds=uptime, microseconds=0),
                 int(self.status_code),
                 self.status_code.phrase,
             )
@@ -1199,25 +1177,71 @@ Redirect Path not found: <code>{esc_ppq}</code>
         self.send_header(*self.Header_Connection_close)
         self.end_headers()
 
+    # manual caching for `_do_VERB_redirect_processing`
+    # class-wide is okay since this is a Singleton class
+    #
+    # XXX: SECURITY RISK: stores `Location` which may contain secrets.
+    #
+    # Regarding manual caching and not @functools.lru_cache, this could be implemented with
+    # functools.lru_cache but I wanted to implement some caching on my own. This also allows more
+    # precise control in pytest in which I can prove to myself my caching works-as-expected.
+    #
+
+    @staticmethod
+    def _ppq_cache_save(ppq: Ppq, location: Location, entry: Re_Entry, ppq_cache: Cache_Ppq) -> None:
+        if RedirectHandler.ppq_cache_max < 1:
+            return
+        # XXX: SECURITY RISK: Python hash is not cryptographically secure
+        ppqh = hash(ppq)
+        # delete entry if too big
+        if len(ppq_cache) >= RedirectHandler._ppq_cache_max:
+            # type `OrderedDict` means `popitem` deletes least recently entered
+            # XXX: this is a primitive cache eviction algorithm. A "least used cache entry" would
+            #      be better. Good enough.
+            ppq_cache.popitem()
+        # cache the entry
+        ppq_cache[ppqh] = (entry, location)
+
+    @staticmethod
+    def _ppq_cache_check(
+        ppq: Ppq, redirects: Re_Entry_Dict, ppq_cache: Cache_Ppq
+    ) -> Union[Tuple[Re_Entry, Location], Tuple[None, None]]:
+        if RedirectHandler.ppq_cache_max < 1:
+            return None, None
+        # the `_ppq_cache_redirects_hash` is a sanity check
+        redirects_hash = id(redirects)
+
+        # XXX: SECURITY RISK: Python hash is not a cryptographically secure hash
+        ppqh = hash(ppq)
+        if ppqh in ppq_cache:
+            return ppq_cache[ppqh]
+        return None, None
+
     @staticmethod
     def _do_VERB_redirect_processing(
-        ppq: Ppq, ppqpr: ParseResult, redirects: Re_Entry_Dict
-    ) -> Union[Tuple[Re_Entry, Re_To], Tuple[None, None]]:
+        ppq: Ppq, ppqpr: ParseResult, redirects: Re_Entry_Dict, ppq_cache: Cache_Ppq
+    ) -> Union[Tuple[Re_Entry, Location], Tuple[None, None]]:
         """
         Handle processing of `ppq`, `ppqpr` and redirects checking and using the `ppq_cache`.
+
+        XXX: Functions `_do_VERB_redirect_processing`, `_ppq_cache_*` are `@staticmethod` to allow
+             for pytest test cases. Instantiating an instance of `SimpleHTTPRequestHandler`
+             for pytest test cases is very awkward to do. For sake of pytests, some functions are
+             `@staticmethod`.
         """
-        entry, to = RedirectHandler._ppq_cache_check(ppq, redirects)
+        entry, location = RedirectHandler._ppq_cache_check(ppq, redirects, ppq_cache)
         if entry:
-            if not to:  # sanity check
-                log.error("entry (%s) found but 'to' is Falsey (%s); this is unexpected", entry, to)
-            return entry, to  # type: ignore # mypy Issue #10225
+            if not location:  # sanity check
+                log.error("entry (%s) found but 'location' is Falsey (%s); this is unexpected",
+                          entry, location)
+            return entry, location  # type: ignore # mypy Issue #10225
         entry = RedirectHandler.query_match_finder(ppq, ppqpr, redirects)
         if not entry:
             return None, None
         # merge RedirectEntry URI parts with incoming requested URI parts
-        to = RedirectHandler.combine_parseresult(entry.to_pr, ppqpr)
-        RedirectHandler._ppq_cache_save(ppq, to, entry)
-        return entry, to
+        location = RedirectHandler.combine_parseresult(entry.to_pr, ppqpr)
+        RedirectHandler._ppq_cache_save(ppq, location, entry, ppq_cache)
+        return entry, location
 
     def _do_VERB_redirect(self, ppq: Ppq, ppqpr: ParseResult, redirects_: Re_Entry_Dict) -> None:
         """
@@ -1227,7 +1251,10 @@ Redirect Path not found: <code>{esc_ppq}</code>
         HEAD requests must not have a body (among many other differences
         in GET and HEAD behavior). See https://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html
         """
-        entry, to = RedirectHandler._do_VERB_redirect_processing(ppq, ppqpr, redirects_)
+
+        entry, location = RedirectHandler._do_VERB_redirect_processing(
+            ppq, ppqpr, redirects_, self._ppq_cache
+        )
 
         if entry is None:
             # no redirect found, return NOT FOUND in manner appropriate to the request (i.e. follow
@@ -1247,11 +1274,11 @@ Redirect Path not found: <code>{esc_ppq}</code>
             log.error('Unhandled command "%s"', cmd)
             return
 
-        # XXX: SECURITY RISK: logging `to` which may contain secrets
+        # XXX: SECURITY RISK: logging `location` which may contain secrets
         self.log_message(
             "redirect found (%s) → (%s), returning %s (%s)",
             ppqpr.path,
-            to,
+            location,
             int(self.status_code),
             self.status_code.phrase,
             loglevel=logging.INFO,
@@ -1263,7 +1290,7 @@ Redirect Path not found: <code>{esc_ppq}</code>
         # The 'Location' Header is used by browsers for HTTP 30X Redirects
         # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Location
         # The most important statement in this program.
-        self.send_header("Location", str(to))
+        self.send_header("Location", str(location))
         try:
             self.send_header("Redirect-Created-By", entry.user)
         except UnicodeEncodeError:
@@ -1309,7 +1336,7 @@ Redirect Path not found: <code>{esc_ppq}</code>
         self._do_VERB_log()
 
         ppq = Ppq(self.path)
-        ppqpr = to_ParseResult(ppq)
+        ppqpr = self._to_ParseResult(ppq)
         if self.query_match(self.status_path_pr, ppqpr):
             global reload_datetime
             self.do_GET_status(self.note_admin, reload_datetime)  # type: ignore
@@ -1331,7 +1358,7 @@ Redirect Path not found: <code>{esc_ppq}</code>
         self._do_VERB_log()
 
         ppq = Ppq(self.path)
-        ppqpr = to_ParseResult(ppq)
+        ppqpr = self._to_ParseResult(ppq)
         if self.query_match(self.status_path_pr, ppqpr):
             self.do_HEAD_nothing()
             return
@@ -1350,6 +1377,10 @@ def redirect_handler_factory(
     note_admin: htmls,
 ) -> typing.Type[RedirectHandler]:
     """
+    Return a class type. For use with `socketserver.TCPServer` which expects a class type, not a
+    class instance. This strange design-choice in `socketserver.TCPServer` makes necessary
+    some awkward workarounds.
+
     :param redirects: dictionary of from-to redirects for the server
     :param status_code: HTTPStatus instance to use for successful redirects
     :param status_path: server status page path
@@ -1562,12 +1593,12 @@ class RedirectServer(socketserver.ThreadingTCPServer):
         """
         Override function.
 
-        Polled during socketserver.TCPServer.serve_forever.
-        Checks global reload and create new handler (which will re-read
-        the Redirect_Files_List)
+        Polled during `socketserver.TCPServer.serve_forever`.
+        Checks global `reload_do`. Creates new handler (which will re-read
+        the `Redirect_Files_List` files).
 
-        TODO: avoid use of globals, somehow pass instance variables to this
-              function or class instance
+        TODO: avoid use of globals, how to pass local instance variables to this
+              function or class instance?
         """
 
         super(RedirectServer, self).service_actions()
@@ -1589,7 +1620,6 @@ class RedirectServer(socketserver.ThreadingTCPServer):
         redirect_handler = redirect_handler_factory(
             entrys, REDIRECT_CODE, STATUS_PATH, RELOAD_PATH, NOTE_ADMIN
         )
-        RedirectHandler.ppq_cache_clear()
         pid = os.getpid()
         log.debug(
             "reload %s (@0x%08x)\n"
@@ -1603,6 +1633,7 @@ class RedirectServer(socketserver.ThreadingTCPServer):
         )
 
         self.RequestHandlerClass = redirect_handler
+        gc.collect()
 
 
 def reload_signal_handler(signum, _) -> None:
@@ -2033,7 +2064,9 @@ def main() -> None:
     )
 
     RedirectServer.field_delimiter = field_delimiter  # set once
-    RedirectHandler.ppq_cache_enabled = ppq_cache_enabled  # set once
+    if ppq_cache_enabled:
+        RedirectHandler.ppq_cache_max = 0  # set once
+        RedirectHandler._lru_cache_max = 0
 
     # process the passed redirects
     global Redirect_FromTo_List
