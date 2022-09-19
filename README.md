@@ -25,6 +25,7 @@ Trivial to install and run.  Only uses Python built-in modules.  Super handy ðŸ˜
   - [Gotchas](#gotchas)
   - [Live Reload](#live-reload)
     - [Reload via Signals](#reload-via-signals)
+    - [Reload automatically using signals and `goto-http-redirect-server-inotify.sh`](#reload-automatically-using-signals-and-goto-http-redirect-server-inotifysh)
     - [Reload via browser](#reload-via-browser)
   - [systemd Service](#systemd-service)
   - [Pro Tips](#pro-tips)
@@ -123,13 +124,19 @@ No service downtime!
 
 ### Reload via Signals
 
- 1. Note during startup the Process ID (or query the host System).
+1. Note during startup the Process ID (or query the host System).
 
- 2. Send the process signal to the running `goto_http_redirect_server`.<br />
-    In Unix, use `kill`.<br />
-    In Windows, use [`windows-kill.exe`](https://github.com/alirdn/windows-kill/releases)<br />
-    The running `goto_http_redirect_server` will re-read all files passed via
-    `--redirects`.
+2. Send the process signal to the running `goto_http_redirect_server`.<br />
+   In Unix, use `kill`.<br />
+   In Windows, use [`windows-kill.exe`](https://github.com/alirdn/windows-kill/releases)<br />
+   The running `goto_http_redirect_server` will re-read all files passed via
+   `--redirects`.
+
+### Reload automatically using signals and `goto-http-redirect-server-inotify.sh`
+
+1. On Linux, run the script [`goto-http-redirect-server-inotify.sh`](./tools/goto-http-redirect-server-inotify.sh)
+   setting variables as needed.
+   This script needs some work, but it functions.
 
 ### Reload via browser
 
@@ -376,6 +383,6 @@ reflective of the respective author(s) and not of Dell Inc.
 Some portions of Javascript code in this project are subject to
 [a separate MIT License](https://kryogenix.org/code/browser/licence.html).
 
-<br />
+----
 
-<a href="https://stackexchange.com/users/216253/jamesthomasmoon1979"><img src="https://stackexchange.com/users/flair/216253.png" width="208" height="58" alt="profile for JamesThomasMoon1979 on Stack Exchange, a network of free, community-driven Q&amp;A sites" title="profile for JamesThomasMoon1979 on Stack Exchange, a network of free, community-driven Q&amp;A sites" /></a>
+<a href="https://stackexchange.com/users/216253/"><img src="https://stackexchange.com/users/flair/216253.png" width="208" height="58" alt="profile for @JamesThomasMoon on Stack Exchange, a network of free, community-driven Q&amp;A sites" title="profile for @JamesThomasMoon on Stack Exchange, a network of free, community-driven Q&amp;A sites" /></a>
