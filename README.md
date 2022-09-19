@@ -1,12 +1,12 @@
 
 # Go To HTTP Redirect Server
 
-[![CircleCI Build Status](https://circleci.com/gh/jtmoon79/goto_http_redirect_server.svg?style=svg)](https://circleci.com/gh/jtmoon79/goto_http_redirect_server)
-[![Azure Build Status](https://dev.azure.com/jtmmoon/goto_http_redirect_server/_apis/build/status/jtmoon79.goto_http_redirect_server?branchName=master)](https://dev.azure.com/jtmmoon/goto_http_redirect_server/_build/latest?definitionId=1&branchName=master)
-[![pytest-cov Code Coverage](https://img.shields.io/azure-devops/coverage/jtmmoon/goto_http_redirect_server/1)](https://dev.azure.com/jtmmoon/goto_http_redirect_server/_build?definitionId=1&_a=summary)
-[![PyPI version](https://badge.fury.io/py/goto-http-redirect-server.svg)](https://badge.fury.io/py/goto-http-redirect-server)
-[![Commits since](https://img.shields.io/github/commits-since/jtmoon79/goto_http_redirect_server/latest.svg)](https://img.shields.io/github/commits-since/jtmoon79/goto_http_redirect_server/latest.svg)
-[![Python versions](https://img.shields.io/pypi/pyversions/goto-http-redirect-server.svg?longCache=True)](https://pypi.org/pypi/goto-http-redirect-server/)
+[![CircleCI](https://img.shields.io/circleci/build/gh/jtmoon79/goto_http_redirect_server.svg?logo=circleci&logoColor=black&style=flat-square)](https://circleci.com/gh/jtmoon79/goto_http_redirect_server)
+[![Azure Build Status](https://img.shields.io/azure-devops/build/jtmmoon/goto_http_redirect_server/1?branchName=master&logo=azurepipelines&style=flat-square)](https://dev.azure.com/jtmmoon/goto_http_redirect_server/_build/latest?definitionId=1&branchName=master)
+[![pytest-cov Code Coverage](https://img.shields.io/azure-devops/coverage/jtmmoon/goto_http_redirect_server/1?logo=azurepipelines&style=flat-square)](https://dev.azure.com/jtmmoon/goto_http_redirect_server/_build?definitionId=1&_a=summary)
+[![PyPi version](https://img.shields.io/pypi/v/goto-http-redirect-server.svg?longCache=True&logo=pypi&color=blue&style=flat-square)](https://pypi.org/pypi/goto-http-redirect-server/)
+[![Commits since](https://img.shields.io/github/commits-since/jtmoon79/goto_http_redirect_server/latest.svg?logo=github)](https://img.shields.io/github/commits-since/jtmoon79/goto_http_redirect_server/latest.svg)
+[![Python versions](https://img.shields.io/pypi/pyversions/goto-http-redirect-server.svg?longCache=True&logo=python)](https://pypi.org/pypi/goto-http-redirect-server/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 The **_"Go To" HTTP Redirect Server_** for sharing dynamic shortcut URLs
@@ -16,7 +16,7 @@ Trivial to install and run.  Only uses Python built-in modules.  Super handy ðŸ˜
 
 ----
 
-<!-- python -m md_toc README.md github -->
+<!-- TOC updated by VS Code extension Markdown All In One -->
 
 - [Go To HTTP Redirect Server](#go-to-http-redirect-server)
   - [Install Manually](#install-manually)
