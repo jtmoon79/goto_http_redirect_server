@@ -186,6 +186,7 @@ jobs:
 workflows:
   version: 2
   workflow_py:
+    jobs:
       - build_install_run__circleci_python_3_6:
           filters:
             branches:
