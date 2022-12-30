@@ -32,7 +32,7 @@ import sys
 import threading
 import time
 import typing
-from typing import cast, DefaultDict, List, NamedTuple, Optional, Tuple, Union
+from typing import cast, DefaultDict, List, NamedTuple, NewType, Optional, Tuple, Union
 from urllib import parse
 import uuid
 
@@ -84,17 +84,17 @@ ParseResult = parse.ParseResult
 # Redirect Entry types
 
 # Redirect From URL Path as input from the Administrator (not modified)
-Re_From = typing.NewType("Re_From", str)
+Re_From = NewType("Re_From", str)
 # Redirect To URL Location
-Re_To = typing.NewType("Re_To", str)
+Re_To = NewType("Re_To", str)
 # User that created the Redirect (records-keeping thing, does not affect behavior)
-Re_User = typing.NewType("Re_User", str)
+Re_User = NewType("Re_User", str)
 # Datetime Redirect was created (records-keeping thing, does not affect behavior)
-Re_Date = typing.NewType("Re_Date", datetime.datetime)
+Re_Date = NewType("Re_Date", datetime.datetime)
 Re_EntryKey = Re_From  # XXX: this might be too confusing?
 # path, parameters, query in a str as given by the BaseHTTPRequestHandler, i.e. the
 # incoming user request
-Ppq = typing.NewType("Ppq", str)
+Ppq = NewType("Ppq", str)
 
 
 def Re_From_to_Re_EntryKey(from_: Re_From) -> Re_EntryKey:
@@ -343,68 +343,9 @@ class Re_Entry(__Re_EntryBase):
         return instance
 
 
-# class Re_EntrySuite(MutableMapping):
-#     """constrained mapping of Re_EntryType to Re_Entry"""
-#
-#     KEYS = [x for x in Re_EntryType]  # type: List[Re_EntryType]
-#
-#     def __init__(self,
-#                  iterable: Optional[
-#                      typing.Iterable[
-#                          typing.Tuple[Re_EntryType, Re_Entry]
-#                      ]
-#                  ] = None
-#                  ):
-#         self._map = defaultdict(None)
-#         if iterable is None:
-#             return
-#         for kv in iterable:
-#             self.__checkkey(kv[0])
-#             self._map[kv[0]] = kv[1]
-#
-#     def __checkkey(self, key):
-#         """check key is valid, raise if not"""
-#         if key not in self.KEYS:
-#             raise KeyError('Given key "%s" which is not in allowed keys %s'
-#                            % (key, self.KEYS))
-#
-#     def __getitem__(self, key):
-#         self.__checkkey(key)
-#         return self._map[key]
-#
-#     def __setitem__(self, key, value):
-#         self.__checkkey(key)
-#         self._map[key] = value
-#
-#     def __delitem__(self, key):
-#         self.__checkkey(key)
-#         del self._map[key]
-#
-#     def __iter__(self):
-#         return iter(self._map.keys())
-#
-#     def __len__(self):
-#         return len(self._map.keys())
-#
-#     def __bool__(self):
-#         for key in self._map.keys():
-#             if self._map[key]:
-#                 return True
-#         return False
-#
-#     def __repr__(self):
-#         s_ = '{'
-#         for key in self:
-#             s_ += str(key) + ': ' + str(self._map[key]) + ','
-#         s_ += '}'
-#         return s_
-#
-#
-# Re_EntryValue = Re_EntrySuite
-
 # XXX: mypy does not like the following but it seems perfectly fine to me
-# Re_Entry_Dict = typing.NewType("Re_Entry_Dict", typing.OrderedDict[Re_EntryKey, Re_Entry])
-Re_Entry_Dict = typing.NewType("Re_Entry_Dict", OrderedDict)
+# Re_Entry_Dict = NewType("Re_Entry_Dict", typing.OrderedDict[Re_EntryKey, Re_Entry])
+Re_Entry_Dict = NewType("Re_Entry_Dict", OrderedDict)
 
 
 def Re_Entry_Dict_new(data: Optional[typing.Sequence] = None) -> Re_Entry_Dict:
@@ -414,7 +355,7 @@ def Re_Entry_Dict_new(data: Optional[typing.Sequence] = None) -> Re_Entry_Dict:
     return Re_Entry_Dict(OrderedDict())
 
 
-Re_Field_Delimiter = typing.NewType("Re_Field_Delimiter", str)
+Re_Field_Delimiter = NewType("Re_Field_Delimiter", str)
 
 #
 # other helpful types and type aliases
@@ -423,12 +364,12 @@ Re_Field_Delimiter = typing.NewType("Re_Field_Delimiter", str)
 
 Path_List = List[pathlib.Path]
 FromTo_List = List[Tuple[str, str]]
-Redirect_Counter = typing.DefaultDict[str, int]
-Redirect_Code_Value = typing.NewType("Redirect_Code_Value", int)
+Redirect_Counter = DefaultDict[str, int]
+Redirect_Code_Value = NewType("Redirect_Code_Value", int)
 str_None = Optional[str]
 Path_None = Optional[pathlib.Path]
 Iter_str = typing.Iterable[str]
-htmls = typing.NewType("htmls", str)  # HTML String
+htmls = NewType("htmls", str)  # HTML String
 htmls_str = Union[htmls, str]
 
 
