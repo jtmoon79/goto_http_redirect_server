@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- encoding: utf-8 -*-
-# -*- pyversion: >=3.5.2 -*-
+# -*- pyversion: >=3.6 -*-
 #
 # black --line-length 100
 #
@@ -1890,7 +1890,7 @@ About this program:
   Underlying caching is so HTTP Redirect responses are a little bit faster.
 
   Modules used are available within the standard CPython distribution.
-  Written for Python 3.7 but hacked to run with at least Python 3.5.2.
+  Written for Python 3.7 but hacked to run with at least Python 3.6.
 
 """.format(
         fd=FIELD_DELIMITER_DEFAULT,

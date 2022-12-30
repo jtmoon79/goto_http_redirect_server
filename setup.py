@@ -262,7 +262,7 @@ setup(
     # keywords should match "topics" listed at github project
     keywords="http-server redirect-urls shortcuts shorturl shorturl-services"
     "shorturls url-shortener",
-    python_requires=">=3.5.2",
+    python_requires=">=3.6",
     packages=["goto_http_redirect_server"],
     # enables `python -m goto-http-redirect-server`
     py_modules=["goto-http-redirect-server"],

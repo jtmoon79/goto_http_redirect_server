@@ -83,7 +83,7 @@ Trivial to install and run.  Only uses Python built-in modules.  Super handy ðŸ˜
 
         python -m goto_http_redirect_server --redirects ./redirects1.csv
 
-    Requires at least Python version 3.5.2.
+    Requires at least Python version 3.6.
 
 ## Install systemd Service
 
@@ -372,7 +372,7 @@ No service downtime!
       Underlying caching is so HTTP Redirect responses are a little bit faster.
 
       Modules used are available within the standard CPython distribution.
-      Written for Python 3.7 but hacked to run with at least Python 3.5.2.
+      Written for Python 3.7 but hacked to run with at least Python 3.6.
 
 ----
 
