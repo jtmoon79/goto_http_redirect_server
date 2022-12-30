@@ -213,7 +213,7 @@ setup(
         #     python -m pip install --user -e '.[development]'
         "development": [
             "flake8==6.0.0" if PYVER_GT36 else "flake8==5.0.4",
-            "mypy==0.991",
+            "mypy==0.991" if PYVER_GT36 else "mypy==0.971",
             "pytest==7.2.0" if PYVER_GT35 else "pytest==6.1",
             "pytest-cov==4.0.0",
             "pytest-timeout==2.1.0",
@@ -224,7 +224,7 @@ setup(
             "flake8==6.0.0" if PYVER_GT36 else "flake8==5.0.4",
         ],
         "development-mypy": [
-            "mypy==0.991",
+            "mypy==0.991" if PYVER_GT36 else "mypy==0.971",
         ],
         "development-pytest": [
             "pytest==7.2.0" if PYVER_GT35 else "pytest==6.1",
