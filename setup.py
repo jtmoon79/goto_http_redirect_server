@@ -59,6 +59,8 @@ PACKAGE_DATA = GOTO_SERVICE_FILES + [
 
 # Python version >3.5 ?
 PYVER_GT35 = sys.version_info.major >= 3 and sys.version_info.minor > 5
+# Python version >3.6 ?
+PYVER_GT36 = sys.version_info.major >= 3 and sys.version_info.minor > 6
 
 
 class GotoSetupCommand(Command, abc.ABC):
@@ -210,7 +212,7 @@ setup(
         # install these locally with command:
         #     python -m pip install --user -e '.[development]'
         "development": [
-            "flake8==6.0.0",
+            "flake8==6.0.0" if PYVER_GT36 else "flake8==5.0.4",
             "mypy==0.991",
             "pytest==7.2.0" if PYVER_GT35 else "pytest==6.1",
             "pytest-cov==4.0.0",
@@ -219,7 +221,7 @@ setup(
         ],
         # subsets of 'development' for faster `pip install` in CI stages
         "development-flake8": [
-            "flake8==6.0.0",
+            "flake8==6.0.0" if PYVER_GT36 else "flake8==5.0.4",
         ],
         "development-mypy": [
             "mypy==0.991",
