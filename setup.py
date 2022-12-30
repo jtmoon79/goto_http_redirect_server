@@ -210,27 +210,27 @@ setup(
         # install these locally with command:
         #     python -m pip install --user -e '.[development]'
         "development": [
-            "flake8==3.8",
-            "mypy==0.812",
-            "pytest==6.2" if PYVER_GT35 else "pytest==6.1",
-            "pytest-cov==2.11",
-            "pytest-timeout==1.4",
-            "yamllint==1.26",
+            "flake8==6.0.0",
+            "mypy==0.991",
+            "pytest==7.2.0" if PYVER_GT35 else "pytest==6.1",
+            "pytest-cov==4.0.0",
+            "pytest-timeout==2.1.0",
+            "yamllint==1.28.0",
         ],
         # subsets of 'development' for faster `pip install` in CI stages
         "development-flake8": [
-            "flake8==3.8",
+            "flake8==6.0.0",
         ],
         "development-mypy": [
-            "mypy==0.812",
+            "mypy==0.991",
         ],
         "development-pytest": [
-            "pytest==6.2" if PYVER_GT35 else "pytest==6.1",
-            "pytest-cov==2.11",
-            "pytest-timeout==1.4",
+            "pytest==7.2.0" if PYVER_GT35 else "pytest==6.1",
+            "pytest-cov==4.0.0",
+            "pytest-timeout==2.1.0",
         ],
         "development-yamllint": [
-            "yamllint==1.26",
+            "yamllint==1.28.0",
         ],
         "build": [
             "pip",
@@ -238,6 +238,7 @@ setup(
             "twine>=3.3",
             "wheel",
         ],
+        # for CLI update of README.md table of contents
         "readme": [
             "md_toc",
         ],
