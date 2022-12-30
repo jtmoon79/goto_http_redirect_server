@@ -15,6 +15,7 @@ set -x
 exec \
     pylint \
         --disable 'C0103' \
+        --disable 'W0511' \
         goto_http_redirect_server/goto_http_redirect_server.py \
         setup.py \
         "${@}"
