@@ -5,14 +5,15 @@
 # source: https://github.com/jtmoon79/goto_http_redirect_server/blob/master/.azure-pipelines/
 #
 # YAML Schema
-# https://docs.microsoft.com/en-us/azure/devops/pipelines/yaml-schema?view=azure-devops&tabs=schema
-# (http://archive.fo/TFpib)
+#   https://docs.microsoft.com/en-us/azure/devops/pipelines/yaml-schema?view=azure-devops&tabs=schema
+#   (http://archive.fo/TFpib)
 # Task Catalog
-# https://docs.microsoft.com/en-us/azure/devops/pipelines/tasks/index?view=azure-devops
-# (http://archive.ph/2q9aS)
+#   https://docs.microsoft.com/en-us/azure/devops/pipelines/tasks/index?view=azure-devops
+#   (http://archive.ph/2q9aS)
 # vmImage list
-# https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/hosted?view=azure-devops
-# (http://archive.ph/Ed9H0)
+#   https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/hosted?view=azure-devops
+#   (http://archive.ph/Ed9H0)
+#   https://github.com/MicrosoftDocs/azure-docs/blob/main/articles/virtual-machines/linux/cli-ps-findimage.md
 ---
 trigger:  # these are branches
   - master
@@ -33,7 +34,8 @@ variables:
   GOTO_PATH_ADD_PIP_SITE: $(GOTO_PATH_TOOLS_CI)/PATH-add-pip-site.sh
   GOTO_PYTEST_REPORT: pytest-report.xml
   GOTO_PYTEST_COVERAGE_REPORT: pytest-cov-coverage.xml
-  GOTO_VM_IMAGE: 'ubuntu-18.04'  # default working VM
+  GOTO_VM_IMAGE: 'ubuntu-22.04'  # default working VM
+  GOTO_VM_IMAGE_WIN: 'windows-2019'  # default working VM for Windows
   GOTO_PY_VERSION: '3.7'  # default working Python
   GOTO_WHEEL_ARTIFACT_DEFAULT: artifact_wheel_$(GOTO_VM_IMAGE)  # default wheel package - one of the built wheel artifacts must have this name
 stages:
@@ -88,7 +90,7 @@ stages:
                 chmod -v +x -- "${GOTO_PATH_FLAKE8}"
                 "${GOTO_PATH_FLAKE8}"
       - job: job_yamllint
-        displayName: 'job: «yamllint»'
+        displayName: "job: «yamllint»"
         pool:
           vmImage: $(GOTO_VM_IMAGE)
         steps:
@@ -130,13 +132,19 @@ stages:
       - job: job_pytest
         displayName: 'job: «pytest»'
         strategy:
+          # see https://github.com/actions/python-versions/blob/main/versions-manifest.json
           matrix:
-            Python36:
-              python.release: '3.6'
             Python37:
               python.release: $(GOTO_PY_VERSION)
+              vmImageName: 'ubuntu-20.04'
+            Python38:
+              python.release: '3.8'
+            Python39:
+              python.release: '3.9'
             Python310:
               python.release: '3.10'
+            Python311:
+              python.release: '3.11'
         pool:
           vmImage: $(GOTO_VM_IMAGE)
         steps:
@@ -187,8 +195,14 @@ stages:
           matrix:
             Ubuntu1804:
               vmImageName: 'ubuntu-18.04'
-            Win2016:
-              vmImageName: 'vs2017-win2016'
+            Ubuntu2004:
+              vmImageName: 'ubuntu-20.04'
+            Ubuntu2204:
+              vmImageName: 'ubuntu-22.04'
+            Win:
+              vmImageName: 'windows-2019'
+            MacOS:
+              vmImageName: 'macOS-11'
         pool:
           vmImage: $(vmImageName)
         steps:
@@ -198,7 +212,7 @@ stages:
               versionSpec: $(GOTO_PY_VERSION)
           - task: Bash@3
             displayName: 'task: «Bash@3» vmImage "$(vmImageName)"'
-            condition: not(in(variables['vmImageName'], 'vs2017-win2016'))
+            condition: not(in(variables['vmImageName'], variables['GOTO_VM_IMAGE_WIN']))
             inputs:
               targetType: inline
               script: |
@@ -215,8 +229,7 @@ stages:
                 python -m twine check "${GOTO_PATH_DIST}"/*.whl
           - task: PowerShell@2
             displayName: 'task: «PowerShell@2» vmImage "$(vmImageName)"'
-            condition: in(variables['vmImageName'], 'vs2017-win2016')
-            # condition: in(variables.vmImageName, 'vs2017-win2016')
+            condition: in(variables['vmImageName'], variables['GOTO_VM_IMAGE_WIN'])
             inputs:
               targetType: inline
               script: |
@@ -251,15 +264,6 @@ stages:
         displayName: 'job: «install --user, run self-test»'
         strategy:
           matrix:
-            Ubuntu1604_Python36:
-              python.version: '3.6'
-              vmImageName: 'ubuntu-16.04'
-            Ubuntu1604_Python37:
-              python.version: '3.7'
-              vmImageName: 'ubuntu-16.04'
-            Ubuntu1604_Python38:
-              python.version: '3.8'
-              vmImageName: 'ubuntu-16.04'
             Ubuntu1804_Python36:
               python.version: '3.6'
               vmImageName: 'ubuntu-18.04'
@@ -275,12 +279,15 @@ stages:
             Ubuntu2004_Python310:
               python.version: '3.10'
               vmImageName: 'ubuntu-20.04'
-            MacOS1014:
+            Ubuntu2204_Python311:
+              python.version: '3.11'
+              vmImageName: 'ubuntu-22.04'
+            MacOS:
               python.version: $(GOTO_PY_VERSION)
-              vmImageName: 'macOS-10.14'
-            Win2016:
+              vmImageName: 'macOS-11'
+            Win:
               python.version: $(GOTO_PY_VERSION)
-              vmImageName: 'vs2017-win2016'
+              vmImageName: 'windows-2019'
         pool:
           vmImage: $(vmImageName)
         steps:
@@ -294,7 +301,7 @@ stages:
               path: $(Build.BinariesDirectory)
           - task: Bash@3
             displayName: 'task: «Bash@3» vmImage "$(vmImageName)" Python $(python.version)'
-            condition: not(in(variables['vmImageName'], 'vs2017-win2016'))
+            condition: not(in(variables['vmImageName'], variables['GOTO_VM_IMAGE_WIN']))
             inputs:
               targetType: inline
               script: |
@@ -330,7 +337,7 @@ stages:
                 python -m pip uninstall --yes --verbose "${GOTO_PACKAGE_NAME}"
           - task: PowerShell@2
             displayName: 'task: «PowerShell@2» vmImage "$(vmImageName)" Python $(python.version)'
-            condition: in(variables['vmImageName'], 'vs2017-win2016')
+            condition: in(variables['vmImageName'], variables['GOTO_VM_IMAGE_WIN'])
             inputs:
               targetType: inline
               script: |
@@ -368,10 +375,12 @@ stages:
         displayName: 'job: «install systemd, start service»'
         strategy:
           matrix:
-            Ubuntu1604:
-              vmImageName: 'ubuntu-16.04'
             Ubuntu1804:
               vmImageName: 'ubuntu-18.04'
+            Ubuntu2004:
+              vmImageName: 'ubuntu-20.04'
+            Ubuntu2204:
+              vmImageName: 'ubuntu-22.04'
         pool:
           vmImage: $(vmImageName)
         steps:
@@ -384,7 +393,7 @@ stages:
               artifact: $(GOTO_WHEEL_ARTIFACT_DEFAULT)
               path: $(Build.BinariesDirectory)
           - task: Bash@3
-            displayName: 'task: «Bash@3» vmImage "$(vmImageName)" Python $(GOTO_PY_VERSION)'
+            displayName: "task: «Bash@3» vmImage $(vmImageName) Python $(GOTO_PY_VERSION)"
             inputs:
               targetType: inline
               script: |
