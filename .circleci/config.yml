@@ -18,25 +18,9 @@
 ---
 version: 2.1
 jobs:
-  build_install_run__circleci_python_3_5:
-    docker:
-      - image: circleci/python:3.5
-    steps:
-      - checkout
-      - run:
-          name: build, install, and run in Python 3.5
-          command: |
-            set -ex
-            # force +x
-            chmod -v +x -- ./tools/ci/pkg-update.sh ./tools/ci/pkg-install.sh ./.circleci/build-install-run.sh
-            sudo -- ./tools/ci/pkg-update.sh
-            sudo -- ./tools/ci/pkg-install.sh curl  # for server-test.sh
-            ./.circleci/build-install-run.sh
-      - store_test_results:
-          path: ./pytest-report.xml
   build_install_run__circleci_python_3_6:
     docker:
-      - image: circleci/python:3.6
+      - image: cimg/python:3.6
     steps:
       - checkout
       - run:
@@ -52,7 +36,7 @@ jobs:
           path: ./pytest-report.xml
   build_install_run__circleci_python_3_7:
     docker:
-      - image: circleci/python:3.7
+      - image: cimg/python:3.7
     steps:
       - checkout
       - run:
@@ -68,11 +52,59 @@ jobs:
           path: ./pytest-report.xml
   build_install_run__circleci_python_3_8:
     docker:
-      - image: circleci/python:3.8
+      - image: cimg/python:3.8
     steps:
       - checkout
       - run:
           name: build, install, and run in Python 3.8
+          command: |
+            set -ex
+            # force +x
+            chmod -v +x -- ./tools/ci/pkg-update.sh ./tools/ci/pkg-install.sh ./.circleci/build-install-run.sh
+            sudo -- ./tools/ci/pkg-update.sh
+            sudo -- ./tools/ci/pkg-install.sh curl  # for server-test.sh
+            ./.circleci/build-install-run.sh
+      - store_test_results:
+          path: ./pytest-report.xml
+  build_install_run__circleci_python_3_9:
+    docker:
+      - image: cimg/python:3.9
+    steps:
+      - checkout
+      - run:
+          name: build, install, and run in Python 3.9
+          command: |
+            set -ex
+            # force +x
+            chmod -v +x -- ./tools/ci/pkg-update.sh ./tools/ci/pkg-install.sh ./.circleci/build-install-run.sh
+            sudo -- ./tools/ci/pkg-update.sh
+            sudo -- ./tools/ci/pkg-install.sh curl  # for server-test.sh
+            ./.circleci/build-install-run.sh
+      - store_test_results:
+          path: ./pytest-report.xml
+  build_install_run__circleci_python_3_10:
+    docker:
+      - image: cimg/python:3.10
+    steps:
+      - checkout
+      - run:
+          name: build, install, and run in Python 3.10
+          command: |
+            set -ex
+            # force +x
+            chmod -v +x -- ./tools/ci/pkg-update.sh ./tools/ci/pkg-install.sh ./.circleci/build-install-run.sh
+            sudo -- ./tools/ci/pkg-update.sh
+            sudo -- ./tools/ci/pkg-install.sh curl  # for server-test.sh
+            ./.circleci/build-install-run.sh
+      - store_test_results:
+          path: ./pytest-report.xml
+  build_install_run__circleci_python_3_11:
+    docker:
+      - image: cimg/python:3.11
+    steps:
+      - checkout
+      - run:
+          name: build, install, and run in Python 3.11
           command: |
             set -ex
             # force +x
@@ -154,13 +186,6 @@ jobs:
 workflows:
   version: 2
   workflow_py:
-    jobs:
-      - build_install_run__circleci_python_3_5:
-          filters:
-            branches:
-              only:
-                - master
-                - circleci
       - build_install_run__circleci_python_3_6:
           filters:
             branches:
@@ -174,6 +199,24 @@ workflows:
                 - master
                 - circleci
       - build_install_run__circleci_python_3_8:
+          filters:
+            branches:
+              only:
+                - master
+                - circleci
+      - build_install_run__circleci_python_3_9:
+          filters:
+            branches:
+              only:
+                - master
+                - circleci
+      - build_install_run__circleci_python_3_10:
+          filters:
+            branches:
+              only:
+                - master
+                - circleci
+      - build_install_run__circleci_python_3_11:
           filters:
             branches:
               only:
