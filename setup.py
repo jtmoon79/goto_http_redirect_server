@@ -59,8 +59,10 @@ PACKAGE_DATA = GOTO_SERVICE_FILES + [
 
 # Python version >3.6 ?
 PYVER_GT36 = sys.version_info.major >= 3 and sys.version_info.minor > 6
+
 # Python version >3.7 ?
 PYVER_GT37 = sys.version_info.major >= 3 and sys.version_info.minor > 7
+
 
 class GotoSetupCommand(Command, abc.ABC):
     """
