@@ -235,6 +235,8 @@ setup(
         "development-yamllint": [
             "yamllint==1.28.0",
         ],
+        # install these locally with command:
+        #     python -m pip install --user -e '.[build]'
         "build": [
             "pip",
             "setuptools>=44",
