@@ -9,6 +9,8 @@
 #   twine
 #   setuptools
 #
+# caller can override $PYTHON
+#
 # Manually tested to run under differing environments including:
 #   Python 3.7 on MinGW64 shell on Windows 10
 #   Python 3.5.3 on Debian 9 Stretch Linux on WLS
@@ -33,12 +35,13 @@ if [[ ! "${PYTHON+x}" ]]; then
     PYTHON='python'  # fallback
     if which 'python3' &> /dev/null; then
         PYTHON='python3'  # Linux Python 3
-    elif which 'py' &> /dev/null; then
-        PYTHON='py -3'  # Windows launcher
+    elif which 'py.exe' &> /dev/null; then
+        PYTHON='py.exe'  # Windows launcher, used by MinGW
     fi
 fi
 
 # check $PYTHON runs
+which ${PYTHON}
 ${PYTHON} --version
 
 #
@@ -112,12 +115,14 @@ uninstall=false
 if [[ "${1+x}" == '--uninstall' ]]; then
     uninstall=true
 fi
+
 function on_exit(){
     if ${uninstall}; then
         set -x
         ${PYTHON} -m pip uninstall --yes --verbose "${PACKAGE_NAME}"
     fi
 }
+
 trap on_exit EXIT
 
 SERVER_TEST=$(readlink -f -- "./tools/ci/server-test.sh")
