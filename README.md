@@ -173,206 +173,210 @@ No service downtime!
 
 # `--help` message
 
-    usage: goto_http_redirect_server [--redirects REDIRECTS_FILES] [--from-to from to] [--ip IP]
-                                     [--port PORT] [--status-path STATUS_PATH] [--reload-path RELOAD_PATH]
-                                     [--redirect-code REDIRECT_CODE] [--field-delimiter FIELD_DELIMITER]
-                                     [--status-note-file STATUS_NOTE_FILE] [--no-cache]
-                                     [--shutdown SHUTDOWN] [--log LOG] [--debug] [--version] [-?]
+```text
+usage: goto_http_redirect_server [--redirects REDIRECTS_FILES] [--from-to from to] [--ip IP]
+                                 [--port PORT] [--status-path STATUS_PATH]
+                                 [--reload-path RELOAD_PATH] [--redirect-code REDIRECT_CODE]
+                                 [--field-delimiter FIELD_DELIMITER]
+                                 [--status-note-file STATUS_NOTE_FILE] [--no-cache]
+                                 [--shutdown SHUTDOWN] [--log LOG] [--debug] [--version] [-?]
 
-    The "Go To" HTTP Redirect Server for sharing dynamic shortcut URLs on your network.
+The "Go To" HTTP Redirect Server for sharing dynamic shortcut URLs on your network.
 
-    HTTP 307 Temporary Redirect reply server. Load this server with redirects of "from path" and
-    "to URL" and let it run indefinitely. Reload the running server by signaling the
-    process or HTTP requesting the RELOAD_PATH.
+HTTP 307 Temporary Redirect reply server. Load this server with redirects of "from path" and
+"to URL" and let it run indefinitely. Reload the running server by signaling the
+process or HTTP requesting the RELOAD_PATH.
 
-    Redirects:
-      One or more required. May be passed multiple times.
+Redirects:
+  One or more required. May be passed multiple times.
 
-      --redirects REDIRECTS_FILES
-                            File of redirects. Within a file, is one redirect entry per line. A redirect
-                            entry is four fields: "from path", "to URL", "added by user", and "added on
-                            datetime" separated by the FIELD_DELIMITER character.
-      --from-to from to     A single redirect entry of "from path" and "to URL" fields. For example,
-                            --from-to "/hr" "http://human-resources.megacorp.local/login"
+  --redirects REDIRECTS_FILES
+                        File of redirects. Within a file, is one redirect entry per line. A
+                        redirect entry is four fields: "from path", "to URL", "added by user", and
+                        "added on datetime" separated by the FIELD_DELIMITER character.
+  --from-to from to     A single redirect entry of "from path" and "to URL" fields. For example,
+                        --from-to "/hr" "http://human-resources.megacorp.local/login"
 
-    Network Options:
-      --ip IP, -i IP        IP interface to listen on. Default is 0.0.0.0 .
-      --port PORT, -p PORT  IP port to listen on. Default is 80 .
+Network Options:
+  --ip IP, -i IP        IP interface to listen on. Default is 0.0.0.0 .
+  --port PORT, -p PORT  IP port to listen on. Default is 80 .
 
-    Server Options:
-      --status-path STATUS_PATH
-                            The status path dumps information about the process and loaded redirects.
-                            Default status page path is "/status".
-      --reload-path RELOAD_PATH
-                            Allow reloads by HTTP GET Request to passed URL Path. e.g. --reload-path
-                            "/reload". May be a potential security or stability issue. The program will
-                            always allow reload by process signal. Default is off.
-      --redirect-code REDIRECT_CODE
-                            Set HTTP Redirect Status Code as an integer. Most often the desired override
-                            will be 307 (Temporary Redirect). Keep in mind, Status Code Permanent Redirect
-                            will cause most browsers to cache the redirect. Any HTTP Status Code could be
-                            used but odd things will happen if a value like 500 is returned. This Status
-                            Code is only returned when a loaded redirect entry is found and returned.
-                            Default successful redirect Status Code is 307 (Temporary Redirect).
-      --field-delimiter FIELD_DELIMITER
-                            Field delimiter string for --redirects files per-line redirect entries. Default
-                            is "\t" (ordinal 9).
-      --status-note-file STATUS_NOTE_FILE
-                            Status page note: Filesystem path to a file with HTML that will be embedded
-                            within a <div> element in the status page.
-      --no-cache            Turn off caching. Caching will store finalized 'To:' Header URLs in process
-                            memory. If users are expected to pass secrets (e.g. a password in a URL
-                            parameter) then turn off caching.
-      --shutdown SHUTDOWN   Shutdown the server after passed seconds. Intended for testing.
-      --log LOG             Log to file at path LOG. Default logging is to sys.stderr.
-      --debug               Set logging level to DEBUG. Default logging level is INFO.
-      --version             Print "goto_http_redirect_server 1.2.0" and exit.
-      -?, -h, --help        Print this help message and exit.
+Server Options:
+  --status-path STATUS_PATH
+                        The status path dumps information about the process and loaded redirects.
+                        Default status page path is "/status".
+  --reload-path RELOAD_PATH
+                        Allow reloads by HTTP GET Request to passed URL Path. e.g. --reload-path
+                        "/reload". May be a potential security or stability issue. The program will
+                        always allow reload by process signal. Default is off.
+  --redirect-code REDIRECT_CODE
+                        Set HTTP Redirect Status Code as an integer. Most often the desired
+                        override will be 307 (Temporary Redirect). Keep in mind, Status Code
+                        Permanent Redirect will cause most browsers to cache the redirect. Any HTTP
+                        Status Code could be used but odd things will happen if a value like 500 is
+                        returned. This Status Code is only returned when a loaded redirect entry is
+                        found and returned. Default successful redirect Status Code is 307
+                        (Temporary Redirect).
+  --field-delimiter FIELD_DELIMITER
+                        Field delimiter string for --redirects files per-line redirect entries.
+                        Default is "\t" (ordinal 9).
+  --status-note-file STATUS_NOTE_FILE
+                        Status page note: Filesystem path to a file with HTML that will be embedded
+                        within a <div> element in the status page.
+  --no-cache            Turn off caching. Caching will store finalized 'To:' Header URLs in process
+                        memory. If users are expected to pass secrets (e.g. a password in a URL
+                        parameter) then turn off caching.
+  --shutdown SHUTDOWN   Shutdown the server after passed seconds. Intended for testing.
+  --log LOG             Log to file at path LOG. Default logging is to sys.stderr.
+  --debug               Set logging level to DEBUG. Default logging level is INFO.
+  --version             Print "goto_http_redirect_server 1.2.1" and exit.
+  -?, -h, --help        Print this help message and exit.
 
-    About Redirect Entries:
+About Redirect Entries:
 
-      Entries found in --redirects file(s) and entries passed via --from-to are
-      combined.
-      Entries passed via --from-to override any matching "from path" entry found in
-      redirects files.
-      The "from path" field corresponds to the URI Path in the originating request.
-      The "to URL" field corresponds to HTTP Header "Location" in the server
-      Redirect reply.
+  Entries found in --redirects file(s) and entries passed via --from-to are
+  combined.
+  Entries passed via --from-to override any matching "from path" entry found in
+  redirects files.
+  The "from path" field corresponds to the URI Path in the originating request.
+  The "to URL" field corresponds to HTTP Header "Location" in the server
+  Redirect reply.
 
-      A redirects file entry has four fields separated by FIELD_DELIMITER character:
-      "from path", "to URL", "added by user", "added on datetime".
-      For example,
+  A redirects file entry has four fields separated by FIELD_DELIMITER character:
+  "from path", "to URL", "added by user", "added on datetime".
+  For example,
 
-        /hr http://human-resources.megacorp.local/login     bob     2019-09-07 12:00:00
+    /hr http://human-resources.megacorp.local/login     bob     2019-09-07 12:00:00
 
-      The last two fields, "added by user" and "added on datetime", are intended
-      for record-keeping within an organization.
+  The last two fields, "added by user" and "added on datetime", are intended
+  for record-keeping within an organization.
 
-      A passed redirect should have a leading "/" as this is the URI path given for
-      processing.
-      For example, the URL "http://host/hr" is processed as URI path "/hr".
+  A passed redirect should have a leading "/" as this is the URI path given for
+  processing.
+  For example, the URL "http://host/hr" is processed as URI path "/hr".
 
-      A redirect will combine the various incoming URI parts.
-      For example, given redirect entry:
+  A redirect will combine the various incoming URI parts.
+  For example, given redirect entry:
 
-        /b  http://bug-tracker.megacorp.local/view.cgi      bob     2019-09-07 12:00:00
+    /b  http://bug-tracker.megacorp.local/view.cgi      bob     2019-09-07 12:00:00
 
-      And incoming GET or HEAD request:
+  And incoming GET or HEAD request:
 
-        http://goto/b?id=123
+    http://goto/b?id=123
 
-      will result in a redirect URL:
+  will result in a redirect URL:
 
-        http://bug-tracker.megacorp.local/view.cgi?id=123
+    http://bug-tracker.megacorp.local/view.cgi?id=123
 
-    Redirect Entry Template Syntax ("dynamic" URLs):
+Redirect Entry Template Syntax ("dynamic" URLs):
 
-      Special substrings with Python string.Template syntax may be set in the
-      redirect entry "To" field.
+  Special substrings with Python string.Template syntax may be set in the
+  redirect entry "To" field.
 
-      First, given the URL
+  First, given the URL
 
-         http://host.com/pa/th;parm?a=A&b=B#frag
+     http://host.com/pa/th;parm?a=A&b=B#frag
 
-      the URI parts that form a urllib.urlparse ParseResult class would be:
+  the URI parts that form a urllib.urlparse ParseResult class would be:
 
-        ParseResult(scheme='http', netloc='host.com', path='/pa/th',
-                    params='parm', query='a=A&b=B', fragment='frag')
+    ParseResult(scheme='http', netloc='host.com', path='/pa/th',
+                params='parm', query='a=A&b=B', fragment='frag')
 
-      So then given redirect entry:
+  So then given redirect entry:
 
-        /b  http://bug-tracker.megacorp.local/view.cgi?id=${query}  bob     2019-09-07 12:00:00
+    /b  http://bug-tracker.megacorp.local/view.cgi?id=${query}  bob     2019-09-07 12:00:00
 
-      and the incoming GET or HEAD request:
+  and the incoming GET or HEAD request:
 
-        http://goto/b?123
+    http://goto/b?123
 
-      Substring '123' is the 'query' part of the ParseResult. The resultant redirect
-      URL would become:
+  Substring '123' is the 'query' part of the ParseResult. The resultant redirect
+  URL would become:
 
-        http://bug-tracker.megacorp.local/view.cgi?id=123
+    http://bug-tracker.megacorp.local/view.cgi?id=123
 
-    Redirect Entry Required Request Modifiers:
+Redirect Entry Required Request Modifiers:
 
-      Ending the Redirect Entry "from path" field with various URI separators allows
-      preferences for which Redirect Entry to use. The purpose is to allow
-      preferring a different Redirect Entry depending upon the users request.
+  Ending the Redirect Entry "from path" field with various URI separators allows
+  preferences for which Redirect Entry to use. The purpose is to allow
+  preferring a different Redirect Entry depending upon the users request.
 
-      Given redirect entries:
+  Given redirect entries:
 
-        /b? http://bug-tracker.megacorp.local/view.cgi?id=${query}  bob     2019-09-07 12:00:00
-        /b  http://bug-tracker.megacorp.local/main  bob     2019-09-07 12:00:00
+    /b? http://bug-tracker.megacorp.local/view.cgi?id=${query}  bob     2019-09-07 12:00:00
+    /b  http://bug-tracker.megacorp.local/main  bob     2019-09-07 12:00:00
 
-      and the incoming GET or HEAD request:
+  and the incoming GET or HEAD request:
 
-        http://goto/b?123
+    http://goto/b?123
 
-      This will choose the first Redirect Entry and return 'Location' header
+  This will choose the first Redirect Entry and return 'Location' header
 
-        http://bug-tracker.megacorp.local/view.cgi?id=123
+    http://bug-tracker.megacorp.local/view.cgi?id=123
 
-      Whereas the incoming GET or HEAD request:
+  Whereas the incoming GET or HEAD request:
 
-        http://goto/b
+    http://goto/b
 
-      This will choose the second Redirect Entry and return 'Location' header
+  This will choose the second Redirect Entry and return 'Location' header
 
-        http://bug-tracker.megacorp.local/main
+    http://bug-tracker.megacorp.local/main
 
-      The example combination sends a basic request for '/b' to some static page and
-      a particular query request '/b?123' to a particular query path.
-      Failed matches will "fallback" to the basic Redirect Entry, e.g. the Entry
-      without any Required Request Modifiers.
+  The example combination sends a basic request for '/b' to some static page and
+  a particular query request '/b?123' to a particular query path.
+  Failed matches will "fallback" to the basic Redirect Entry, e.g. the Entry
+  without any Required Request Modifiers.
 
-      A Redirect Entry with Required Request Modifier will not match a request
-      without such a modifier.
+  A Redirect Entry with Required Request Modifier will not match a request
+  without such a modifier.
 
-      Given redirect entries:
+  Given redirect entries:
 
-        /b? http://bug-tracker.megacorp.local/view.cgi?id=${query}  bob     2019-09-07 12:00:00
+    /b? http://bug-tracker.megacorp.local/view.cgi?id=${query}  bob     2019-09-07 12:00:00
 
-      and the incoming GET or HEAD request:
+  and the incoming GET or HEAD request:
 
-        http://goto/b
+    http://goto/b
 
-      will return 404 NOT FOUND.
+  will return 404 NOT FOUND.
 
-      Required Request Modifiers must be at the end of the "from path" field string.
-      Required Request Modifiers strings are:
+  Required Request Modifiers must be at the end of the "from path" field string.
+  Required Request Modifiers strings are:
 
-         ';'  for user requests with a parameter.
-         '?'  for user requests with a query.
-         ';?' for user requests with a parameter and a query.
+     ';'  for user requests with a parameter.
+     '?'  for user requests with a query.
+     ';?' for user requests with a parameter and a query.
 
-    About Redirect Files:
+About Redirect Files:
 
-       A line with a leading "#" will be ignored.
+   A line with a leading "#" will be ignored.
 
-    About Reloads:
+About Reloads:
 
-      Sending a process signal to the running process will cause
-      a reload of any files passed via --redirects.  This allows live updating of
-      redirect information without disrupting the running server process.
-      On Unix, the signal is SIGUSR1.  On Windows, the signal is SIGBREAK.
-      On this system, the signal is Signals.SIGUSR1 (10).
-      On Unix, use program `kill`.  On Windows, use program `windows-kill.exe`.
+  Sending a process signal to the running process will cause
+  a reload of any files passed via --redirects.  This allows live updating of
+  redirect information without disrupting the running server process.
+  On Unix, the signal is SIGUSR1.  On Windows, the signal is SIGBREAK.
+  On this system, the signal is Signals.SIGUSR1 (10).
+  On Unix, use program `kill`.  On Windows, use program `windows-kill.exe`.
 
-      A reload of redirect files may also be requested via passed URL path
-      RELOAD_PATH.
+  A reload of redirect files may also be requested via passed URL path
+  RELOAD_PATH.
 
-    About Paths:
+About Paths:
 
-      Options --status-path and --reload-path may be passed paths to obscure access
-      from unauthorized users. e.g.
+  Options --status-path and --reload-path may be passed paths to obscure access
+  from unauthorized users. e.g.
 
-          --status-path '/7fc73d2c-c389-4dfd-994f-20e0af1fb1ba'
+      --status-path '/62aa687a-c75d-47a5-b76f-4e33ea776e4b'
 
-    About this program:
+About this program:
 
-      Underlying caching is so HTTP Redirect responses are a little bit faster.
+  Underlying caching is so HTTP Redirect responses are a little bit faster.
 
-      Modules used are available within the standard CPython distribution.
-      Written for Python 3.7 but hacked to run with at least Python 3.6.
+  Modules used are available within the standard CPython distribution.
+  Written for Python 3.7 but hacked to run with at least Python 3.6.
+```
 
 ----
 
