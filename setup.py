@@ -197,6 +197,7 @@ setup(
     version=__version__,
     author=__author__,
     url=__url_pypi__,
+    # https://packaging.python.org/en/latest/guides/distributing-packages-using-setuptools/#project-urls
     project_urls={
         "Source": __url_github__,
         "Bug Reports": __url_issues__,
