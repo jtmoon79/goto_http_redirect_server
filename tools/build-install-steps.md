@@ -22,8 +22,9 @@ A reminder of end-to-end steps for creating a new release.
 5. upload to pypi following `build-install` script instructions<br/>
    or
    ```text
-   python -m twine upload --verbose ./dist/goto_http_redirect_server-A.B.C-py3-none-any.whl
+   python -m twine upload --username "__token__" --verbose ./dist/goto_http_redirect_server-A.B.C-py3-none-any.whl
    ```
+   Create an upload token at [pypi.org/manage/account/token/](https://pypi.org/manage/account/token/).
 
 6. tagging
 
